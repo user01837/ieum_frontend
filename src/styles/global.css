@@ -1,0 +1,49 @@
+:root{
+  --navy:#1B2540;
+  --navy-deep:#141C33;
+  --blue:#2453D8;
+  --blue-deep:#1B3FAE;
+  --blue-soft:#EAF0FE;
+  --bg:#F5F6FA;
+  --surface:#FFFFFF;
+  --line:#E5E7EE;
+  --line-strong:#D6DAE3;
+  --ink:#1F2433;
+  --ink-soft:#6B7280;
+  --ink-tertiary:#9CA3AF;
+  --good:#1B8A5A;
+  --good-soft:#E5F5EC;
+  --warn:#C17A1F;
+  --warn-soft:#FBF0DC;
+  --wait:#2453D8;
+  --wait-soft:#EAF0FE;
+}
+
+/* Reset */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  width: 100%;
+  min-height: 100vh;
+}
+
+body {
+  font-family: "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+  background: var(--bg);
+  color: var(--ink);
+}
+
+.layout {
+  display: flex;
+  min-height: 100vh;
+}
+
+.content {
+  flex: 1;
+}

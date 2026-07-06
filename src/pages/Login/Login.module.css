@@ -1,0 +1,139 @@
+.loginPage {
+  margin:0;
+  font-family:'Noto Sans KR', sans-serif;
+  background: linear-gradient(to top, var(--navy), white);
+  min-height:100vh;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  color:var(--ink);
+}
+
+.wrap{width:400px;max-width:92vw;}
+
+.brandrow{
+  text-align:center;
+  color:#fff;
+  margin-bottom:20px;
+}
+
+.img-box {
+  width: 120px;
+  height: 120px;
+}
+
+.card{
+  background:#fff;
+  border-radius:16px;
+  padding:30px;
+  box-shadow:0 20px 50px rgba(0,0,0,.25);
+}
+
+.card-title{font-weight:700;margin-bottom:5px;}
+.card-sub{font-size:12px;color:var(--ink-soft);margin-bottom:20px;}
+
+.field{margin-bottom:16px;}
+label{font-size:12px;font-weight:700;color:var(--ink-soft);display:block;margin-bottom:6px;}
+
+.dropdown{
+  padding:12px;
+  border:1px solid var(--line-strong);
+  border-radius:8px;
+  display:flex;
+  justify-content:space-between;
+  cursor:pointer;
+}
+.dropdown.placeholder{color:var(--ink-tertiary);}
+
+.dropdown-menu{
+  border:1px solid var(--line-strong);
+  border-radius:8px;
+  margin-top:6px;
+  background:#fff;
+  max-height:180px;
+  overflow:auto;
+}
+
+.dropdown-item{
+  padding:10px;
+  cursor:pointer;
+}
+.dropdown-item:hover{
+  background:var(--bg);
+}
+.dropdown-item.active{
+  background:var(--blue-soft);
+  color:var(--blue);
+  font-weight:700;
+}
+
+.inputwrap{
+  position:relative;
+}
+.inputwrap input{
+  width:100%;
+  padding:12px;
+  border:1px solid var(--line-strong);
+  border-radius:8px;
+}
+
+.toggle-eye{
+  position:absolute;
+  right:10px;
+  top:50%;
+  transform:translateY(-50%);
+  cursor:pointer;
+}
+
+.rowline{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin:10px 0 20px;
+}
+
+.rememberline{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  cursor:pointer;
+  font-size:12px;
+}
+
+.checkbox{
+  width:16px;height:16px;
+  border:1px solid var(--line-strong);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  border-radius:4px;
+}
+.checkbox.on{
+  background:var(--blue);
+  color:#fff;
+}
+
+.btn-primary{
+  background:var(--navy);
+  color:#fff;
+  text-align:center;
+  padding:12px;
+  border-radius:8px;
+  cursor:pointer;
+  font-weight:700;
+}
+
+.field-error{
+  font-size:11px;
+  color:var(--danger);
+  margin-top:6px;
+}
+
+.toast{
+  position:fixed;
+  bottom:30px;
+  background:var(--navy);
+  color:#fff;
+  padding:12px 18px;
+  border-radius:8px;
+}

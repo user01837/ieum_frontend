@@ -1,0 +1,154 @@
+/* 전역 스케일 및 박스 모델은 필요에 따라 공통 CSS에 포함하세요 */
+.org-panel {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  padding: 28px;
+  max-width: 900px;
+  margin: 40px auto;
+  font-family: "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+  color: #1f2937;
+}
+
+.org-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+}
+.org-panel-header h2 { font-size: 17px; font-weight: 600; margin: 0; }
+.org-panel-controls { display: flex; align-items: center; gap: 12px; }
+
+select#deptSelect {
+  font-size: 13px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid #d1d5db;
+  background: #fff;
+  color: #1f2937;
+  outline: none;
+  cursor: pointer;
+}
+.org-total-count { font-size: 13px; color: #6b7280; }
+.org-total-count strong { color: #1f2937; }
+
+/* ---------- Tree Structure ---------- */
+.org-tree { display: flex; flex-direction: column; align-items: center; }
+
+.org-node-manager {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #2563eb;
+  border-radius: 12px;
+  padding: 12px 22px;
+}
+.org-node-manager .org-avatar { background: #fff; color: #2563eb; }
+.org-node-manager .org-rank { font-size: 11px; color: rgba(255,255,255,0.8); margin-bottom: 2px; }
+.org-node-manager .org-name { font-size: 15px; font-weight: 600; color: #fff; }
+
+.org-stem { width: 1px; height: 22px; background: #cbd5e1; }
+
+.org-lead-row {
+  display: flex;
+  gap: 28px;
+  border-top: 1px solid #cbd5e1;
+  padding-top: 22px;
+  width: fit-content;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.org-node-lead {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #eaf1fd;
+  border-radius: 8px;
+  padding: 8px 14px;
+  min-width: 130px;
+}
+.org-node-lead .org-avatar { background: #fff; color: #2563eb; width: 26px; height: 26px; font-size: 11px; }
+.org-node-lead .org-rank { font-size: 10px; color: #2563eb; margin-bottom: 1px; }
+.org-node-lead .org-name { font-size: 13px; font-weight: 600; color: #1e3a8a; }
+
+.org-staff-section {
+  width: 100%;
+  border-top: 1px dashed #d1d5db;
+  padding-top: 18px;
+  margin-top: 22px;
+}
+.org-staff-label {
+  font-size: 12px;
+  color: #9ca3af;
+  text-align: center;
+  margin-bottom: 14px;
+}
+.org-staff-chips {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+}
+.org-chip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #f3f4f6;
+  border-radius: 20px;
+  padding: 6px 14px 6px 6px;
+  font-size: 13px;
+  color: #374151;
+}
+.org-chip .org-avatar { width: 20px; height: 20px; font-size: 9px; background: #e5e7eb; color: #6b7280; }
+
+/* 기타 그룹 스타일 */
+.org-other-section {
+  width: 100%;
+  border-top: 1px dashed #f3d38a;
+  padding-top: 18px;
+  margin-top: 18px;
+}
+.org-other-label {
+  font-size: 12px;
+  color: #b45309;
+  text-align: center;
+  margin-bottom: 14px;
+}
+.org-other-chips {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+}
+.org-chip-other {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #fef3c7;
+  border-radius: 20px;
+  padding: 6px 14px 6px 6px;
+  font-size: 13px;
+  color: #92400e;
+}
+.org-chip-other .org-avatar { width: 20px; height: 20px; font-size: 9px; background: #fde68a; color: #92400e; }
+.org-chip-other .org-raw-position { font-size: 11px; color: #b45309; margin-left: 2px; }
+
+/* 공통 아바타 */
+.org-avatar {
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  flex-shrink: 0;
+  width: 30px;
+  height: 30px;
+  font-size: 12px;
+}
+
+.org-empty-state {
+  text-align: center;
+  color: #9ca3af;
+  font-size: 13px;
+  padding: 40px 0;
+}
