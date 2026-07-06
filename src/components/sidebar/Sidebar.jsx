@@ -24,7 +24,7 @@ function Sidebar() {
 
         <NavLink to="/projects" className={({ isActive }) => "nav-link" + (isActive ? " active" : "")}>
           <svg className="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>
-          사업/프로젝트 추진
+          사업/프로젝트 기획
         </NavLink>
 
         <NavLink to="/departments" className={({ isActive }) => "nav-link" + (isActive ? " active" : "")}>
