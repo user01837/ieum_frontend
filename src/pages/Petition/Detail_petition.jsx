@@ -78,6 +78,7 @@ function DetailPetition() {
   const [isSimilarCasesOpen, setIsSimilarCasesOpen] = useState(false);
   const [isSimilarCasesLoading, setIsSimilarCasesLoading] = useState(false);
   const [similarCases, setSimilarCases] = useState([]);
+  const [isMoreCasesLoading, setIsMoreCasesLoading] = useState(false);
   const [isAiDraftOpen, setIsAiDraftOpen] = useState(false);
   const [isAiDraftLoading, setIsAiDraftLoading] = useState(false);
   const [aiDraft, setAiDraft] = useState('');
@@ -102,9 +103,42 @@ function DetailPetition() {
     setAttachedFiles(prevFiles => [...prevFiles, ...acceptedFiles]);
   }, []);
 
+  const onDropRejected = useCallback((fileRejections) => {
+    // 파일 첨부가 거부되었을 때 실행될 콜백
+    fileRejections.forEach(({ file, errors }) => {
+      errors.forEach(error => {
+        if (error.code === 'file-too-large') {
+          // maxSize보다 큰 파일이 첨부되었을 경우
+          alert(`오류: "${file.name}" 파일의 크기가 너무 큽니다. (최대 10MB)`);
+        } else if (error.code === 'file-invalid-type') {
+          // 허용되지 않는 파일 형식일 경우
+          alert(`오류: "${file.name}" 파일은 허용되지 않는 파일 형식입니다.`);
+        } else {
+          alert(`오류: ${file.name} - ${error.message}`);
+        }
+      });
+    });
+  }, []);
+
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
+    onDropRejected, // 거부되었을 때 실행할 콜백 연결
     multiple: true,
+    maxSize: 10485760, // 10MB (10 * 1024 * 1024)
+    accept: { // 허용할 파일 타입 지정 (악성코드 방지)
+      'image/jpeg': ['.jpeg', '.jpg'],
+      'image/png': ['.png'],
+      'image/gif': ['.gif'],
+      'application/pdf': ['.pdf'],
+      'application/zip': ['.zip'],
+      'application/x-hwp': ['.hwp'],
+      'application/msword': ['.doc'],
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx'],
+      'application/vnd.ms-excel': ['.xls'],
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx'],
+      'application/vnd.ms-powerpoint': ['.ppt'],
+      'application/vnd.openxmlformats-officedocument.presentationml.presentation': ['.pptx'],
+    }
   });
 
   const removeFile = (file) => {
@@ -136,6 +170,32 @@ function DetailPetition() {
     }, 1500);
   };
 
+  // 추가 유사사례를 생성하는 함수 (API 호출 시뮬레이션)
+  const generateMoreCases = (complaint, existingCount) => {
+    const newCases = [];
+    for (let i = 1; i <= 2; i++) { // 2개의 새로운 사례 생성
+      const newIndex = existingCount + i;
+      newCases.push({
+        id: `s${complaint.id}-more-${newIndex}`,
+        title: `추가된 유사 민원 사례 ${newIndex}`,
+        dept: complaint.dept,
+        date: '2024.10.21',
+        status: '처리완료',
+        fullContent: `[민원 요지]\n추가적으로 검색된 유사 민원 사례입니다. (사례 ${newIndex})\n\n[처리 경과]\n담당 부서에서 신속하게 현장을 확인하고 필요한 조치를 계획했습니다.\n\n[답변 내용]\n안녕하세요. 추가로 문의주신 사안에 대해 검토 후 조치하였음을 알려드립니다.`
+      });
+    }
+    return newCases;
+  };
+
+  const handleLoadMoreSimilarCases = () => {
+    setIsMoreCasesLoading(true);
+    setTimeout(() => {
+      const newCases = generateMoreCases(complaint, similarCases.length);
+      setSimilarCases(prevCases => [...prevCases, ...newCases]);
+      setIsMoreCasesLoading(false);
+    }, 1000);
+  };
+
   const handleLoadAiDraft = () => {
     setIsAiDraftLoading(true);
     setTimeout(() => {
@@ -162,6 +222,52 @@ function DetailPetition() {
     // 애니메이션 종료 후 내용 초기화(선택)
     setTimeout(() => setSelectedCase(null), 250);
   };
+
+  // 데이터 저장/전송 로직을 별도 함수로 분리 (재사용성)
+  const saveData = async (status = 'progress') => {
+    // 실제 API 호출을 시뮬레이션합니다.
+    console.log("API Call: Saving data...");
+    console.log({
+      id: complaint.id,
+      status: status,
+      assignee: newAssignee || { name: complaint.assignee, role: '' },
+      replyContent: editor.getHTML(),
+      attachedFiles: attachedFiles.map(f => f.name),
+    });
+
+    // return new Promise(resolve => setTimeout(resolve, 500)); // API 지연시간 시뮬레이션
+  };
+
+  const handleSave = () => {
+    if (newAssignee) {
+      const isConfirmed = window.confirm(
+        "담당자 변경 시 해당 민원이 완료되기 전까지 접근하실 수 없습니다. 지금까지 변경된 내용을 저장하고 담당자를 변경하시겠습니까?"
+      );
+      if (isConfirmed) {
+        saveData().then(() => {
+          alert("저장되었습니다.");
+          navigate('/petitions');
+        });
+      }
+    } else {
+      saveData().then(() => {
+        alert("저장되었습니다.");
+        navigate('/petitions');
+      });
+    }
+  };
+
+  const handleComplete = () => {
+    const isConfirmed = window.confirm("민원 처리를 완료합니다. 완료 후에는 수정할 수 없습니다. 계속하시겠습니까?");
+    if (isConfirmed) {
+      // '완료' 상태로 데이터 저장 API 호출
+      saveData('done').then(() => {
+        alert("민원 처리가 완료되었습니다.");
+        navigate('/petitions');
+      });
+    }
+  };
+
 
   if (!complaint) {
     return (
@@ -259,7 +365,13 @@ function DetailPetition() {
                       </div>
                     </div>
                   ))}
-                  <div className="morelink">유사 사례 더 찾아보기 <svg viewBox="0 0 24 24"><path fill="currentColor" d="M16.59 8.59L12 13.17 7.41 8.59 6 10l6 6 6-6z"></path></svg></div>
+                  <div className="morelink" onClick={!isMoreCasesLoading ? handleLoadMoreSimilarCases : undefined}>
+                    {isMoreCasesLoading ? (
+                      <div className="spinner small" style={{margin: '0 auto'}}></div>
+                    ) : (
+                      <>유사 사례 더 찾아보기 <svg viewBox="0 0 24 24"><path fill="currentColor" d="M16.59 8.59L12 13.17 7.41 8.59 6 10l6 6 6-6z"></path></svg></>
+                    )}
+                  </div>
                 </>
               ) : (
                 <div className="applybtn" onClick={handleLoadSimilarCases}>유사 민원 불러오기</div>
@@ -334,11 +446,11 @@ function DetailPetition() {
             )}
           </div>
           <div className="rightbtns">
-            <div className="btn btn-ghost">
+            <div className="btn btn-ghost" onClick={handleSave}>
               <svg className="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2Z"/><path d="M17 21v-8H7v8M7 3v5h8"/></svg>
               저장
             </div>
-            <div className="btn btn-navy">
+            <div className="btn btn-navy" onClick={handleComplete}>
               작성 완료
               <svg className="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M20 6 9 17l-5-5"/></svg>
             </div>
