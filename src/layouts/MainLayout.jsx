@@ -20,6 +20,15 @@ function MainLayout() {
     if (path.startsWith("/home")) {
       return "홈";
     }
+    if (path.startsWith("/project")) {
+      return "사업/추진프로젝트";
+    }
+    if (path.startsWith("/department")) {
+      return "부서관리";
+    }
+    if (path.startsWith("/admin")) {
+      return "관리자";
+    }
     return "IEUM";
   };
 

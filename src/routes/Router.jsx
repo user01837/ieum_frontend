@@ -8,6 +8,9 @@ import DetailPetition from "../pages/Petition/Detail_petition";
 import Home from "../pages/Home/Home";
 import NotFound from "../pages/NotFound/NotFound";
 import OrgChart from "../pages/OrgChart/OrgChart";
+import ProjectList from "../pages/Project/ProjectList";
+import DepartmentList from "../pages/Department/DepartmentList";
+import Admin from "../pages/Admin/Admin";
 
 const router = createBrowserRouter([
   {
@@ -33,7 +36,19 @@ const router = createBrowserRouter([
       {
         path: "orgchart",
         element: <OrgChart />,
-      }
+      },
+      {
+        path: "project",
+        element: <ProjectList />,
+      },
+      {
+        path: "department",
+        element: <DepartmentList />,
+      },
+      {
+        path: "admin",
+        element: <Admin />,
+      },
     ],
   },
   {
