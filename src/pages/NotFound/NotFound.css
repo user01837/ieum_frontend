@@ -1,0 +1,188 @@
+/* 기본 리셋 및 공통 스타일 */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: 'Noto Sans KR', sans-serif;
+}
+
+.fullscreen-error-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background-color: #f8fafc; /* 기존 메인 배경색 계승 */
+}
+
+/* 상단 헤더 스타일 */
+.error-header {
+  height: 70px;
+  background-color: #fff;
+  padding: 0 40px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.header-logo {
+  display: flex;
+  align-items: center;
+}
+
+.logo-icon {
+  width: 32px;
+  height: 32px;
+  background-color: #1a233d; /* 기존 사이드바 딥네이비 컬러를 로고에 매칭 */
+  color: #fff;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 14px;
+  margin-right: 10px;
+}
+
+.logo-text {
+  font-size: 16px;
+  font-weight: bold;
+  color: #1e293b;
+}
+
+.header-user {
+  display: flex;
+  align-items: center;
+  font-size: 14px;
+  color: #475569;
+}
+
+.header-user strong {
+  color: #1e293b;
+}
+
+.divider {
+  margin: 0 12px;
+  color: #cbd5e1;
+}
+
+.logout-btn {
+  margin-left: 16px;
+  background: none;
+  border: 1px solid #cbd5e1;
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-size: 12px;
+  cursor: pointer;
+  color: #64748b;
+  transition: background-color 0.2s;
+}
+
+.logout-btn:hover {
+  background-color: #f1f5f9;
+}
+
+/* 메인 에러 영역 */
+.error-main {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+}
+
+.error-card {
+  background-color: #fff;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+  border: 1px solid #e2e8f0;
+  width: 100%;
+  max-width: 580px;
+  padding: 50px 40px;
+  text-align: center;
+}
+
+/* 404 타이포그래피 강조 */
+.error-visual {
+  position: relative;
+  display: inline-block;
+  margin-bottom: 24px;
+}
+
+.error-code {
+  font-size: 96px;
+  font-weight: 900;
+  color: #f1f5f9; /* 배경에 은은하게 깔리는 큰 숫자 */
+  line-height: 1;
+  letter-spacing: -0.05em;
+}
+
+.error-icon-bg {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-translate(-50%, -50%));
+  font-size: 40px;
+  margin-top: 10px; /* 시각적 중앙 정렬 조정 */
+}
+
+.error-title {
+  font-size: 24px;
+  font-weight: 700;
+  color: #1e293b;
+  margin-bottom: 16px;
+}
+
+.error-description {
+  font-size: 15px;
+  color: #64748b;
+  line-height: 1.6;
+  margin-bottom: 36px;
+}
+
+/* 버튼 그룹 */
+.button-group {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}
+
+.primary-btn {
+  background-color: #2563eb; /* 기존 포인트 블루 컬러 */
+  color: #fff;
+  border: none;
+  padding: 12px 24px;
+  font-size: 15px;
+  font-weight: bold;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.primary-btn:hover {
+  background-color: #1d4ed8;
+}
+
+.secondary-btn {
+  background-color: #fff;
+  color: #475569;
+  border: 1px solid #cbd5e1;
+  padding: 12px 24px;
+  font-size: 15px;
+  font-weight: bold;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.secondary-btn:hover {
+  background-color: #f1f5f9;
+  color: #1e293b;
+}
+
+/* 하단 안내 문구 스타일 계승 */
+.footer-notice {
+  margin-top: 32px;
+  font-size: 13px;
+  color: #94a3b8;
+}
