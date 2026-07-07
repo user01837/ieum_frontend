@@ -20,10 +20,10 @@ function MainLayout() {
     if (path.startsWith("/home")) {
       return "홈";
     }
-    if (path.startsWith("/project")) {
+    if (path.startsWith("/projects")) {
       return "사업/추진프로젝트";
     }
-    if (path.startsWith("/department")) {
+    if (path.startsWith("/departments")) {
       return "부서관리";
     }
     if (path.startsWith("/admin")) {

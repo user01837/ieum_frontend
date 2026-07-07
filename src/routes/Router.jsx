@@ -38,11 +38,11 @@ const router = createBrowserRouter([
         element: <OrgChart />,
       },
       {
-        path: "project",
+        path: "projects",
         element: <ProjectList />,
       },
       {
-        path: "department",
+        path: "departments",
         element: <DepartmentList />,
       },
       {
