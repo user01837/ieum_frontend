@@ -29,11 +29,13 @@ const router = createBrowserRouter([
       },
       {
         path: "petitions",
-        element: <PetitionList />,
+        element: <PetitionList //isAdmin={true}
+        />,
       },
       {
         path: "petitions/:id",
-        element: <DetailPetition />,
+        element: <DetailPetition //isAdmin={true} 
+        />,
       },
       {
         path: "orgchart",

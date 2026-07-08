@@ -2,21 +2,31 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './Petition_list.css';
 import Pagination from '../../components/Pagination';
-import { COMPLAINTS, PREDECESSOR } from './data';
+import { COMPLAINTS, PREDECESSOR, TASKS } from './data';
 
-const scopeSubtitles = { 
-  dept:'문화도시과 소관 민원을 조회합니다. 항목을 클릭하면 상세 처리 화면으로 이동합니다.', 
-  task:'처리기한이 임박한 순서로 업무를 조회합니다. 항목을 클릭하면 상세 처리 화면으로 이동합니다.', 
-  mine:'박주임님이 담당하고 있는 민원만 조회합니다. 항목을 클릭하면 상세 처리 화면으로 이동합니다.', 
-  predecessor:'전임자로부터 인계받은 업무 목록입니다. 항목을 클릭하면 상세 처리 화면으로 이동합니다.' 
+// 현재 로그인한 사용자 정보 (가상 데이터, 실제로는 useAuth() 등으로 가져와야 함)
+const CURRENT_USER = {
+  name: '박주임',
+  dept: '문화도시과',
+  taskIds: ['t-culture-1', 't-culture-2'],
 };
 
-const scopeOptions = [
+const nonAdminScopeOptions = [
     { key: 'dept', label: '부서 전체 민원' },
     { key: 'task', label: '업무별' },
     { key: 'mine', label: '내 민원' },
     { key: 'predecessor', label: '전임자' },
 ];
+
+const nonAdminScopeSubtitles = { 
+  dept:`${CURRENT_USER.dept} 소관 민원을 조회합니다. 항목을 클릭하면 상세 처리 화면으로 이동합니다.`, 
+  task:'처리기한이 임박한 순서로 업무를 조회합니다. 항목을 클릭하면 상세 처리 화면으로 이동합니다.', 
+  mine:'박주임님이 담당하고 있는 민원만 조회합니다. 항목을 클릭하면 상세 처리 화면으로 이동합니다.', 
+  predecessor:'전임자로부터 인계받은 업무 목록입니다. 항목을 클릭하면 상세 처리 화면으로 이동합니다.' 
+};
+
+// 다른 파일에서도 사용될 수 있으므로, 나중에 공통 데이터 파일로 옮기는 것을 고려해볼 수 있습니다.
+const ALL_DEPARTMENTS = ['행정복지과', '도로교통과', '문화도시과', '도시계획과', '정보통신과', '총무과'];
 
 const statusOptions = [
     { key: 'all', label: '전체' },
@@ -26,11 +36,11 @@ const statusOptions = [
 ];
 
 
-function PetitionList() {
+function PetitionList({ isAdmin = false }) {
     const [allComplaints, setAllComplaints] = useState([]); // 필터/정렬된 전체 데이터
     const [complaints, setComplaints] = useState([]); // 현재 페이지에 보여줄 데이터 (10개)
-    const [currentScope, setCurrentScope] = useState('dept');
-    const [currentStatus, setCurrentStatus] = useState('all');
+    const [currentScope, setCurrentScope] = useState(isAdmin ? ALL_DEPARTMENTS[0] : 'dept');
+    const [currentStatus, setCurrentStatus] = useState('all'); // 'all', 'wait', 'progress', 'done'
     const [isSortOn, setIsSortOn] = useState(true);
     const [currentPage, setCurrentPage] = useState(1);
 
@@ -39,6 +49,16 @@ function PetitionList() {
 
     const navigate = useNavigate();
     const ITEMS_PER_PAGE = 10;
+
+    const scopeOptions = isAdmin
+        ? ALL_DEPARTMENTS.map(dept => ({ key: dept, label: dept }))
+        : nonAdminScopeOptions;
+
+    const currentSubtitle = isAdmin
+        ? `${currentScope} 소관 민원을 조회하고 관리합니다.`
+        : nonAdminScopeSubtitles[currentScope];
+
+    const currentScopeLabel = scopeOptions.find(o => o.key === currentScope)?.label;
     
     const scopeDropdownRef = useRef(null);
     const statusDropdownRef = useRef(null);
@@ -59,15 +79,19 @@ function PetitionList() {
     useEffect(() => {
         // 1. 데이터 소스 결정 및 필터링/정렬
         let source;
-  
-        if (currentScope === 'predecessor') {
+
+        if (isAdmin) {
+            // 관리자는 모든 민원(COMPLAINTS + PREDECESSOR)을 대상으로 부서별 필터링
+            source = [...COMPLAINTS, ...PREDECESSOR].filter(c => c.dept === currentScope);
+        } else if (currentScope === 'predecessor') {
             source = [...PREDECESSOR];
         } else if (currentScope === 'mine') {
-            source = COMPLAINTS.filter(c => c.assignee === '박주임');
+            source = [...COMPLAINTS, ...PREDECESSOR].filter(c => c.assignee === CURRENT_USER.name);
         } else if (currentScope === 'task') {
-            source = [...COMPLAINTS].sort((a,b) => a.deadline.localeCompare(b.deadline));
+            source = [...COMPLAINTS, ...PREDECESSOR].filter(c => CURRENT_USER.taskIds.includes(c.taskId)).sort((a,b) => a.deadline.localeCompare(b.deadline));
         } else { 
-            source = [...COMPLAINTS];
+            // 일반 사용자의 '부서 전체 민원'
+            source = [...COMPLAINTS, ...PREDECESSOR].filter(c => c.dept === CURRENT_USER.dept);
         }
         
         if (currentStatus !== 'all') {
@@ -87,7 +111,7 @@ function PetitionList() {
         
         setAllComplaints(source);
         setCurrentPage(1); // 필터가 변경되면 1페이지로 리셋
-    }, [currentScope, currentStatus, isSortOn]);
+    }, [currentScope, currentStatus, isSortOn, isAdmin]);
 
     useEffect(() => {
         // 2. 현재 페이지에 맞는 데이터 10개 슬라이싱
@@ -117,14 +141,14 @@ function PetitionList() {
                     <div className="pagehead">
                         <div>
                             <h2>민원 목록</h2>
-                            <div className="sub">{scopeSubtitles[currentScope]}</div>
+                            <div className="sub">{currentSubtitle}</div>
                         </div>
                     </div>
 
                     <div className="toolbar">
                         <div className={`dropdown-wrap ${isScopeDropdownOpen ? 'open' : ''}`} ref={scopeDropdownRef}>
                             <div className="dropdown" onClick={() => {setIsScopeDropdownOpen(p => !p); setIsStatusDropdownOpen(false);}}>
-                                <span>{scopeOptions.find(o => o.key === currentScope)?.label}</span>
+                                <span>{currentScopeLabel}</span>
                                 <svg className="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="m6 9 6 6 6-6"/></svg>
                             </div>
                             <div className="dropdown-menu">
@@ -162,7 +186,7 @@ function PetitionList() {
                             <span>접수일</span>
                             <span>처리기한</span>
                             <span>제목</span>
-                            <span>담당과</span>
+                            <span>{currentScope === 'task' ? '담당 업무' : '담당과'}</span>
                             <span>처리상태</span>
                             <span></span>
                         </div>
@@ -172,8 +196,10 @@ function PetitionList() {
                                     <div key={c.id} className="trow" onClick={() => navigate(`/petitions/${c.id}`)}>
                                         <span className="date">{c.received}</span>
                                         <span className="date">{c.deadline}</span>
-                                        <div><div className="title">{c.title}</div></div>
-                                        <span className="deptname">{c.dept}</span>
+                                        <div className="title">{c.title}</div>
+                                        <span className="deptname">
+                                            {currentScope === 'task' ? (TASKS[c.taskId]?.name || '미분류') : c.dept}
+                                        </span>
                                         <span className={`status ${c.status}`}>
                                             <span className="dot"></span>{c.statusText}
                                         </span>

@@ -1,7 +1,34 @@
+import React, { useState, useRef, useEffect } from 'react';
 import { NavLink } from 'react-router-dom';
 import "./Sidebar.css";
 
+import ChangePasswordModal from './ChangePasswordModal';
+
+function UserActionPopover({ open, onClose, onOpenChangePasswordModal }) {
+  const ref = useRef(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e) => {
+      if (ref.current && !ref.current.contains(e.target)) {
+        onClose();
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [open, onClose]);
+
+  if (!open) return null;
+  return (
+    <div className="user-popover" ref={ref}>
+      <div className="user-popover-item" onClick={onOpenChangePasswordModal}>비밀번호 변경</div>
+    </div>
+  );
+}
+
 function Sidebar() {
+  const [isPopoverOpen, setIsPopoverOpen] = useState(false);
+  const [isChangePasswordModalOpen, setIsChangePasswordModalOpen] = useState(false);
   return (
     <aside className="sidebar">
       <div className="brand">
@@ -56,7 +83,23 @@ function Sidebar() {
           <div className="user-name">박주임</div>
           <div className="user-dept">문화도시과</div>
         </div>
+        <div className="user-actions">
+          <button className="kebab-btn" onClick={() => setIsPopoverOpen(p => !p)}>
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"></path></svg>
+          </button>
+          <UserActionPopover
+            open={isPopoverOpen}
+            onClose={() => setIsPopoverOpen(false)}
+            onOpenChangePasswordModal={() => {
+              setIsPopoverOpen(false);
+              setIsChangePasswordModalOpen(true);
+            }}
+          />
+        </div>
       </div>
+      {isChangePasswordModalOpen && (
+        <ChangePasswordModal onClose={() => setIsChangePasswordModalOpen(false)} />
+      )}
     </aside>
   );
 }

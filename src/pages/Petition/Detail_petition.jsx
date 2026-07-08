@@ -70,7 +70,11 @@ const TiptapToolbar = ({ editor }) => {
   );
 };
 
-function DetailPetition() {
+/**
+ * 민원 상세 처리 페이지
+ * @param {boolean} isAdmin - 관리자 여부 (읽기 전용 모드 활성화)
+ */
+function DetailPetition({ isAdmin = false }) {
   const { id } = useParams();
   const navigate = useNavigate();
 
@@ -150,10 +154,11 @@ function DetailPetition() {
     extensions: [
       StarterKit,
       Placeholder.configure({
-        placeholder: '민원 답변을 작성해주세요.',
+        placeholder: isAdmin ? '관리자는 답변을 수정할 수 없습니다.' : '민원 답변을 작성해주세요.',
       }),
     ],
     content: '',
+    editable: !isAdmin, // isAdmin일 경우 에디터 비활성화
   });
 
   useEffect(() => {
@@ -341,7 +346,7 @@ function DetailPetition() {
           </div>
         </div>
 
-        <div className="twocol">
+        {!isAdmin && <div className="twocol">
           <div className={`panel ${!isSimilarCasesOpen ? 'collapsed' : ''}`}>
             <div className="panel-head">
               <svg className="ic" viewBox="0 0 24 24"><path fill="currentColor" d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z"></path></svg>
@@ -395,14 +400,14 @@ function DetailPetition() {
               )}
             </div>
           </div>
-        </div>
+        </div>}
 
         <div className="tiptap-wrapper">
           <h3 className="dtitle" style={{ fontSize: '15px', margin: '16px 20px' }}>민원 답변 작성</h3>
           <div className="tiptap-editor-wrapper">
-            <TiptapToolbar editor={editor} />
+            {!isAdmin && <TiptapToolbar editor={editor} />}
             <EditorContent editor={editor} className="tiptap-editor" />
-            <div className="reply-attach-row" style={{ padding: '14px 0px' }}>
+            {!isAdmin && <div className="reply-attach-row" style={{ padding: '14px 0px' }}>
               <div
                 {...getRootProps({ className: `attach-addbtn ${isDragActive ? 'dropzone-active' : ''}` })}
                 style={{ justifyContent: 'center', flexDirection: 'column' }}
@@ -429,6 +434,7 @@ function DetailPetition() {
                 </div>
               )}
             </div>
+            }
           </div>
         </div>
 
@@ -438,22 +444,26 @@ function DetailPetition() {
               <svg className="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3"><path d="m15 18-6-6 6-6"/></svg>
               목록으로
             </div>
-            <div className="btn btn-ghost" onClick={handleOpenModal}>담당자 변경</div>
-            {newAssignee && (
-              <p style={{ fontSize: '12px', color: 'var(--ink-soft)', marginLeft: '10px', marginTop: '12px' }}>
-                선택됨: {newAssignee.name} ({newAssignee.role})
-              </p>
+            {!isAdmin && (
+              <>
+                <div className="btn btn-ghost" onClick={handleOpenModal}>담당자 변경</div>
+                {newAssignee && (
+                  <p style={{ fontSize: '12px', color: 'var(--ink-soft)', marginLeft: '10px', marginTop: '12px' }}>
+                    선택됨: {newAssignee.name} ({newAssignee.role})
+                  </p>
+                )}
+              </>
             )}
           </div>
           <div className="rightbtns">
-            <div className="btn btn-ghost" onClick={handleSave}>
+            {!isAdmin && <div className="btn btn-ghost" onClick={handleSave}>
               <svg className="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2Z"/><path d="M17 21v-8H7v8M7 3v5h8"/></svg>
               저장
-            </div>
-            <div className="btn btn-navy" onClick={handleComplete}>
+            </div>}
+            {!isAdmin && <div className="btn btn-navy" onClick={handleComplete}>
               작성 완료
               <svg className="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M20 6 9 17l-5-5"/></svg>
-            </div>
+            </div>}
           </div>
         </div>
       </div>
@@ -502,14 +512,14 @@ function DetailPetition() {
               ))}
             </div>
             <div className="cdp-footer">
-              <div
+              {!isAdmin && <div
                 className="applybtn"
                 onClick={() => {
                   if (editor) editor.commands.setContent(selectedCase.fullContent.replace(/\n/g, '<br/>'));
                 }}
               >
                 이 사례 내용 답변에 참고하기
-              </div>
+              </div>}
             </div>
           </>
         )}
