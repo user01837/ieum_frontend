@@ -1,0 +1,169 @@
+/* backrow, backbtn, crumb — ProjectCreate 전용 */
+.create-content {
+  padding: 26px 34px 60px;
+  max-width: 900px;
+}
+
+.backrow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.backbtn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--ink-soft);
+  cursor: pointer;
+}
+
+.crumb {
+  font-size: 12px;
+  color: var(--ink-tertiary);
+  margin-bottom: 16px;
+}
+
+.crumb b {
+  color: var(--ink-soft);
+  font-weight: 600;
+}
+
+.formcard {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 28px 30px;
+  max-width: 640px;
+}
+
+.field {
+  margin-bottom: 18px;
+}
+
+.field label {
+  display: block;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--ink-soft);
+  margin-bottom: 8px;
+}
+
+.hint {
+  font-size: 11px;
+  color: var(--ink-tertiary);
+  margin-top: 6px;
+}
+
+.input {
+  width: 100%;
+  padding: 11px 13px;
+  font-size: 13px;
+  border: 1px solid var(--line-strong);
+  border-radius: 9px;
+  color: var(--ink);
+  outline: none;
+  background: var(--surface);
+  font-family: inherit;
+}
+
+.input:focus {
+  border-color: var(--blue);
+}
+
+.input:disabled,
+.input[readonly] {
+  background: var(--bg);
+  color: var(--ink-soft);
+}
+
+textarea.input {
+  resize: vertical;
+  min-height: 80px;
+}
+
+.formrow2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.addteam-inline {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--blue);
+  background: var(--blue-soft);
+  padding: 9px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  width: fit-content;
+  margin-top: 12px;
+}
+
+.teamchips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.teamchip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 7px 8px 7px 11px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.teamchip .rm {
+  width: 17px;
+  height: 17px;
+  border-radius: 50%;
+  background: var(--line-strong);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border: none;
+}
+
+.formfoot {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.btn {
+  font-size: 13px;
+  padding: 11px 20px;
+  border-radius: 8px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  border: none;
+  font-family: inherit;
+}
+
+.btn-ghost {
+  background: var(--surface);
+  border: 1px solid var(--line-strong);
+  color: var(--ink-soft);
+}
+
+.btn-navy {
+  background: var(--navy);
+  color: #fff;
+}
