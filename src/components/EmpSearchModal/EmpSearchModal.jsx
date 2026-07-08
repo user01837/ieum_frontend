@@ -10,17 +10,17 @@ import './EmpSearchModal.css';
  * query: 검색어 (이름 또는 사번)
  */
 const MOCK_EMPLOYEES = [
-  { id: 'P-2210', name: '박주임', dept: '문화도시과', role: '주무관' },
-  { id: 'P-2144', name: '김하늘', dept: '문화도시과', role: '주무관' },
-  { id: 'P-2098', name: '이도현', dept: '문화도시과', role: '팀장' },
+  { id: 'm1', name: '김철수', dept: '행정복지과', role: '과장' },
+  { id: 'm2', name: '이영희', dept: '행정복지과', role: '팀장' },
+  { id: 'm3', name: '박민수', dept: '행정복지과', role: '주무관' },
+  { id: 'm4', name: '김하늘', dept: '행정복지과', role: '주무관' },
   { id: 'P-2311', name: '정수민', dept: '도시계획과', role: '주무관' },
   { id: 'P-2287', name: '최유진', dept: '정보통신과', role: '주무관' },
   { id: 'P-2055', name: '한서준', dept: '총무과', role: '팀장' },
   { id: 'P-2179', name: '오세현', dept: '도시계획과', role: '주무관' },
   { id: 'P-2402', name: '강민지', dept: '정보통신과', role: '팀장' },
 ];
-
-const DEPT_OPTIONS = ['문화도시과', '도시계획과', '정보통신과', '총무과'];
+const DEPT_OPTIONS = ['행정복지과', '문화도시과', '도시계획과', '정보통신과', '총무과'];
 
 function fetchEmployees({ scope, currentDept, dept, query }) {
   return new Promise((resolve) => {
