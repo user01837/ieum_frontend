@@ -21,10 +21,10 @@ function MainLayout() {
       return "홈";
     }
     if (path.startsWith("/projects")) {
-      return "사업/추진프로젝트";
+      return "사업/프로젝트 기획";
     }
     if (path.startsWith("/departments")) {
-      return "부서관리";
+      return "부서 관리";
     }
     if (path.startsWith("/admin")) {
       return "관리자";

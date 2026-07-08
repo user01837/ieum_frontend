@@ -43,7 +43,7 @@
 
 .project-trow {
   display: grid;
-  grid-template-columns: 1fr 108px 108px 120px 28px;
+  grid-template-columns: 1fr 108px 108px 55px 28px;
   align-items: center;
   padding: 15px 20px;
   border-bottom: 1px solid var(--line);

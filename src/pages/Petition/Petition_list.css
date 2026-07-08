@@ -27,7 +27,7 @@
 .checkbox svg{width:10px;height:10px;stroke:#fff;stroke-width:3;}
 
 .tablewrap{background:var(--surface);border:1px solid var(--line);border-radius:14px;overflow:hidden;}
-.trow{display:grid;grid-template-columns:100px 100px 1fr 130px 100px 28px;align-items:center;padding:14px 20px;border-bottom:1px solid var(--line);column-gap:10px;cursor:pointer;}
+.trow{display:grid;grid-template-columns:100px 100px 1fr 130px 70px 28px;align-items:center;padding:14px 20px;border-bottom:1px solid var(--line);column-gap:10px;cursor:pointer;}
 .trow.head{background:var(--bg);padding:11px 20px;cursor:default;}
 .trow.head span{font-size:11px;font-weight:700;color:var(--ink-soft);letter-spacing:.02em;}
 .trow:last-child{border-bottom:none;}

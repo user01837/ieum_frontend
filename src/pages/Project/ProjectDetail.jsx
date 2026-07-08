@@ -153,7 +153,7 @@ export default function ProjectDetail() {
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="m12 3 1.9 4.9L19 9.5l-4.9 1.9L12 16l-1.9-4.9L5 9.5l4.9-1.9L12 3Z" />
             </svg>
-            AI 초안 생성
+            AI 답변 초안 생성
           </button>
           {isAiLoading && (
             <div className="ai-loading">
@@ -165,7 +165,7 @@ export default function ProjectDetail() {
             <>
               <div className="draftbox">{aiDraft}</div>
               <button className="applybtn" onClick={handleApplyDraft}>
-                이 초안 기획서 작성란에 적용
+                답변 초안 사용
               </button>
             </>
           )}

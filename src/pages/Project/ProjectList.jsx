@@ -59,7 +59,7 @@ export default function ProjectList() {
           <span>프로젝트명 / 부서</span>
           <span>시작일</span>
           <span>기한</span>
-          <span>상태</span>
+          <span>진행상태</span>
           <span></span>
         </div>
 

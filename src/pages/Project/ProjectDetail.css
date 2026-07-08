@@ -158,6 +158,21 @@
   margin-top: 12px;
 }
 
+.applybtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--blue);
+  background: var(--surface);
+  border: 1.5px solid var(--blue);
+  padding: 9px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-family: inherit;
+}
+
 .draftbtn:disabled {
   opacity: 0.55;
   cursor: not-allowed;
