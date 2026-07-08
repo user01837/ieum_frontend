@@ -195,6 +195,7 @@
 
 /* 유사사례 칩 */
 .simcase {
+  background: var(--surface);
   border: 1px solid var(--line);
   border-radius: 9px;
   padding: 12px 14px;

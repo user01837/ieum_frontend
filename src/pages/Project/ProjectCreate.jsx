@@ -29,6 +29,7 @@ export default function ProjectCreate() {
     if (!startDate || !dueDate) { alert("시작일과 기한을 입력해 주세요."); return; }
     // TODO: useProjectMutation 연결
     console.log({ title, desc, startDate, dueDate, teamMembers });
+    navigate("/projects");
   };
 
   return (
