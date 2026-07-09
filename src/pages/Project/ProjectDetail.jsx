@@ -1,7 +1,37 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { useEditor, EditorContent } from '@tiptap/react';
+import StarterKit from '@tiptap/starter-kit';
+import Placeholder from '@tiptap/extension-placeholder';
 import EmpSearchModal from "../../components/EmpSearchModal/EmpSearchModal";
 import "./ProjectDetail.css";
+import "./Tiptap.css";
+
+const TiptapToolbar = ({ editor }) => {
+  if (!editor) return null;
+  return (
+    <div className="tiptap-toolbar">
+      <button type="button"
+        onClick={() => editor.chain().focus().toggleBold().run()}
+        disabled={!editor.can().chain().focus().toggleBold().run()}
+        className={`t-tool ${editor.isActive('bold') ? 'is-active' : ''}`}>
+        <b>B</b>
+      </button>
+      <button type="button"
+        onClick={() => editor.chain().focus().toggleItalic().run()}
+        disabled={!editor.can().chain().focus().toggleItalic().run()}
+        className={`t-tool ${editor.isActive('italic') ? 'is-active' : ''}`}>
+        <i>I</i>
+      </button>
+      <button type="button"
+        onClick={() => editor.chain().focus().toggleStrike().run()}
+        disabled={!editor.can().chain().focus().toggleStrike().run()}
+        className={`t-tool ${editor.isActive('strike') ? 'is-active' : ''}`}>
+        <s>S</s>
+      </button>
+    </div>
+  );
+};
 
 export default function ProjectDetail() {
   const navigate = useNavigate();
@@ -9,13 +39,29 @@ export default function ProjectDetail() {
 
   const [title, setTitle] = useState("");
   const [desc, setDesc] = useState("");
-  const [editorContent, setEditorContent] = useState("");
   const [teamMembers, setTeamMembers] = useState([]);
   const [isEmpModalOpen, setIsEmpModalOpen] = useState(false);
   const [aiDraft, setAiDraft] = useState("");
   const [isAiLoading, setIsAiLoading] = useState(false);
   const [isExportOpen, setIsExportOpen] = useState(false);
   const [isLocked, setIsLocked] = useState(false);
+
+  const editor = useEditor({
+    extensions: [
+      StarterKit,
+      Placeholder.configure({
+        placeholder: isLocked ? '승인 완료된 기획서입니다.' : '기획서 본문을 작성하세요.',
+      }),
+    ],
+    content: '',
+    editable: !isLocked,
+  });
+
+  useEffect(() => {
+    if (editor) {
+      editor.setEditable(!isLocked);
+    }
+  }, [isLocked, editor]);
 
   const handleAddMember = (employee) => {
     const isDuplicate = teamMembers.some((m) => m.id === employee.id);
@@ -34,18 +80,26 @@ export default function ProjectDetail() {
     setAiDraft("");
     // TODO: AI API 연결
     setTimeout(() => {
-      setAiDraft(`[${title}] 사업 기획서 초안입니다. 실제 AI 응답으로 교체 예정입니다.`);
+      setAiDraft(
+        `[${title}] 사업 기획서 초안입니다.\n\n` +
+        `본 사업은 관련 업무 효율화 및 서비스 개선을 목적으로 추진하며, ` +
+        `관계 부서와의 협의를 통해 단계적으로 진행할 예정입니다.\n\n` +
+        `추진 과정에서 발생하는 사항은 담당자를 통해 안내드리겠습니다.\n\n` +
+        `감사합니다.`
+      );
       setIsAiLoading(false);
     }, 2000);
   };
 
   const handleApplyDraft = () => {
-    setEditorContent(aiDraft);
+    if (editor) {
+      editor.commands.setContent(aiDraft);
+    }
   };
 
   const handleSave = () => {
     // TODO: useProjectMutation 연결
-    console.log({ id, title, desc, editorContent, teamMembers });
+    console.log({ id, title, desc, content: editor?.getHTML(), teamMembers });
     alert("저장되었습니다.");
   };
 
@@ -81,7 +135,7 @@ export default function ProjectDetail() {
 
       {/* 사업명 / 개요 */}
       <div className="dcard">
-        <div className="field-label">사업명</div>
+        <div className="section-title">사업명</div>
         <input
           className="dtitle-input"
           value={title}
@@ -89,7 +143,7 @@ export default function ProjectDetail() {
           disabled={isLocked}
           placeholder="사업명을 입력하세요."
         />
-        <div className="field-label">사업 개요</div>
+        <div className="section-title">사업 개요</div>
         <textarea
           className="desc-input"
           value={desc}
@@ -102,7 +156,7 @@ export default function ProjectDetail() {
       {/* 참여 부서 */}
       <div className="dcard">
         <div className="dept-head-row">
-          <div className="field-label" style={{ margin: 0 }}>참여 부서</div>
+          <div className="section-title" style={{ margin: 0 }}>참여 부서</div>
           {!isLocked && (
             <div
               className="addteam-inline"
@@ -160,25 +214,13 @@ export default function ProjectDetail() {
       </div>
 
       {/* 기획서 작성 */}
-      <div className="dcard">
-        <div className="field-label">기획서 작성</div>
-        <div className="editor-toolbar">
-          <div className="etool" style={{ fontWeight: 800 }}>B</div>
-          <div className="etool" style={{ fontStyle: "italic" }}>I</div>
-          <div className="etool" style={{ textDecoration: "underline" }}>U</div>
-          <div className="etool sep" />
-          <div className="etool">≡</div>
-          <div className="etool">"</div>
+      <div className="tiptap-wrapper">
+        <h3 className="dtitle" style={{ fontSize: '15px', margin: '16px 20px' }}>기획서 작성</h3>
+        <div className="tiptap-editor-wrapper">
+          <TiptapToolbar editor={editor} />
+          <EditorContent editor={editor} className="tiptap-editor" />
         </div>
-        {/* TODO: TipTap 에디터로 교체 */}
-        <div
-          className={`editor-body${isLocked ? " locked" : ""}`}
-          contentEditable={!isLocked}
-          suppressContentEditableWarning
-          data-placeholder="기획서 본문을 작성하세요."
-        />
-
-        <div className="bottomrow">
+        <div className="bottomrow" style={{ padding: '0 20px 16px' }}>
           <div className={`export-wrap${isExportOpen ? " open" : ""}`}>
             <button className="btn btn-ghost" onClick={() => setIsExportOpen((p) => !p)}>
               내보내기
@@ -205,7 +247,6 @@ export default function ProjectDetail() {
               </div>
             )}
           </div>
-
           {!isLocked && (
             <div style={{ display: "flex", gap: "8px" }}>
               <button className="btn btn-ghost" onClick={handleSave}>
@@ -215,7 +256,7 @@ export default function ProjectDetail() {
                 </svg>
                 저장
               </button>
-              <button className="btn btn-good" onClick={handleComplete}>
+              <button className="btn btn-navy" onClick={handleComplete}>
                 승인 완료
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                   <path d="M20 6 9 17l-5-5" />
