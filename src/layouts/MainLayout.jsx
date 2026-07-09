@@ -3,7 +3,7 @@ import { Outlet, useLocation, useOutlet } from "react-router-dom";
 import "../styles/global.css";
 import Header from "../components/header/Header";
 import { format } from 'date-fns';
-import Chatbot from "./Chatbot.jsx";
+import Chatbot from "../components/chatbot/Chatbot.jsx";
 
 function MainLayout() {
   const outlet = useOutlet();
