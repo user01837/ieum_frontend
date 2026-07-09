@@ -3,7 +3,7 @@ import "./Admin.css";
 
 // 더미 데이터
 const USERS = [
-  { id: 'u1', loginId: 'park01', name: '박주임', employeeNo: '20210034', dept: '문화도시과', grade: '7급', position: '주무관', tasks: ['민원처리', '행사기획'], predecessor: { name: '김전임', employeeNo: '20180021' }, status: '재직' },
+  { id: 'u1', loginId: 'park01', name: '박주임', employeeNo: '20210034', dept: '문화도시과', grade: '7급', position: '주무관', tasks: ['민원처리', '도로교통정비','행사기획'], predecessor: { name: '김전임', employeeNo: '20180021' }, status: '재직' },
   { id: 'u2', loginId: 'kim02', name: '김팀장', employeeNo: '20150012', dept: '문화도시과', grade: '6급', position: '팀장', tasks: ['예산관리'], predecessor: null, status: '재직' },
   { id: 'u3', loginId: 'lee03', name: '이과장', employeeNo: '20100005', dept: '행정복지과', grade: '6급', position: '과장', tasks: ['행정관리', '복지기획'], predecessor: null, status: '재직' },
   { id: 'u4', loginId: 'choi04', name: '최주무', employeeNo: '20220041', dept: '도로교통과', grade: '9급', position: '주무관', tasks: ['도로점검'], predecessor: null, status: '휴직' },
@@ -27,7 +27,8 @@ export default function Admin() {
   // 목록 필터
   const [deptFilter, setDeptFilter] = useState('전체 부서');
   const [statusFilter, setStatusFilter] = useState('전체 상태');
-  const [searchKeyword, setSearchKeyword] = useState('');
+  const [searchInputValue, setSearchInputValue] = useState(''); // 입력창의 값
+  const [appliedSearchKeyword, setAppliedSearchKeyword] = useState(''); // 실제 필터링에 적용될 값
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [isDeptOpen, setIsDeptOpen] = useState(false);
@@ -80,7 +81,7 @@ export default function Admin() {
   const filteredUsers = USERS.filter((u) => {
     const deptMatch = deptFilter === '전체 부서' || u.dept === deptFilter;
     const statusMatch = statusFilter === '전체 상태' || u.status === statusFilter;
-    const keyword = searchKeyword.trim().toLowerCase();
+    const keyword = appliedSearchKeyword.trim().toLowerCase();
     const keywordMatch = !keyword || u.name.includes(keyword) || u.employeeNo.includes(keyword);
     return deptMatch && statusMatch && keywordMatch;
   });
@@ -262,24 +263,38 @@ export default function Admin() {
               <input
                 type="text"
                 placeholder="이름, 사번으로 검색"
-                value={searchKeyword}
-                onChange={(e) => { setSearchKeyword(e.target.value); setCurrentPage(1); }}
+                value={searchInputValue}
+                onChange={(e) => setSearchInputValue(e.target.value)}
+                onKeyPress={(e) => {
+                  if (e.key === 'Enter') {
+                    setAppliedSearchKeyword(searchInputValue);
+                    setCurrentPage(1);
+                  }
+                }}
               />
             </div>
+
+            {/* 검색 */}
+            <button className="admin-action-btn" onClick={() => {
+              setAppliedSearchKeyword(searchInputValue);
+              setCurrentPage(1);
+            }}>검색</button>
 
             {/* 초기화 */}
             <button className="admin-action-btn" onClick={() => {
               setDeptFilter('전체 부서'); setStatusFilter('전체 상태');
-              setSearchKeyword(''); setCurrentPage(1);
+              setSearchInputValue(''); setAppliedSearchKeyword(''); setCurrentPage(1);
             }}>초기화</button>
 
-            <span className="admin-count-label">전체 {filteredUsers.length}명</span>
-
             {/* 신규 등록 */}
-            <button className="btn btn-navy" onClick={openCreateModal}>
+            <button className="btn btn-navy add-new-empl-btn" onClick={openCreateModal}>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M12 5v14M5 12h14" /></svg>
               신규 직원 등록
             </button>
+          </div>
+
+          <div>
+            <span className="admin-count-label">전체 {filteredUsers.length}명</span>
           </div>
 
           {/* 테이블 */}
@@ -287,7 +302,7 @@ export default function Admin() {
             <div className="admin-trow head">
               <span>사번</span><span>이름</span><span>부서</span>
               <span>직급</span><span>직책</span><span>담당 Task</span>
-              <span>전임자</span><span>상태</span><span>작업</span>
+              <span>전임자</span><span>상태</span><span className="task-span">작업</span>
             </div>
 
             {pagedUsers.length === 0 ? (
@@ -301,7 +316,13 @@ export default function Admin() {
                   <span className="admin-grade-text">{user.grade}</span>
                   <span><span className={`admin-rank-badge ${user.position}`}>{user.position}</span></span>
                   <div className="admin-task-tags">
-                    {user.tasks.map(t => <span key={t} className="admin-task-tag">{t}</span>)}
+                    {user.tasks.slice(0, 2).map(t => <span key={t} className="admin-task-tag">{t}</span>)}
+                    {user.tasks.length > 2 && (
+                      <>
+                        <span className="admin-task-tag">...</span>
+                        <div className="admin-task-tooltip">{user.tasks.join(', ')}</div>
+                      </>
+                    )}
                   </div>
                   <div className={`admin-predecessor ${user.predecessor ? '' : 'none'}`}>
                     {user.predecessor ? <>{user.predecessor.name}<div style={{ fontSize: '10.5px', color: 'var(--ink-tertiary)' }}>{user.predecessor.employeeNo}</div></> : '없음'}

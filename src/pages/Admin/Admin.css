@@ -23,13 +23,29 @@
 .admin-search-wrap input:focus { border-color: var(--blue); }
 .admin-action-btn { font-size: 12px; font-weight: 700; padding: 9px 12px; border-radius: 8px; border: 1px solid var(--line-strong); background: var(--surface); color: var(--ink-soft); cursor: pointer; font-family: inherit; }
 .admin-action-btn:hover { border-color: var(--blue); color: var(--blue); }
-.admin-count-label { font-size: 12px; color: var(--ink-tertiary); margin-left: auto; }
+.admin-count-label { 
+    font-size: 12px; 
+    color: var(--ink-tertiary); 
+    margin-left: auto; 
+    padding-left: 8px;
+}
+div:has(.admin-count-label){
+    margin-bottom: 5px;
+}
+
+.add-new-empl-btn{
+    margin-left: auto;
+}
 
 /* 테이블 */
 .admin-tablewrap { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; }
 .admin-trow { display: grid; grid-template-columns: .7fr .7fr .8fr .5fr .6fr .9fr .6fr .6fr 1.8fr; align-items: center; padding: 13px 16px; border-bottom: 1px solid var(--line); column-gap: 10px; }
-.admin-trow.head { background: var(--bg); padding: 11px 16px; }
+.admin-trow.head { 
+    background: var(--bg); 
+    padding: 11px 16px;}
+
 .admin-trow.head span { font-size: 10.5px; font-weight: 700; color: var(--ink-soft); letter-spacing: .02em; }
+.admin-trow.head .task-span { text-align: center; }
 .admin-trow:last-child { border-bottom: none; }
 .admin-user-name { font-size: 13px; font-weight: 700; color: var(--ink); }
 .admin-user-id-cell { font-size: 12.5px; font-weight: 600; color: var(--ink); }
@@ -39,7 +55,21 @@
 .admin-rank-badge.과장 { background: var(--blue); color: #fff; }
 .admin-rank-badge.팀장 { background: var(--blue-soft); color: var(--blue); }
 .admin-rank-badge.주무관 { background: var(--bg); color: var(--ink-soft); }
-.admin-task-tags { display: flex; flex-wrap: wrap; gap: 4px; }
+.admin-task-tags { display: flex; flex-wrap: wrap; gap: 4px; position: relative; }
+.admin-task-tags .admin-task-tooltip {
+    display: none;
+    position: absolute;
+    bottom: calc(100% + 6px);
+    left: 0;
+    background-color: var(--navy-deep);
+    color: white;
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-size: 12px;
+    white-space: nowrap;
+    z-index: 10;
+}
+.admin-task-tags:hover .admin-task-tooltip { display: block; }
 .admin-task-tag { font-size: 10.5px; font-weight: 600; background: var(--bg); color: var(--ink-soft); padding: 2px 7px; border-radius: 5px; }
 .admin-predecessor { font-size: 11.5px; color: var(--ink); line-height: 1.4; }
 .admin-predecessor.none { color: var(--ink-tertiary); }
@@ -47,7 +77,7 @@
 .admin-status-pill.재직 { background: var(--good-soft); color: var(--good); }
 .admin-status-pill.휴직 { background: var(--warn-soft); color: var(--warn); }
 .admin-status-pill.퇴직 { background: #FAE8E3; color: #C1503D; }
-.admin-row-actions { display: flex; gap: 5px; align-items: center; position: relative; }
+.admin-row-actions { display: flex; gap: 5px; align-items: center; justify-content: center; position: relative; }
 .admin-kebab-btn { width: 26px; height: 26px; border-radius: 6px; display: flex; align-items: center; justify-content: center; color: var(--ink-tertiary); cursor: pointer; border: 1px solid transparent; background: none; }
 .admin-kebab-btn:hover { background: var(--bg); color: var(--ink-soft); }
 .admin-kebab-menu { position: absolute; top: calc(100% + 4px); right: 0; background: var(--surface); border: 1px solid var(--line-strong); border-radius: 9px; box-shadow: 0 10px 26px rgba(0,0,0,.14); min-width: 150px; padding: 6px; z-index: 40; }
