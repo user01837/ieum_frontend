@@ -34,9 +34,6 @@ export default function Admin() {
   const [isStatusOpen, setIsStatusOpen] = useState(false);
   const [isPageSizeOpen, setIsPageSizeOpen] = useState(false);
 
-  // 케밥 메뉴
-  const [openKebabId, setOpenKebabId] = useState(null);
-
   // 신규 직원 등록 모달
   const [isUserFormOpen, setIsUserFormOpen] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
@@ -68,7 +65,6 @@ export default function Admin() {
       if (deptRef.current && !deptRef.current.contains(e.target)) setIsDeptOpen(false);
       if (statusRef.current && !statusRef.current.contains(e.target)) setIsStatusOpen(false);
       if (pageSizeRef.current && !pageSizeRef.current.contains(e.target)) setIsPageSizeOpen(false);
-      setOpenKebabId(null);
     };
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
@@ -139,7 +135,6 @@ export default function Admin() {
     setPredecessorSearch(user.predecessor?.name || '');
     setPredecessorResults([]);
     setIsUserFormOpen(true);
-    setOpenKebabId(null);
   };
 
   // 저장
@@ -158,7 +153,6 @@ export default function Admin() {
     setTransferTarget(user);
     setTransferForm({ dept: user.dept, grade: user.grade });
     setIsTransferOpen(true);
-    setOpenKebabId(null);
   };
 
   // 인사이동 저장
@@ -173,7 +167,6 @@ export default function Admin() {
   const openResetPw = (user) => {
     setResetTarget(user);
     setIsResetPwOpen(true);
-    setOpenKebabId(null);
   };
 
   const handleResetPw = () => {
@@ -317,16 +310,9 @@ export default function Admin() {
 
                   {/* 케밥 메뉴 */}
                   <div className="admin-row-actions">
-                    <button className="admin-kebab-btn" onClick={(e) => { e.stopPropagation(); setOpenKebabId(openKebabId === user.id ? null : user.id); }}>
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.5" /><circle cx="12" cy="12" r="1.5" /><circle cx="12" cy="19" r="1.5" /></svg>
-                    </button>
-                    {openKebabId === user.id && (
-                      <div className="admin-kebab-menu">
-                        <div className="admin-kebab-item" onClick={() => openEditModal(user)}>정보 수정</div>
-                        <div className="admin-kebab-item" onClick={() => openTransfer(user)}>인사이동</div>
-                        <div className="admin-kebab-item" onClick={() => openResetPw(user)}>비밀번호 초기화</div>
-                      </div>
-                    )}
+                    <button className="admin-action-btn" onClick={() => openEditModal(user)}>수정</button>
+                    <button className="admin-action-btn" onClick={() => openTransfer(user)}>인사이동</button>
+                    <button className="admin-action-btn" onClick={() => openResetPw(user)}>비밀번호 초기화</button>
                   </div>
                 </div>
               ))

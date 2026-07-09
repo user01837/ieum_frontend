@@ -142,32 +142,19 @@ export default function ProjectDetail() {
           </svg>
           <span className="panel-title">AI 기획서 초안 생성</span>
         </div>
-        <div className="panel-body">
-          사업명과 개요를 바탕으로 AI가 기획서 초안을 생성합니다. 초안은 참고용이며, 검토 후 작성란에 적용할 수 있습니다.
-          <br />
-          <button
-            className="draftbtn"
-            onClick={handleGenDraft}
-            disabled={isAiLoading}
-          >
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="m12 3 1.9 4.9L19 9.5l-4.9 1.9L12 16l-1.9-4.9L5 9.5l4.9-1.9L12 3Z" />
-            </svg>
-            AI 답변 초안 생성
-          </button>
-          {isAiLoading && (
-            <div className="ai-loading">
-              <div className="ai-spinner" />
-              초안을 생성하고 있습니다...
-            </div>
-          )}
-          {aiDraft && !isAiLoading && (
+        <div className="panel-body" style={{ marginTop: '8px' }}>
+          <p style={{ fontSize: '12.5px', color: 'var(--ink-soft)', lineHeight: '1.7', marginBottom: '15px' }}>
+            AI가 사업명과 개요를 바탕으로 기획서 초안을 생성합니다. 초안은 참고용이며, 검토 후 작성란에 반영할 수 있습니다.
+          </p>
+          {isAiLoading ? (
+            <div className="spinner"></div>
+          ) : aiDraft ? (
             <>
               <div className="draftbox">{aiDraft}</div>
-              <button className="applybtn" onClick={handleApplyDraft}>
-                답변 초안 사용
-              </button>
+              <div className="applybtn" onClick={handleApplyDraft}>답변 초안 사용</div>
             </>
+          ) : (
+            <div className="applybtn" onClick={handleGenDraft}>AI 답변 초안 생성</div>
           )}
         </div>
       </div>

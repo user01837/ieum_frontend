@@ -1,6 +1,8 @@
 .detail-content {
   padding: 26px 34px 60px;
   max-width: 900px;
+  width: 100%;
+  margin: 0 auto;
 }
 
 .locked-banner {

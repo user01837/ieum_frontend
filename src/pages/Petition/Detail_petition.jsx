@@ -366,7 +366,10 @@ function DetailPetition({ isAdmin = false }) {
               <svg className="ic" viewBox="0 0 24 24"><path fill="currentColor" d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z"></path></svg>
               <div className="panel-title">유사 민원 사례</div>
             </div>
-            <div className="panel-body">
+            <div className="panel-body" style={{ marginTop: '8px' }}>
+              <p style={{ fontSize: '12.5px', color: 'var(--ink-soft)', lineHeight: '1.7', marginBottom: '15px' }}>
+                현재 민원과 유사한 과거 처리 사례를 검색합니다. 사례는 참고용으로만 활용할 수 있습니다.
+              </p>
               {isSimilarCasesLoading ? <div className="spinner"></div> : isSimilarCasesOpen ? (
                 <>
                   {similarCases.map((simCase) => (
@@ -386,7 +389,7 @@ function DetailPetition({ isAdmin = false }) {
                   ))}
                   <div className="morelink" onClick={!isMoreCasesLoading ? handleLoadMoreSimilarCases : undefined}>
                     {isMoreCasesLoading ? (
-                      <div className="spinner small" style={{margin: '0 auto'}}></div>
+                      <div className="spinner small" style={{ margin: '0 auto' }}></div>
                     ) : (
                       <>유사 사례 더 찾아보기 <svg viewBox="0 0 24 24"><path fill="currentColor" d="M16.59 8.59L12 13.17 7.41 8.59 6 10l6 6 6-6z"></path></svg></>
                     )}
@@ -403,7 +406,10 @@ function DetailPetition({ isAdmin = false }) {
               <svg className="ic" viewBox="0 0 24 24"><path fill="currentColor" d="M15 16.5c0 .83.67 1.5 1.5 1.5s1.5-.67 1.5-1.5-.67-1.5-1.5-1.5-1.5.67-1.5 1.5zM9 18c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm7.5-3c.83 0 1.5-.67 1.5-1.5S17.33 12 16.5 12 15 12.67 15 13.5s.67 1.5 1.5 1.5zM9 12c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm4.08-2.41c.45-.8.72-1.73.72-2.74C13.8 4.46 11.54 2.2 9 2.2S4.2 4.46 4.2 6.85c0 1.01.27 1.94.72 2.74C3.16 10.53 2 12.63 2 15c0 2.76 2.24 5 5 5 .9 0 1.75-.25 2.5-.69.69.43 1.48.69 2.35.69 2.76 0 5-2.24 5-5 0-2.37-1.16-4.47-2.92-5.41z"></path></svg>
               <div className="panel-title">AI 답변 초안</div>
             </div>
-            <div className="panel-body">
+            <div className="panel-body" style={{ marginTop: '8px' }}>
+              <p style={{ fontSize: '12.5px', color: 'var(--ink-soft)', lineHeight: '1.7', marginBottom: '15px' }}>
+                AI가 민원 내용을 바탕으로 답변 초안을 생성합니다. 초안은 참고용이며, 검토 후 작성란에 반영할 수 있습니다.
+              </p>
               {isAiDraftLoading ? <div className="spinner"></div> : isAiDraftOpen ? (
                 <>
                   <div className="draftbox">{aiDraft}</div>
@@ -432,7 +438,7 @@ function DetailPetition({ isAdmin = false }) {
                   파일 첨부
                   <p style={{ fontSize: '10px', color: 'var(--ink-tertiary)', marginTop: '2px' }}>파일을 드래그하거나 클릭하세요</p>
                 </div>
-                
+
               </div>
               {attachedFiles.length > 0 && (
                 <div className="attach-list" style={{ marginTop: '10px', width: '100%' }}>
@@ -455,7 +461,7 @@ function DetailPetition({ isAdmin = false }) {
         <div className="stepnav">
           <div className="leftbtns">
             <div className="btn btn-ghost" onClick={() => navigate(-1)}>
-              <svg className="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3"><path d="m15 18-6-6 6-6"/></svg>
+              <svg className="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3"><path d="m15 18-6-6 6-6" /></svg>
               목록으로
             </div>
             {!isAdmin && (
@@ -471,12 +477,12 @@ function DetailPetition({ isAdmin = false }) {
           </div>
           <div className="rightbtns">
             {!isAdmin && <div className="btn btn-ghost" onClick={handleSave}>
-              <svg className="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2Z"/><path d="M17 21v-8H7v8M7 3v5h8"/></svg>
+              <svg className="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2Z" /><path d="M17 21v-8H7v8M7 3v5h8" /></svg>
               저장
             </div>}
             {!isAdmin && <div className="btn btn-navy" onClick={handleComplete}>
               작성 완료
-              <svg className="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M20 6 9 17l-5-5"/></svg>
+              <svg className="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M20 6 9 17l-5-5" /></svg>
             </div>}
           </div>
         </div>
@@ -499,7 +505,7 @@ function DetailPetition({ isAdmin = false }) {
               <div className="cdp-header-top">
                 <span className="cdp-badge">유사 사례</span>
                 <div className="cdp-close" onClick={handleCloseCaseDetail}>
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M18 6 6 18M6 6l12 12" /></svg>
                 </div>
               </div>
               <h3 className="cdp-title">{selectedCase.title}</h3>
@@ -518,11 +524,11 @@ function DetailPetition({ isAdmin = false }) {
             <div className="cdp-body">
               {selectedCase.fullContent.split('\n').map((line, idx) => (
                 line.trim() === '' ? <br key={idx} /> :
-                /^\[.+\]$/.test(line.trim()) ? (
-                  <div key={idx} className="cdp-section-label">{line}</div>
-                ) : (
-                  <p key={idx} className="cdp-line">{line}</p>
-                )
+                  /^\[.+\]$/.test(line.trim()) ? (
+                    <div key={idx} className="cdp-section-label">{line}</div>
+                  ) : (
+                    <p key={idx} className="cdp-line">{line}</p>
+                  )
               ))}
             </div>
             <div className="cdp-footer">
