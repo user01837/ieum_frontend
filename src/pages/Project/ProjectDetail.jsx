@@ -205,7 +205,10 @@ export default function ProjectDetail() {
           ) : aiDraft ? (
             <>
               <div className="draftbox">{aiDraft}</div>
-              <div className="applybtn" onClick={handleApplyDraft}>답변 초안 사용</div>
+              <div style={{ display: 'flex', gap: '8px', marginTop: '4px' }}>
+                <div className="applybtn" onClick={handleApplyDraft}>답변 초안 사용</div>
+                <div className="applybtn" onClick={handleGenDraft}>다시 생성</div>
+              </div>
             </>
           ) : (
             <div className="applybtn" onClick={handleGenDraft}>AI 답변 초안 생성</div>
