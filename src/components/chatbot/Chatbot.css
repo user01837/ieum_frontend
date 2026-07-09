@@ -108,3 +108,28 @@
   font-weight: 600;
   cursor: pointer;
 }
+
+/* 채팅 메시지 스타일 */
+.chat-message {
+  padding: 8px 12px;
+  border-radius: 12px;
+  margin-bottom: 10px;
+  max-width: 80%;
+  word-wrap: break-word;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.chat-message.user {
+  background-color: var(--blue-soft); /* 사용자 메시지 배경색 */
+  color: var(--blue); /* 사용자 메시지 텍스트색 */
+  align-self: flex-end; /* 오른쪽 정렬 */
+  margin-left: auto; /* 오른쪽 정렬 */
+}
+
+.chat-message.bot {
+  background-color: var(--ghost); /* 챗봇 메시지 배경색 */
+  color: var(--ink); /* 챗봇 메시지 텍스트색 */
+  align-self: flex-start; /* 왼쪽 정렬 */
+  margin-right: auto; /* 왼쪽 정렬 */
+}

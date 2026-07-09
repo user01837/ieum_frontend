@@ -17,6 +17,7 @@
   --warn-soft:#FBF0DC;
   --wait:#2453D8;
   --wait-soft:#EAF0FE;
+  --ghost:#F1F3F9; /* 챗봇 메시지 등에 사용될 새로운 배경색 변수 */
 }
 
 /* Reset */
