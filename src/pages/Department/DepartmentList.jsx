@@ -452,6 +452,21 @@ function DeptMgmt() {
     fetchDeptData();
   }, [userRole, selectedDept, myDept]);
 
+  // ESC 키로 사이드 패널 닫기
+  useEffect(() => {
+    if (!isUrgentPanelOpen) return;
+
+    const handleKeyDown = (event) => {
+      if (event.key === 'Escape') {
+        setIsUrgentPanelOpen(false);
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [isUrgentPanelOpen]);
+
   const handleOpenUrgentPanel = (complaints) => {
     setUrgentComplaintsData(complaints);
     setIsUrgentPanelOpen(true);

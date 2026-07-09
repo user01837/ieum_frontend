@@ -228,6 +228,20 @@ function DetailPetition({ isAdmin = false }) {
     setTimeout(() => setSelectedCase(null), 250);
   };
 
+  // ESC 키로 유사사례 패널 닫기
+  useEffect(() => {
+    if (!isCaseDetailOpen) return;
+
+    const handleKeyDown = (event) => {
+      if (event.key === 'Escape') {
+        handleCloseCaseDetail();
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [isCaseDetailOpen]);
+
   // 데이터 저장/전송 로직을 별도 함수로 분리 (재사용성)
   const saveData = async (status = 'progress') => {
     // 실제 API 호출을 시뮬레이션합니다.

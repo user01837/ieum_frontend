@@ -137,3 +137,7 @@ label{font-size:12px;font-weight:700;color:var(--ink-soft);display:block;margin-
   padding:12px 18px;
   border-radius:8px;
 }
+.footlink{
+  color: #fff; /* 또는 var(--white) 같은 색상 변수 사용 */
+  text-decoration: none; /* 기본 밑줄 제거 */
+}
