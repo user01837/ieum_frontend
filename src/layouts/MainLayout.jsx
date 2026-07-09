@@ -3,6 +3,7 @@ import { Outlet, useLocation, useOutlet } from "react-router-dom";
 import "../styles/global.css";
 import Header from "../components/header/Header";
 import { format } from 'date-fns';
+import Chatbot from "./Chatbot.jsx";
 
 function MainLayout() {
   const outlet = useOutlet();
@@ -45,6 +46,7 @@ function MainLayout() {
       <main className={`content ${isSplitViewActive ? 'no-max-width' : ''}`}>
         <Header title={getTitle()} userName="박주임" currentDate={formattedDate} />
         <Outlet />
+        <Chatbot />
       </main>
     </div>
   );

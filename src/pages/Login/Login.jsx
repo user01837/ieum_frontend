@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from "react";
 import styles from "./Login.module.css";
 import logo from "../../assets/logo.png";
 
-
 export default function Login() {
   const [dept, setDept] = useState("");
   const [openDept, setOpenDept] = useState(false);
@@ -165,7 +164,7 @@ export default function Login() {
         </div>
 
         {/* 푸터 */}
-        <div className="footlink">
+        <div className={styles.footlink}>
           계정 관련 문의는 <b>부서 시스템 관리자</b>에게 연락해 주세요.
         </div>
 
