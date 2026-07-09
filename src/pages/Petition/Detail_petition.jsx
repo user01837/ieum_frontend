@@ -403,7 +403,9 @@ function DetailPetition({ isAdmin = false }) {
 
           <div className={`panel ai-panel ${!isAiDraftOpen ? 'collapsed' : ''}`}>
             <div className="panel-head">
-              <svg className="ic" viewBox="0 0 24 24"><path fill="currentColor" d="M15 16.5c0 .83.67 1.5 1.5 1.5s1.5-.67 1.5-1.5-.67-1.5-1.5-1.5-1.5.67-1.5 1.5zM9 18c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm7.5-3c.83 0 1.5-.67 1.5-1.5S17.33 12 16.5 12 15 12.67 15 13.5s.67 1.5 1.5 1.5zM9 12c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm4.08-2.41c.45-.8.72-1.73.72-2.74C13.8 4.46 11.54 2.2 9 2.2S4.2 4.46 4.2 6.85c0 1.01.27 1.94.72 2.74C3.16 10.53 2 12.63 2 15c0 2.76 2.24 5 5 5 .9 0 1.75-.25 2.5-.69.69.43 1.48.69 2.35.69 2.76 0 5-2.24 5-5 0-2.37-1.16-4.47-2.92-5.41z"></path></svg>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" strokeWidth="2">
+            <path d="m12 3 1.9 4.9L19 9.5l-4.9 1.9L12 16l-1.9-4.9L5 9.5l4.9-1.9L12 3Z" />
+          </svg>
               <div className="panel-title">AI 답변 초안</div>
             </div>
             <div className="panel-body" style={{ marginTop: '8px' }}>
