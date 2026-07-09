@@ -1,8 +1,14 @@
 import { useEffect, useRef, useState } from "react";
 import styles from "./Login.module.css";
 import logo from "../../assets/logo.png";
+import { useLoginMutation } from "../../hooks/mutations/useAuthMutation";
+import { useNavigate } from "react-router-dom";
+import useAuthStore from "../../store/useAuthStore";
 
 export default function Login() {
+  const navigate = useNavigate();
+  const { token } = useAuthStore();
+
   const [dept, setDept] = useState("");
   const [openDept, setOpenDept] = useState(false);
   const [id, setId] = useState("");
@@ -13,9 +19,14 @@ export default function Login() {
   const [deptError, setDeptError] = useState(false);
   const [loginError, setLoginError] = useState(false);
 
-  const [toast, setToast] = useState("");
-
   const wrapRef = useRef(null);
+  const { mutate: loginMutate, isPending: isLoginPending } = useLoginMutation();
+
+  useEffect(() => {
+    if (token) {
+      navigate("/home");
+    }
+  }, [token, navigate]);
 
   const deptList = [
     "문화도시과",
@@ -41,10 +52,7 @@ export default function Login() {
     return () => document.removeEventListener("click", handler);
   }, []);
 
-  const showToast = (msg) => {
-    setToast(msg);
-    setTimeout(() => setToast(""), 2000);
-  };
+
 
   const handleLogin = () => {
     setDeptError(false);
@@ -60,7 +68,7 @@ export default function Login() {
       return;
     }
 
-    showToast("로그인 되었습니다. 민원 처리 화면으로 이동합니다.");
+    loginMutate({ empId: id, password: pw, deptName: dept });
   };
 
   return (
@@ -168,8 +176,6 @@ export default function Login() {
           계정 관련 문의는 <b>부서 시스템 관리자</b>에게 연락해 주세요.
         </div>
 
-        {/* 토스트 */}
-        {toast && <div className={`${styles.toast} show`}>{toast}</div>}
       </div>
     </div>
   );

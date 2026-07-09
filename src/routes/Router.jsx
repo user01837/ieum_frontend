@@ -21,6 +21,10 @@ const router = createBrowserRouter([
     errorElement: <NotFound />,
   },
   {
+    path: "/login", // /login 경로 추가
+    element: <Login />,
+  },
+  {
     element: <MainLayout />,
     children: [
       {

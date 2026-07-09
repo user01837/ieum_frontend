@@ -1,7 +1,10 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import './NotFound.css';
 
 const NotFound = () => {
+  const navigate = useNavigate();
+
   return (
     <div className="fullscreen-error-container">
       {/* 상단 헤더 (사이드바가 없으므로 로고를 헤더 왼쪽에 배치) */}
@@ -35,13 +38,13 @@ const NotFound = () => {
           <div className="button-group">
             <button 
               className="primary-btn"
-              onClick={() => window.location.href = '/'} // 메인(민원 처리)으로 이동
+              onClick={() => navigate('/')} // 메인(민원 처리)으로 이동
             >
               민원 처리 홈으로 이동
             </button>
             <button 
               className="secondary-btn"
-              onClick={() => window.history.back()} // 이전 페이지로 돌아가기
+              onClick={() => navigate(-1)} // 이전 페이지로 돌아가기
             >
               이전 페이지로 돌아가기
             </button>
