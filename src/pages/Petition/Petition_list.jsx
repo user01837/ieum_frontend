@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './Petition_list.css';
-import Pagination from '../../components/Pagination';
+import Pagination from '../../components/Pagination/Pagination.jsx';
 import { COMPLAINTS, PREDECESSOR, TASKS } from './data';
 
 // 현재 로그인한 사용자 정보 (가상 데이터, 실제로는 useAuth() 등으로 가져와야 함)

@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import "./Admin.css";
 import EmployeeSearchModal from "../../components/EmpSearchModal/EmpSearchModal";
+import Pagination from "../../components/Pagination/Pagination.jsx";
 
 // 더미 데이터
 const USERS = [
@@ -10,7 +11,14 @@ const USERS = [
   { id: 'u4', loginId: 'choi04', name: '최주무', employeeNo: '20220041', dept: '도로교통과', grade: '9급', position: '주무관', tasks: ['도로점검'], predecessor: null, status: '휴직' },
   { id: 'u5', loginId: 'jung05', name: '정주임', employeeNo: '20190028', dept: '환경과', grade: '8급', position: '주무관', tasks: ['환경감시', '민원처리'], predecessor: null, status: '재직' },
   { id: 'u6', loginId: 'han06', name: '한팀장', employeeNo: '20120008', dept: '건설과', grade: '6급', position: '팀장', tasks: ['건설감독'], predecessor: null, status: '퇴직' },
+  { id: 'u7', loginId: 'park01', name: '박주임', employeeNo: '20210034', dept: '문화도시과', grade: '7급', position: '주무관', tasks: ['민원처리', '도로교통정비','행사기획'], predecessor: { name: '김전임', employeeNo: '20180021' }, status: '재직' },
+  { id: 'u8', loginId: 'kim02', name: '김팀장', employeeNo: '20150012', dept: '문화도시과', grade: '6급', position: '팀장', tasks: ['예산관리'], predecessor: null, status: '재직' },
+  { id: 'u9', loginId: 'lee03', name: '이과장', employeeNo: '20100005', dept: '행정복지과', grade: '6급', position: '과장', tasks: ['행정관리', '복지기획'], predecessor: null, status: '재직' },
+  { id: 'u10', loginId: 'choi04', name: '최주무', employeeNo: '20220041', dept: '도로교통과', grade: '9급', position: '주무관', tasks: ['도로점검'], predecessor: null, status: '휴직' },
+  { id: 'u11', loginId: 'jung05', name: '정주임', employeeNo: '20190028', dept: '환경과', grade: '8급', position: '주무관', tasks: ['환경감시', '민원처리'], predecessor: null, status: '재직' },
 ];
+
+const TEMP_PASSWORD = '1234'
 
 const DEPT_OPTIONS = ['전체 부서', '문화도시과', '행정복지과', '도로교통과', '환경과', '건설과', '기획예산과'];
 const STATUS_OPTIONS = ['전체 상태', '재직', '휴직', '퇴직'];
@@ -49,10 +57,15 @@ export default function Admin() {
 
   // 토스트
   const [toast, setToast] = useState('');
+  const toastTimerRef = useRef(null);
 
   const deptRef = useRef(null);
   const statusRef = useRef(null);
   const pageSizeRef = useRef(null);
+
+  useEffect(() => {
+    return () => toastTimerRef.current && clearTimeout(toastTimerRef.current);
+  }, []);
 
   // 드롭다운 외부 클릭 닫기
   useEffect(() => {
@@ -67,8 +80,14 @@ export default function Admin() {
 
   // 토스트
   const showToast = (msg) => {
+    if (toastTimerRef.current) {
+      clearTimeout(toastTimerRef.current);
+    }
     setToast(msg);
-    setTimeout(() => setToast(''), 2500);
+    toastTimerRef.current = setTimeout(() => {
+      setToast('');
+      toastTimerRef.current = null;
+    }, 2500);
   };
 
   // 필터링된 유저 목록
@@ -313,21 +332,12 @@ export default function Admin() {
 
             {/* 페이지네이션 */}
             <div className="admin-tablefoot">
-              <div style={{ display: 'flex', gap: '4px' }}>
-                {Array.from({ length: totalPages }, (_, i) => i + 1).map(p => (
-                  <button
-                    key={p}
-                    onClick={() => setCurrentPage(p)}
-                    style={{
-                      minWidth: 28, height: 28, padding: '0 6px', borderRadius: 6,
-                      fontSize: 12, fontWeight: 600, cursor: 'pointer', border: '1px solid',
-                      background: p === currentPage ? 'var(--navy)' : 'var(--surface)',
-                      color: p === currentPage ? '#fff' : 'var(--ink-soft)',
-                      borderColor: p === currentPage ? 'var(--navy)' : 'var(--line-strong)',
-                    }}
-                  >{p}</button>
-                ))}
-              </div>
+              <Pagination
+                totalItems={filteredUsers.length}
+                itemsPerPage={pageSize}
+                currentPage={currentPage}
+                onPageChange={setCurrentPage}
+              />
 
               {/* 페이지 크기 */}
               <div style={{ position: 'absolute', right: 16 }}>
@@ -501,15 +511,19 @@ export default function Admin() {
             <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 8 }}>비밀번호 초기화</div>
             <div style={{ fontSize: 12.5, color: 'var(--ink-soft)', lineHeight: 1.7, marginBottom: 20 }}>
               <b>{resetTarget.name}</b>님의 비밀번호를 초기화합니다.<br />
+              임시 비밀번호는 {TEMP_PASSWORD}입니다.<br />
               초기화된 임시 비밀번호를 해당 직원에게 전달해 주세요.
             </div>
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
               <button className="modal-footer-btn" onClick={() => setIsResetPwOpen(false)}>취소</button>
-              <button className="btn btn-navy" style={{ padding: '9px 16px' }} onClick={handleResetPw}>초기화 확인</button>
+              <button className="btn btn-navy" style={{ padding: '9px 16px' }} onClick={handleResetPw}>초기화</button>
             </div>
           </div>
         </div>
       )}
-          </div>
+      {/* 토스트 */}
+      {toast && <div key={toast} className="admin-toast">{toast}</div>}
+
+    </div>
   );
 }
