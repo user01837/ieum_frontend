@@ -134,7 +134,8 @@ export default function ProjectDetail() {
         </div>
       </div>
       <div className="crumb">
-        사업/프로젝트 기획 <b>&nbsp;›&nbsp; {title || "기획서"}</b>
+        홈 &gt; 사업/프로젝트 기획 &gt; <b>{title || "기획서 수정"}</b>
+
       </div>
 
       {isLocked && (
@@ -192,7 +193,7 @@ export default function ProjectDetail() {
             />
           </div>
           <div>
-            <div className="section-title">완료 목표일</div>
+            <div className="section-title">목표일</div>
             <input
               type="date"
               className="dtitle-input"

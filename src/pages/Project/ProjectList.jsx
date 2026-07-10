@@ -1,18 +1,24 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "./ProjectList.css";
-import { PROJECTS } from "./data"; // ← 추가
+import { PROJECTS } from "./data";
+import Pagination from "../../components/Pagination/Pagination";
 
 export default function ProjectList() {
   const navigate = useNavigate();
 
   const [statusFilter, setStatusFilter] = useState("저장");
   const [isStatusOpen, setIsStatusOpen] = useState(false);
-
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 10;
   const STATUS_OPTIONS = ["저장", "승인완료"];
 
   // 필터 적용
-  const projectList = PROJECTS.filter((p) => p.status === statusFilter);
+  const filteredList = PROJECTS.filter((p) => p.status === statusFilter);
+  const projectList = filteredList.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
 
   return (
     <div className="project-content">
@@ -38,7 +44,7 @@ export default function ProjectList() {
               <div
                 key={s}
                 className={`dropdown-item ${statusFilter === s ? "active" : ""}`}
-                onClick={() => { setStatusFilter(s); setIsStatusOpen(false); }}
+                onClick={() => { setStatusFilter(s); setIsStatusOpen(false); setCurrentPage(1); }}
               >
                 {s}
               </div>
@@ -58,7 +64,7 @@ export default function ProjectList() {
         <div className="project-trow head">
           <span>프로젝트명 / 부서</span>
           <span>시작일</span>
-          <span>기한</span>
+          <span>목표일</span>
           <span>진행상태</span>
           <span></span>
         </div>
@@ -66,10 +72,11 @@ export default function ProjectList() {
         {projectList.length === 0 ? (
           <div className="project-emptystate">등록된 프로젝트가 없습니다.</div>
         ) : (
-          projectList.map((project) => (
+          projectList.map((project, index) => (
             <div
               key={project.id}
               className="project-trow"
+              style={index === projectList.length - 1 ? { borderBottom: 'none' } : {}}
               onClick={() => navigate(`/projects/${project.id}`)}
             >
               <div>
@@ -93,6 +100,14 @@ export default function ProjectList() {
             </div>
           ))
         )}
+        <div className="project-tablefoot">
+          <Pagination
+            totalItems={filteredList.length}
+            itemsPerPage={ITEMS_PER_PAGE}
+            currentPage={currentPage}
+            onPageChange={setCurrentPage}
+          />
+        </div>
       </div>
     </div>
   );

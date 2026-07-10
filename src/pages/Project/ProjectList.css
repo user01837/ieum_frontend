@@ -70,3 +70,12 @@
 .project-trow:not(.head):hover {
   background: var(--blue-soft);
 }
+
+.project-tablefoot {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 16px 20px;
+  background: var(--bg);
+  border-top: 1px solid var(--line);
+}
