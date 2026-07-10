@@ -243,7 +243,7 @@ export default function ProjectDetail() {
       {/* AI 초안 */}
       <div className="panel">
         <div className="panel-head">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" strokeWidth="2">
+          <svg width="15" height="15" style={{ marginTop: '5px' }} viewBox="0 0 24 24" fill="none" stroke="var(--blue)" strokeWidth="2">
             <path d="m12 3 1.9 4.9L19 9.5l-4.9 1.9L12 16l-1.9-4.9L5 9.5l4.9-1.9L12 3Z" />
           </svg>
           <span className="panel-title">AI 기획서 초안 생성</span>

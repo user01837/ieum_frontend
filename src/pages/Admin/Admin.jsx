@@ -5,13 +5,13 @@ import Pagination from "../../components/Pagination/Pagination.jsx";
 
 // 더미 데이터
 const USERS = [
-  { id: 'u1', loginId: 'park01', name: '박주임', employeeNo: '20210034', dept: '문화도시과', grade: '7급', position: '주무관', tasks: ['민원처리', '도로교통정비','행사기획'], predecessor: { name: '김전임', employeeNo: '20180021' }, status: '재직' },
+  { id: 'u1', loginId: 'park01', name: '박주임', employeeNo: '20210034', dept: '문화도시과', grade: '7급', position: '주무관', tasks: ['민원처리', '도로교통정비', '행사기획'], predecessor: { name: '김전임', employeeNo: '20180021' }, status: '재직' },
   { id: 'u2', loginId: 'kim02', name: '김팀장', employeeNo: '20150012', dept: '문화도시과', grade: '6급', position: '팀장', tasks: ['예산관리'], predecessor: null, status: '재직' },
   { id: 'u3', loginId: 'lee03', name: '이과장', employeeNo: '20100005', dept: '행정복지과', grade: '6급', position: '과장', tasks: ['행정관리', '복지기획'], predecessor: null, status: '재직' },
   { id: 'u4', loginId: 'choi04', name: '최주무', employeeNo: '20220041', dept: '도로교통과', grade: '9급', position: '주무관', tasks: ['도로점검'], predecessor: null, status: '휴직' },
   { id: 'u5', loginId: 'jung05', name: '정주임', employeeNo: '20190028', dept: '환경과', grade: '8급', position: '주무관', tasks: ['환경감시', '민원처리'], predecessor: null, status: '재직' },
   { id: 'u6', loginId: 'han06', name: '한팀장', employeeNo: '20120008', dept: '건설과', grade: '6급', position: '팀장', tasks: ['건설감독'], predecessor: null, status: '퇴직' },
-  { id: 'u7', loginId: 'park01', name: '박주임', employeeNo: '20210034', dept: '문화도시과', grade: '7급', position: '주무관', tasks: ['민원처리', '도로교통정비','행사기획'], predecessor: { name: '김전임', employeeNo: '20180021' }, status: '재직' },
+  { id: 'u7', loginId: 'park01', name: '박주임', employeeNo: '20210034', dept: '문화도시과', grade: '7급', position: '주무관', tasks: ['민원처리', '도로교통정비', '행사기획'], predecessor: { name: '김전임', employeeNo: '20180021' }, status: '재직' },
   { id: 'u8', loginId: 'kim02', name: '김팀장', employeeNo: '20150012', dept: '문화도시과', grade: '6급', position: '팀장', tasks: ['예산관리'], predecessor: null, status: '재직' },
   { id: 'u9', loginId: 'lee03', name: '이과장', employeeNo: '20100005', dept: '행정복지과', grade: '6급', position: '과장', tasks: ['행정관리', '복지기획'], predecessor: null, status: '재직' },
   { id: 'u10', loginId: 'choi04', name: '최주무', employeeNo: '20220041', dept: '도로교통과', grade: '9급', position: '주무관', tasks: ['도로점검'], predecessor: null, status: '휴직' },
@@ -50,7 +50,7 @@ export default function Admin() {
   const [editTargetId, setEditTargetId] = useState(null);
   const [formData, setFormData] = useState(INIT_FORM);
   const [isPredecessorModalOpen, setIsPredecessorModalOpen] = useState(false);
-  
+
   // 비밀번호 초기화 모달
   const [isResetPwOpen, setIsResetPwOpen] = useState(false);
   const [resetTarget, setResetTarget] = useState(null);
@@ -139,7 +139,7 @@ export default function Admin() {
 
   // 저장
   const handleFormSave = () => {
-    if (!formData.loginId || !formData.name || !formData.dept || !formData.position) {
+    if (!formData.name || !formData.employeeNo || !formData.dept || !formData.position) {
       alert('필수 항목을 모두 입력해 주세요.'); return;
     }
     // TODO: useUserMutation 연결
@@ -434,11 +434,11 @@ export default function Admin() {
                 <div className="admin-field">
                   <label>전임자 <span style={{ fontWeight: 500, color: 'var(--ink-tertiary)' }}>(선택)</span></label>
                   {!formData.predecessor ? (
-                    <button className="admin-action-btn" style={{width: '100%', justifyContent: 'center'}} onClick={() => setIsPredecessorModalOpen(true)}>
+                    <button className="admin-action-btn" style={{ width: '100%', justifyContent: 'center' }} onClick={() => setIsPredecessorModalOpen(true)}>
                       직원 검색
                     </button>
                   ) : (
-                    <div className="admin-selected-chip" style={{marginTop: 0}}>
+                    <div className="admin-selected-chip" style={{ marginTop: 0 }}>
                       {formData.predecessor.name} ({formData.predecessor.employeeNo})
                       <button className="rm" onClick={() => { setFormData(p => ({ ...p, predecessor: null })); }}>
                         <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M18 6 6 18M6 6l12 12" /></svg>
@@ -450,14 +450,14 @@ export default function Admin() {
                 <div className="admin-field">
                   <label>재직 상태 *</label>
                   <div className="admin-radio-row">
-                  {['재직', '휴직', '퇴직'].map(s => (
-                    <div key={s} className="admin-radio" onClick={() => setFormData(p => ({ ...p, status: s }))}>
-                      <input type="radio" name="ufStatus" value={s} checked={formData.status === s}
-                        onChange={() => setFormData(p => ({ ...p, status: s }))} readOnly />
-                      <span className="dot" />
-                      <span>{s}</span>
-                    </div>
-                  ))}
+                    {['재직', '휴직', '퇴직'].map(s => (
+                      <div key={s} className="admin-radio" onClick={() => setFormData(p => ({ ...p, status: s }))}>
+                        <input type="radio" name="ufStatus" value={s} checked={formData.status === s}
+                          onChange={() => setFormData(p => ({ ...p, status: s }))} readOnly />
+                        <span className="dot" />
+                        <span>{s}</span>
+                      </div>
+                    ))}
                   </div>
                 </div>
               </div>
