@@ -459,14 +459,14 @@ export default function Admin() {
                 <div className="admin-field">
                   <label>재직 상태 *</label>
                   <div className="admin-radio-row">
-                    {['재직', '휴직', '퇴직'].map(s => (
-                      <label key={s} className="admin-radio">
-                        <input type="radio" name="ufStatus" value={s} checked={formData.status === s}
-                          onChange={() => setFormData(p => ({ ...p, status: s }))} style={{ position: 'absolute', opacity: 0 }} />
-                        <span className="dot" />
-                        {s}
-                      </label>
-                    ))}
+                  {['재직', '휴직', '퇴직'].map(s => (
+  <div key={s} className="admin-radio" onClick={() => setFormData(p => ({ ...p, status: s }))}>
+    <input type="radio" name="ufStatus" value={s} checked={formData.status === s}
+      onChange={() => setFormData(p => ({ ...p, status: s }))} readOnly />
+    <span className="dot" />
+    <span>{s}</span>
+  </div>
+))}
                   </div>
                 </div>
               </div>

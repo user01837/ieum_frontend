@@ -129,13 +129,16 @@ select.admin-input { cursor: pointer; }
 .admin-pw-wrap { position: relative; }
 .admin-pw-wrap input { padding-right: 38px; }
 .admin-pw-wrap .toggle-eye { position: absolute; right: 11px; top: 50%; transform: translateY(-50%); width: 17px; height: 17px; color: var(--ink-tertiary); cursor: pointer; background: none; border: none; }
-.admin-radio-row { display: flex; gap: 18px; flex-wrap: wrap; }
-.admin-radio { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 500; color: var(--ink); cursor: pointer; }
-.admin-radio .dot { width: 17px; height: 17px; border-radius: 50%; border: 1.5px solid var(--line-strong); position: relative; flex-shrink: 0; background: var(--surface); }
+.admin-radio-row { display: flex;  gap: 24px;  /* 18px → 24px */ flex-wrap: wrap; }
+.admin-radio { position: relative; display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 500; color: var(--ink); cursor: pointer; 
+min-width: 52px;}
+.admin-radio .dot { width: 17px; height: 17px; border-radius: 50%; border: 1.5px solid var(--line-strong); position: relative; flex-shrink: 0; background: var(--surface); 
+}
 .admin-radio input:checked + .dot { border-color: var(--blue); }
 .admin-radio input:checked + .dot::after { content: ''; position: absolute; top: 3px; left: 3px; width: 9px; height: 9px; border-radius: 50%; background: var(--blue); }
-.admin-radio input { position: absolute; opacity: 0; width: 0; height: 0; }
-.admin-search-inline { display: flex; gap: 8px; }
+.admin-radio input {
+  display: none;
+}min-search-inline { display: flex; gap: 8px; }
 .admin-search-inline .admin-input { flex: 1; }
 .admin-search-results { margin-top: 8px; border: 1px solid var(--line); border-radius: 9px; overflow: hidden; max-height: 160px; overflow-y: auto; }
 .admin-search-result-row { display: flex; align-items: center; gap: 10px; padding: 9px 12px; cursor: pointer; border-bottom: 1px solid var(--line); font-size: 12.5px; }
