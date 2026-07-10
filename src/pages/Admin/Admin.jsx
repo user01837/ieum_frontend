@@ -1,5 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import "./Admin.css";
+import EmployeeSearchModal from "../../components/EmpSearchModal/EmpSearchModal";
+import Pagination from "../../components/Pagination/Pagination.jsx";
 
 // 더미 데이터
 const USERS = [
@@ -9,7 +11,14 @@ const USERS = [
   { id: 'u4', loginId: 'choi04', name: '최주무', employeeNo: '20220041', dept: '도로교통과', grade: '9급', position: '주무관', tasks: ['도로점검'], predecessor: null, status: '휴직' },
   { id: 'u5', loginId: 'jung05', name: '정주임', employeeNo: '20190028', dept: '환경과', grade: '8급', position: '주무관', tasks: ['환경감시', '민원처리'], predecessor: null, status: '재직' },
   { id: 'u6', loginId: 'han06', name: '한팀장', employeeNo: '20120008', dept: '건설과', grade: '6급', position: '팀장', tasks: ['건설감독'], predecessor: null, status: '퇴직' },
+  { id: 'u7', loginId: 'park01', name: '박주임', employeeNo: '20210034', dept: '문화도시과', grade: '7급', position: '주무관', tasks: ['민원처리', '도로교통정비','행사기획'], predecessor: { name: '김전임', employeeNo: '20180021' }, status: '재직' },
+  { id: 'u8', loginId: 'kim02', name: '김팀장', employeeNo: '20150012', dept: '문화도시과', grade: '6급', position: '팀장', tasks: ['예산관리'], predecessor: null, status: '재직' },
+  { id: 'u9', loginId: 'lee03', name: '이과장', employeeNo: '20100005', dept: '행정복지과', grade: '6급', position: '과장', tasks: ['행정관리', '복지기획'], predecessor: null, status: '재직' },
+  { id: 'u10', loginId: 'choi04', name: '최주무', employeeNo: '20220041', dept: '도로교통과', grade: '9급', position: '주무관', tasks: ['도로점검'], predecessor: null, status: '휴직' },
+  { id: 'u11', loginId: 'jung05', name: '정주임', employeeNo: '20190028', dept: '환경과', grade: '8급', position: '주무관', tasks: ['환경감시', '민원처리'], predecessor: null, status: '재직' },
 ];
+
+const TEMP_PASSWORD = '1234'
 
 const DEPT_OPTIONS = ['전체 부서', '문화도시과', '행정복지과', '도로교통과', '환경과', '건설과', '기획예산과'];
 const STATUS_OPTIONS = ['전체 상태', '재직', '휴직', '퇴직'];
@@ -40,25 +49,23 @@ export default function Admin() {
   const [isEditMode, setIsEditMode] = useState(false);
   const [editTargetId, setEditTargetId] = useState(null);
   const [formData, setFormData] = useState(INIT_FORM);
-  const [showPw, setShowPw] = useState(false);
-  const [predecessorSearch, setPredecessorSearch] = useState('');
-  const [predecessorResults, setPredecessorResults] = useState([]);
-
-  // 인사이동 모달
-  const [isTransferOpen, setIsTransferOpen] = useState(false);
-  const [transferTarget, setTransferTarget] = useState(null);
-  const [transferForm, setTransferForm] = useState({ dept: '', grade: '' });
-
+  const [isPredecessorModalOpen, setIsPredecessorModalOpen] = useState(false);
+  
   // 비밀번호 초기화 모달
   const [isResetPwOpen, setIsResetPwOpen] = useState(false);
   const [resetTarget, setResetTarget] = useState(null);
 
   // 토스트
   const [toast, setToast] = useState('');
+  const toastTimerRef = useRef(null);
 
   const deptRef = useRef(null);
   const statusRef = useRef(null);
   const pageSizeRef = useRef(null);
+
+  useEffect(() => {
+    return () => toastTimerRef.current && clearTimeout(toastTimerRef.current);
+  }, []);
 
   // 드롭다운 외부 클릭 닫기
   useEffect(() => {
@@ -73,8 +80,14 @@ export default function Admin() {
 
   // 토스트
   const showToast = (msg) => {
+    if (toastTimerRef.current) {
+      clearTimeout(toastTimerRef.current);
+    }
     setToast(msg);
-    setTimeout(() => setToast(''), 2500);
+    toastTimerRef.current = setTimeout(() => {
+      setToast('');
+      toastTimerRef.current = null;
+    }, 2500);
   };
 
   // 필터링된 유저 목록
@@ -99,22 +112,10 @@ export default function Admin() {
   const totalPages = Math.ceil(filteredUsers.length / pageSize);
   const pagedUsers = filteredUsers.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
-  // 전임자 검색
-  const handlePredecessorSearch = (keyword) => {
-    setPredecessorSearch(keyword);
-    if (!keyword.trim()) { setPredecessorResults([]); return; }
-    const results = USERS.filter(u =>
-      u.name.includes(keyword) || u.employeeNo.includes(keyword)
-    );
-    setPredecessorResults(results);
-  };
-
   // 신규 등록 모달 열기
   const openCreateModal = () => {
     setIsEditMode(false);
     setFormData(INIT_FORM);
-    setPredecessorSearch('');
-    setPredecessorResults([]);
     setIsUserFormOpen(true);
   };
 
@@ -133,8 +134,6 @@ export default function Admin() {
       status: user.status,
       predecessor: user.predecessor,
     });
-    setPredecessorSearch(user.predecessor?.name || '');
-    setPredecessorResults([]);
     setIsUserFormOpen(true);
   };
 
@@ -149,21 +148,6 @@ export default function Admin() {
     showToast(isEditMode ? '직원 정보가 수정되었습니다.' : '신규 직원이 등록되었습니다.');
   };
 
-  // 인사이동 열기
-  const openTransfer = (user) => {
-    setTransferTarget(user);
-    setTransferForm({ dept: user.dept, grade: user.grade });
-    setIsTransferOpen(true);
-  };
-
-  // 인사이동 저장
-  const handleTransferSave = () => {
-    // TODO: useUserMutation 연결
-    console.log('인사이동:', transferTarget, transferForm);
-    setIsTransferOpen(false);
-    showToast('인사이동이 처리되었습니다.');
-  };
-
   // 비밀번호 초기화
   const openResetPw = (user) => {
     setResetTarget(user);
@@ -175,6 +159,14 @@ export default function Admin() {
     console.log('비밀번호 초기화:', resetTarget);
     setIsResetPwOpen(false);
     showToast(`${resetTarget.name}님의 비밀번호가 초기화되었습니다.`);
+  };
+
+  const handleSelectPredecessor = (employee) => {
+    setFormData(p => ({
+      ...p,
+      predecessor: { name: employee.name, employeeNo: employee.id }
+    }));
+    setIsPredecessorModalOpen(false);
   };
 
   return (
@@ -329,10 +321,9 @@ export default function Admin() {
                   </div>
                   <span><span className={`admin-status-pill ${user.status}`}>{user.status}</span></span>
 
-                  {/* 케밥 메뉴 */}
+                  {/* 메뉴 */}
                   <div className="admin-row-actions">
                     <button className="admin-action-btn" onClick={() => openEditModal(user)}>수정</button>
-                    <button className="admin-action-btn" onClick={() => openTransfer(user)}>인사이동</button>
                     <button className="admin-action-btn" onClick={() => openResetPw(user)}>비밀번호 초기화</button>
                   </div>
                 </div>
@@ -341,21 +332,12 @@ export default function Admin() {
 
             {/* 페이지네이션 */}
             <div className="admin-tablefoot">
-              <div style={{ display: 'flex', gap: '4px' }}>
-                {Array.from({ length: totalPages }, (_, i) => i + 1).map(p => (
-                  <button
-                    key={p}
-                    onClick={() => setCurrentPage(p)}
-                    style={{
-                      minWidth: 28, height: 28, padding: '0 6px', borderRadius: 6,
-                      fontSize: 12, fontWeight: 600, cursor: 'pointer', border: '1px solid',
-                      background: p === currentPage ? 'var(--navy)' : 'var(--surface)',
-                      color: p === currentPage ? '#fff' : 'var(--ink-soft)',
-                      borderColor: p === currentPage ? 'var(--navy)' : 'var(--line-strong)',
-                    }}
-                  >{p}</button>
-                ))}
-              </div>
+              <Pagination
+                totalItems={filteredUsers.length}
+                itemsPerPage={pageSize}
+                currentPage={currentPage}
+                onPageChange={setCurrentPage}
+              />
 
               {/* 페이지 크기 */}
               <div style={{ position: 'absolute', right: 16 }}>
@@ -390,7 +372,6 @@ export default function Admin() {
         <div className="admin-infobox-grid">
           <div>• <b>신규 직원 등록</b>: 계정 생성은 '신규 직원 등록' 버튼을 통해 진행합니다.</div>
           <div>• <b>전임자</b>: 업무 인수인계 및 참고를 위해 전임자를 지정합니다.</div>
-          <div>• <b>인사이동</b>: 선택한 직원의 부서를 변경하고, 이력을 관리합니다.</div>
           <div>• <b>비밀번호 초기화</b>: 비밀번호를 초기화하여 해당 사용자에게 새 비밀번호를 안내할 수 있습니다.</div>
         </div>
       </div>
@@ -411,27 +392,6 @@ export default function Admin() {
 
             <div className="admin-modal-body">
               <div className="admin-form-scroll">
-                <div className="admin-formrow2">
-                  <div className="admin-field">
-                    <label>아이디 *</label>
-                    <input className="admin-input" type="text" placeholder="아이디를 입력하세요"
-                      value={formData.loginId} onChange={(e) => setFormData(p => ({ ...p, loginId: e.target.value }))} />
-                    <div className="hint">영문, 숫자 4~20자</div>
-                  </div>
-                  <div className="admin-field">
-                    <label>{isEditMode ? '새 비밀번호' : '임시 비밀번호 *'}</label>
-                    <div className="admin-pw-wrap">
-                      <input className="admin-input" type={showPw ? 'text' : 'password'} placeholder="비밀번호를 입력하세요"
-                        value={formData.pw} onChange={(e) => setFormData(p => ({ ...p, pw: e.target.value }))} />
-                      <button className="toggle-eye" onClick={() => setShowPw(p => !p)}>
-                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7Z" /><circle cx="12" cy="12" r="3" />
-                        </svg>
-                      </button>
-                    </div>
-                    <div className="hint">영문+숫자+특수문자 8자 이상</div>
-                  </div>
-                </div>
 
                 <div className="admin-formrow2">
                   <div className="admin-field">
@@ -442,7 +402,7 @@ export default function Admin() {
                   <div className="admin-field">
                     <label>사번 *</label>
                     <input className="admin-input" type="text" placeholder="사번을 입력하세요"
-                      value={formData.employeeNo} onChange={(e) => setFormData(p => ({ ...p, employeeNo: e.target.value }))} />
+                      value={formData.employeeNo} onChange={(e) => setFormData(p => ({ ...p, employeeNo: e.target.value }))} disabled={isEditMode} />
                   </div>
                 </div>
 
@@ -473,25 +433,14 @@ export default function Admin() {
 
                 <div className="admin-field">
                   <label>전임자 <span style={{ fontWeight: 500, color: 'var(--ink-tertiary)' }}>(선택)</span></label>
-                  <div className="admin-search-inline">
-                    <input className="admin-input" type="text" placeholder="이름 또는 사번으로 검색"
-                      value={predecessorSearch} onChange={(e) => handlePredecessorSearch(e.target.value)} />
-                  </div>
-                  {predecessorResults.length > 0 && (
-                    <div className="admin-search-results show">
-                      {predecessorResults.map(u => (
-                        <div key={u.id} className="admin-search-result-row"
-                          onClick={() => { setFormData(p => ({ ...p, predecessor: { name: u.name, employeeNo: u.employeeNo } })); setPredecessorSearch(u.name); setPredecessorResults([]); }}>
-                          <span className="name">{u.name}</span>
-                          <span className="meta">{u.dept} · {u.employeeNo}</span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                  {formData.predecessor && (
-                    <div className="admin-selected-chip">
-                      선택됨: {formData.predecessor.name}
-                      <button className="rm" onClick={() => { setFormData(p => ({ ...p, predecessor: null })); setPredecessorSearch(''); }}>
+                  {!formData.predecessor ? (
+                    <button className="admin-action-btn" style={{width: '100%', justifyContent: 'center'}} onClick={() => setIsPredecessorModalOpen(true)}>
+                      직원 검색
+                    </button>
+                  ) : (
+                    <div className="admin-selected-chip" style={{marginTop: 0}}>
+                      {formData.predecessor.name} ({formData.predecessor.employeeNo})
+                      <button className="rm" onClick={() => { setFormData(p => ({ ...p, predecessor: null })); }}>
                         <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M18 6 6 18M6 6l12 12" /></svg>
                       </button>
                     </div>
@@ -501,14 +450,14 @@ export default function Admin() {
                 <div className="admin-field">
                   <label>재직 상태 *</label>
                   <div className="admin-radio-row">
-                    {['재직', '휴직', '퇴직'].map(s => (
-                      <label key={s} className="admin-radio">
-                        <input type="radio" name="ufStatus" value={s} checked={formData.status === s}
-                          onChange={() => setFormData(p => ({ ...p, status: s }))} style={{ position: 'absolute', opacity: 0 }} />
-                        <span className="dot" />
-                        {s}
-                      </label>
-                    ))}
+                  {['재직', '휴직', '퇴직'].map(s => (
+                    <div key={s} className="admin-radio" onClick={() => setFormData(p => ({ ...p, status: s }))}>
+                      <input type="radio" name="ufStatus" value={s} checked={formData.status === s}
+                        onChange={() => setFormData(p => ({ ...p, status: s }))} readOnly />
+                      <span className="dot" />
+                      <span>{s}</span>
+                    </div>
+                  ))}
                   </div>
                 </div>
               </div>
@@ -545,53 +494,11 @@ export default function Admin() {
         </div>
       )}
 
-      {/* 인사이동 모달 */}
-      {isTransferOpen && transferTarget && (
-        <div className="modal-overlay" onClick={() => setIsTransferOpen(false)}>
-          <div className="modal-card" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <div>
-                <p className="modal-title">인사이동 처리</p>
-                <p className="modal-subtitle">새로운 소속과 직급을 지정해 주세요.</p>
-              </div>
-              <button className="modal-close-btn" onClick={() => setIsTransferOpen(false)}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3"><path d="M18 6 6 18M6 6l12 12" /></svg>
-              </button>
-            </div>
-
-            <div className="admin-transfer-user">
-              <div className="avatar-lg">{transferTarget.name[0]}</div>
-              <div>
-                <div style={{ fontSize: '13.5px', fontWeight: 700 }}>{transferTarget.name}</div>
-                <div style={{ fontSize: '11.5px', color: 'var(--ink-soft)' }}>{transferTarget.dept} · {transferTarget.grade} · {transferTarget.position}</div>
-              </div>
-            </div>
-
-            <div className="admin-formrow2" style={{ marginTop: 14 }}>
-              <div className="admin-field">
-                <label>새 소속 부서</label>
-                <select className="admin-input" value={transferForm.dept}
-                  onChange={(e) => setTransferForm(p => ({ ...p, dept: e.target.value }))}>
-                  {['문화도시과', '행정복지과', '도로교통과', '환경과', '건설과', '기획예산과'].map(d => <option key={d}>{d}</option>)}
-                </select>
-              </div>
-              <div className="admin-field">
-                <label>새 직급</label>
-                <select className="admin-input" value={transferForm.grade}
-                  onChange={(e) => setTransferForm(p => ({ ...p, grade: e.target.value }))}>
-                  {['6급', '7급', '8급', '9급'].map(g => <option key={g}>{g}</option>)}
-                </select>
-              </div>
-            </div>
-
-            <div className="modal-footer">
-              <div style={{ marginLeft: 'auto', display: 'flex', gap: 8 }}>
-                <button className="modal-footer-btn" onClick={() => setIsTransferOpen(false)}>취소</button>
-                <button className="btn btn-navy" style={{ padding: '9px 16px' }} onClick={handleTransferSave}>인사이동 완료</button>
-              </div>
-            </div>
-          </div>
-        </div>
+      {isPredecessorModalOpen && (
+        <EmployeeSearchModal
+          onSelect={handleSelectPredecessor}
+          onClose={() => setIsPredecessorModalOpen(false)}
+        />
       )}
 
       {/* 비밀번호 초기화 확인 모달 */}
@@ -604,18 +511,19 @@ export default function Admin() {
             <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 8 }}>비밀번호 초기화</div>
             <div style={{ fontSize: 12.5, color: 'var(--ink-soft)', lineHeight: 1.7, marginBottom: 20 }}>
               <b>{resetTarget.name}</b>님의 비밀번호를 초기화합니다.<br />
+              임시 비밀번호는 {TEMP_PASSWORD}입니다.<br />
               초기화된 임시 비밀번호를 해당 직원에게 전달해 주세요.
             </div>
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
               <button className="modal-footer-btn" onClick={() => setIsResetPwOpen(false)}>취소</button>
-              <button className="btn btn-navy" style={{ padding: '9px 16px' }} onClick={handleResetPw}>초기화 확인</button>
+              <button className="btn btn-navy" style={{ padding: '9px 16px' }} onClick={handleResetPw}>초기화</button>
             </div>
           </div>
         </div>
       )}
-
       {/* 토스트 */}
-      {toast && <div className="admin-toast">{toast}</div>}
+      {toast && <div key={toast} className="admin-toast">{toast}</div>}
+
     </div>
   );
 }
