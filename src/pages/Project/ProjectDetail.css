@@ -1,3 +1,6 @@
+/* ================================
+   레이아웃 / 페이지 기본
+================================ */
 .detail-content {
   padding: 26px 34px 60px;
   max-width: 900px;
@@ -5,6 +8,7 @@
   margin: 0 auto;
 }
 
+/* 승인 완료 시 상단 잠금 배너 */
 .locked-banner {
   display: flex;
   align-items: center;
@@ -18,6 +22,9 @@
   margin-bottom: 16px;
 }
 
+/* ================================
+   사업명 / 사업개요 / 날짜 카드
+================================ */
 .dcard {
   background: var(--surface);
   border: 1px solid var(--line);
@@ -26,6 +33,7 @@
   margin-bottom: 16px;
 }
 
+/* 각 필드 라벨 (소문자, 연한색) */
 .field-label {
   font-size: 11.5px;
   font-weight: 700;
@@ -33,6 +41,7 @@
   margin-bottom: 8px;
 }
 
+/* 사업명 input / 날짜 input 공용 */
 .dtitle-input {
   font-size: 14px;
   font-weight: 400;
@@ -50,6 +59,7 @@
   border-color: var(--blue);
 }
 
+/* 사업 개요 textarea */
 .desc-input {
   width: 100%;
   border: 1px solid var(--line-strong);
@@ -68,6 +78,9 @@
   border-color: var(--blue);
 }
 
+/* ================================
+   참여 부서
+================================ */
 .dept-head-row {
   display: flex;
   align-items: center;
@@ -106,6 +119,7 @@
   color: var(--ink-tertiary);
 }
 
+/* 팀원 삭제 버튼 */
 .member-chip .rm {
   width: 16px;
   height: 16px;
@@ -118,7 +132,9 @@
   border: none;
 }
 
-/* AI 패널 */
+/* ================================
+   AI 패널
+================================ */
 .panel {
   background: var(--blue-soft);
   border: 1px solid #D7E3FC;
@@ -144,6 +160,7 @@
   color: var(--ink-soft);
 }
 
+/* AI 초안 사용 / 다시 생성 버튼 */
 .applybtn {
   display: inline-flex;
   align-items: center;
@@ -159,12 +176,14 @@
   font-family: inherit;
 }
 
+/* 승인 완료 버튼 */
 .btn-navy {
   background: var(--navy);
   border: 1px solid var(--navy);
   color: #fff;
 }
 
+/* AI 초안 텍스트 박스 */
 .draftbox {
   background: var(--surface);
   border: 1px solid #D7E3FC;
@@ -176,7 +195,9 @@
   margin-bottom: 12px;
 }
 
-/* 하단 버튼 */
+/* ================================
+   하단 버튼 행 / 내보내기
+================================ */
 .bottomrow {
   display: flex;
   justify-content: space-between;
@@ -188,6 +209,7 @@
   position: relative;
 }
 
+/* 내보내기 드롭다운 메뉴 */
 .export-menu {
   position: absolute;
   bottom: calc(100% + 8px);
@@ -196,7 +218,7 @@
   border: 1px solid var(--line-strong);
   border-radius: 9px;
   box-shadow: 0 10px 26px rgba(0, 0, 0, 0.12);
-  min-width: 170px;
+  min-width: 200px;
   padding: 6px;
   z-index: 30;
 }
@@ -217,6 +239,9 @@
   background: var(--bg);
 }
 
+/* ================================
+   기획서 작성 (TipTap 에디터)
+================================ */
 .tiptap-wrapper {
   background: var(--surface);
   border: 1px solid var(--line);
@@ -229,6 +254,10 @@
   padding: 0 20px;
 }
 
+/* ================================
+   공통 유틸
+================================ */
+/* 목록으로 / 브레드크럼 */
 .backrow {
   display: flex;
   align-items: center;
@@ -257,12 +286,16 @@
   font-weight: 600;
 }
 
+/* "기획서 작성" 섹션 제목 */
 .dtitle {
   font-size: 17px;
   font-weight: 700;
   margin: 0 0 12px;
 }
 
+/* ================================
+   공통 버튼
+================================ */
 .btn {
   font-size: 13px;
   padding: 11px 20px;
@@ -282,6 +315,7 @@
   color: var(--ink-soft);
 }
 
+/* AI 로딩 스피너 */
 .spinner {
   border: 3px solid #f3f3f3;
   border-top: 3px solid var(--blue);
@@ -297,9 +331,85 @@
   100% { transform: rotate(360deg); }
 }
 
+/* 각 카드 내 필드 제목 (사업명, 사업개요, 시작일, 완료목표일 등 공용) */
 .section-title {
   font-size: 13.5px;
   font-weight: 700;
   color: var(--ink);
+  margin-bottom: 12px;
+}
+
+/* 시작일 / 완료목표일 2열 그리드 */
+.formrow2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-top: 8px;
+}
+
+/* 삭제 버튼 (backrow 우측) */
+.delbtn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #C1503D;
+  cursor: pointer;
+  margin-right: 5px;
+}
+
+.delbtn:hover {
+  opacity: 0.75;
+}
+
+/* 삭제 확인 모달 */
+.del-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+
+.del-modal {
+  background: var(--surface);
+  border-radius: 14px;
+  padding: 28px 30px;
+  width: 320px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.18);
+}
+
+.del-modal-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--ink);
+  margin-bottom: 8px;
+}
+
+.del-modal-desc {
+  font-size: 13px;
+  color: var(--ink-soft);
+  margin-bottom: 24px;
+}
+
+.del-modal-btns {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.del-confirm-btn {
+  background: #C1503D;
+  color: #fff;
+  border: none;
+}
+
+.dcard-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   margin-bottom: 12px;
 }

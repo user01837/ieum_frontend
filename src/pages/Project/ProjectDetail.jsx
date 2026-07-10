@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
@@ -45,6 +45,10 @@ export default function ProjectDetail() {
   const [isAiLoading, setIsAiLoading] = useState(false);
   const [isExportOpen, setIsExportOpen] = useState(false);
   const [isLocked, setIsLocked] = useState(false);
+  const [startDate, setStartDate] = useState("");
+  const [dueDate, setDueDate] = useState("");
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const exportRef = useRef(null);
 
   const editor = useEditor({
     extensions: [
@@ -109,6 +113,16 @@ export default function ProjectDetail() {
     // TODO: useProjectMutation 연결
   };
 
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (exportRef.current && !exportRef.current.contains(e.target)) {
+        setIsExportOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
   return (
     <div className="detail-content">
       <div className="backrow">
@@ -135,7 +149,22 @@ export default function ProjectDetail() {
 
       {/* 사업명 / 개요 */}
       <div className="dcard">
-        <div className="section-title">사업명</div>
+        <div className="dcard-title-row">
+          <div className="section-title" style={{ margin: 0 }}>사업명</div>
+          {!isLocked && (
+            <div className="delbtn" onClick={() => setIsDeleteModalOpen(true)}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '3px', borderBottom: '1.5px solid #C1503D', paddingBottom: '0px' }}>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <polyline points="3 6 5 6 21 6" />
+                  <path d="M19 6l-1 14H6L5 6" />
+                  <path d="M10 11v6M14 11v6" />
+                  <path d="M9 6V4h6v2" />
+                </svg>
+                삭제
+              </div>
+            </div>
+          )}
+        </div>
         <input
           className="dtitle-input"
           value={title}
@@ -151,7 +180,29 @@ export default function ProjectDetail() {
           disabled={isLocked}
           placeholder="사업 목적, 배경, 주요 내용을 간략히 작성하세요."
         />
-      </div>
+        <div className="formrow2">
+          <div>
+            <div className="section-title">시작일</div>
+            <input
+              type="date"
+              className="dtitle-input"
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+              disabled={isLocked}
+            />
+          </div>
+          <div>
+            <div className="section-title">완료 목표일</div>
+            <input
+              type="date"
+              className="dtitle-input"
+              value={dueDate}
+              onChange={(e) => setDueDate(e.target.value)}
+              disabled={isLocked}
+            />
+          </div>
+        </div>
+      </div>  {/* dcard 닫기 */}
 
       {/* 참여 부서 */}
       <div className="dcard">
@@ -224,7 +275,7 @@ export default function ProjectDetail() {
           <EditorContent editor={editor} className="tiptap-editor" />
         </div>
         <div className="bottomrow" style={{ padding: '0 20px 16px' }}>
-          <div className={`export-wrap${isExportOpen ? " open" : ""}`}>
+          <div className={`export-wrap${isExportOpen ? " open" : ""}`} ref={exportRef}>
             <button className="btn btn-ghost" onClick={() => setIsExportOpen((p) => !p)}>
               내보내기
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3">
@@ -270,6 +321,22 @@ export default function ProjectDetail() {
         </div>
       </div>
 
+      {isDeleteModalOpen && (
+        <div className="del-modal-overlay" onClick={() => setIsDeleteModalOpen(false)}>
+          <div className="del-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="del-modal-title">기획서를 삭제하시겠습니까?</div>
+            <div className="del-modal-desc">삭제 후에는 복구할 수 없습니다.</div>
+            <div className="del-modal-btns">
+              <button className="btn btn-ghost" onClick={() => setIsDeleteModalOpen(false)}>취소</button>
+              <button className="btn del-confirm-btn" onClick={() => {
+                // TODO: useProjectMutation 연결
+                console.log("delete", id);
+                navigate("/projects");
+              }}>삭제</button>
+            </div>
+          </div>
+        </div>
+      )}
       {isEmpModalOpen && (
         <EmpSearchModal
           onSelect={handleAddMember}
