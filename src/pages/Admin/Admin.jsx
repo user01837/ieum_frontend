@@ -44,10 +44,6 @@ export default function Admin() {
   const [predecessorSearch, setPredecessorSearch] = useState('');
   const [predecessorResults, setPredecessorResults] = useState([]);
 
-  // 인사이동 모달
-  const [isTransferOpen, setIsTransferOpen] = useState(false);
-  const [transferTarget, setTransferTarget] = useState(null);
-  const [transferForm, setTransferForm] = useState({ dept: '', grade: '' });
 
   // 비밀번호 초기화 모달
   const [isResetPwOpen, setIsResetPwOpen] = useState(false);
@@ -147,21 +143,6 @@ export default function Admin() {
     console.log(isEditMode ? '수정:' : '생성:', formData);
     setIsUserFormOpen(false);
     showToast(isEditMode ? '직원 정보가 수정되었습니다.' : '신규 직원이 등록되었습니다.');
-  };
-
-  // 인사이동 열기
-  const openTransfer = (user) => {
-    setTransferTarget(user);
-    setTransferForm({ dept: user.dept, grade: user.grade });
-    setIsTransferOpen(true);
-  };
-
-  // 인사이동 저장
-  const handleTransferSave = () => {
-    // TODO: useUserMutation 연결
-    console.log('인사이동:', transferTarget, transferForm);
-    setIsTransferOpen(false);
-    showToast('인사이동이 처리되었습니다.');
   };
 
   // 비밀번호 초기화
@@ -329,10 +310,9 @@ export default function Admin() {
                   </div>
                   <span><span className={`admin-status-pill ${user.status}`}>{user.status}</span></span>
 
-                  {/* 케밥 메뉴 */}
+                  {/* 메뉴 */}
                   <div className="admin-row-actions">
                     <button className="admin-action-btn" onClick={() => openEditModal(user)}>수정</button>
-                    <button className="admin-action-btn" onClick={() => openTransfer(user)}>인사이동</button>
                     <button className="admin-action-btn" onClick={() => openResetPw(user)}>비밀번호 초기화</button>
                   </div>
                 </div>
@@ -390,7 +370,6 @@ export default function Admin() {
         <div className="admin-infobox-grid">
           <div>• <b>신규 직원 등록</b>: 계정 생성은 '신규 직원 등록' 버튼을 통해 진행합니다.</div>
           <div>• <b>전임자</b>: 업무 인수인계 및 참고를 위해 전임자를 지정합니다.</div>
-          <div>• <b>인사이동</b>: 선택한 직원의 부서를 변경하고, 이력을 관리합니다.</div>
           <div>• <b>비밀번호 초기화</b>: 비밀번호를 초기화하여 해당 사용자에게 새 비밀번호를 안내할 수 있습니다.</div>
         </div>
       </div>
@@ -411,27 +390,6 @@ export default function Admin() {
 
             <div className="admin-modal-body">
               <div className="admin-form-scroll">
-                <div className="admin-formrow2">
-                  <div className="admin-field">
-                    <label>아이디 *</label>
-                    <input className="admin-input" type="text" placeholder="아이디를 입력하세요"
-                      value={formData.loginId} onChange={(e) => setFormData(p => ({ ...p, loginId: e.target.value }))} />
-                    <div className="hint">영문, 숫자 4~20자</div>
-                  </div>
-                  <div className="admin-field">
-                    <label>{isEditMode ? '새 비밀번호' : '임시 비밀번호 *'}</label>
-                    <div className="admin-pw-wrap">
-                      <input className="admin-input" type={showPw ? 'text' : 'password'} placeholder="비밀번호를 입력하세요"
-                        value={formData.pw} onChange={(e) => setFormData(p => ({ ...p, pw: e.target.value }))} />
-                      <button className="toggle-eye" onClick={() => setShowPw(p => !p)}>
-                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7Z" /><circle cx="12" cy="12" r="3" />
-                        </svg>
-                      </button>
-                    </div>
-                    <div className="hint">영문+숫자+특수문자 8자 이상</div>
-                  </div>
-                </div>
 
                 <div className="admin-formrow2">
                   <div className="admin-field">
@@ -442,7 +400,7 @@ export default function Admin() {
                   <div className="admin-field">
                     <label>사번 *</label>
                     <input className="admin-input" type="text" placeholder="사번을 입력하세요"
-                      value={formData.employeeNo} onChange={(e) => setFormData(p => ({ ...p, employeeNo: e.target.value }))} />
+                      value={formData.employeeNo} onChange={(e) => setFormData(p => ({ ...p, employeeNo: e.target.value }))} disabled={isEditMode} />
                   </div>
                 </div>
 
@@ -539,55 +497,6 @@ export default function Admin() {
                 <button className="btn btn-navy" style={{ padding: '9px 16px' }} onClick={handleFormSave}>
                   {isEditMode ? '저장' : '계정 생성'}
                 </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* 인사이동 모달 */}
-      {isTransferOpen && transferTarget && (
-        <div className="modal-overlay" onClick={() => setIsTransferOpen(false)}>
-          <div className="modal-card" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <div>
-                <p className="modal-title">인사이동 처리</p>
-                <p className="modal-subtitle">새로운 소속과 직급을 지정해 주세요.</p>
-              </div>
-              <button className="modal-close-btn" onClick={() => setIsTransferOpen(false)}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3"><path d="M18 6 6 18M6 6l12 12" /></svg>
-              </button>
-            </div>
-
-            <div className="admin-transfer-user">
-              <div className="avatar-lg">{transferTarget.name[0]}</div>
-              <div>
-                <div style={{ fontSize: '13.5px', fontWeight: 700 }}>{transferTarget.name}</div>
-                <div style={{ fontSize: '11.5px', color: 'var(--ink-soft)' }}>{transferTarget.dept} · {transferTarget.grade} · {transferTarget.position}</div>
-              </div>
-            </div>
-
-            <div className="admin-formrow2" style={{ marginTop: 14 }}>
-              <div className="admin-field">
-                <label>새 소속 부서</label>
-                <select className="admin-input" value={transferForm.dept}
-                  onChange={(e) => setTransferForm(p => ({ ...p, dept: e.target.value }))}>
-                  {['문화도시과', '행정복지과', '도로교통과', '환경과', '건설과', '기획예산과'].map(d => <option key={d}>{d}</option>)}
-                </select>
-              </div>
-              <div className="admin-field">
-                <label>새 직급</label>
-                <select className="admin-input" value={transferForm.grade}
-                  onChange={(e) => setTransferForm(p => ({ ...p, grade: e.target.value }))}>
-                  {['6급', '7급', '8급', '9급'].map(g => <option key={g}>{g}</option>)}
-                </select>
-              </div>
-            </div>
-
-            <div className="modal-footer">
-              <div style={{ marginLeft: 'auto', display: 'flex', gap: 8 }}>
-                <button className="modal-footer-btn" onClick={() => setIsTransferOpen(false)}>취소</button>
-                <button className="btn btn-navy" style={{ padding: '9px 16px' }} onClick={handleTransferSave}>인사이동 완료</button>
               </div>
             </div>
           </div>
