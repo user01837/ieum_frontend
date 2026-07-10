@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import "./Admin.css";
+import EmployeeSearchModal from "../../components/EmpSearchModal/EmpSearchModal";
 
 // 더미 데이터
 const USERS = [
@@ -40,11 +41,8 @@ export default function Admin() {
   const [isEditMode, setIsEditMode] = useState(false);
   const [editTargetId, setEditTargetId] = useState(null);
   const [formData, setFormData] = useState(INIT_FORM);
-  const [showPw, setShowPw] = useState(false);
-  const [predecessorSearch, setPredecessorSearch] = useState('');
-  const [predecessorResults, setPredecessorResults] = useState([]);
-
-
+  const [isPredecessorModalOpen, setIsPredecessorModalOpen] = useState(false);
+  
   // 비밀번호 초기화 모달
   const [isResetPwOpen, setIsResetPwOpen] = useState(false);
   const [resetTarget, setResetTarget] = useState(null);
@@ -95,22 +93,10 @@ export default function Admin() {
   const totalPages = Math.ceil(filteredUsers.length / pageSize);
   const pagedUsers = filteredUsers.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
-  // 전임자 검색
-  const handlePredecessorSearch = (keyword) => {
-    setPredecessorSearch(keyword);
-    if (!keyword.trim()) { setPredecessorResults([]); return; }
-    const results = USERS.filter(u =>
-      u.name.includes(keyword) || u.employeeNo.includes(keyword)
-    );
-    setPredecessorResults(results);
-  };
-
   // 신규 등록 모달 열기
   const openCreateModal = () => {
     setIsEditMode(false);
     setFormData(INIT_FORM);
-    setPredecessorSearch('');
-    setPredecessorResults([]);
     setIsUserFormOpen(true);
   };
 
@@ -129,8 +115,6 @@ export default function Admin() {
       status: user.status,
       predecessor: user.predecessor,
     });
-    setPredecessorSearch(user.predecessor?.name || '');
-    setPredecessorResults([]);
     setIsUserFormOpen(true);
   };
 
@@ -156,6 +140,14 @@ export default function Admin() {
     console.log('비밀번호 초기화:', resetTarget);
     setIsResetPwOpen(false);
     showToast(`${resetTarget.name}님의 비밀번호가 초기화되었습니다.`);
+  };
+
+  const handleSelectPredecessor = (employee) => {
+    setFormData(p => ({
+      ...p,
+      predecessor: { name: employee.name, employeeNo: employee.id }
+    }));
+    setIsPredecessorModalOpen(false);
   };
 
   return (
@@ -431,25 +423,14 @@ export default function Admin() {
 
                 <div className="admin-field">
                   <label>전임자 <span style={{ fontWeight: 500, color: 'var(--ink-tertiary)' }}>(선택)</span></label>
-                  <div className="admin-search-inline">
-                    <input className="admin-input" type="text" placeholder="이름 또는 사번으로 검색"
-                      value={predecessorSearch} onChange={(e) => handlePredecessorSearch(e.target.value)} />
-                  </div>
-                  {predecessorResults.length > 0 && (
-                    <div className="admin-search-results show">
-                      {predecessorResults.map(u => (
-                        <div key={u.id} className="admin-search-result-row"
-                          onClick={() => { setFormData(p => ({ ...p, predecessor: { name: u.name, employeeNo: u.employeeNo } })); setPredecessorSearch(u.name); setPredecessorResults([]); }}>
-                          <span className="name">{u.name}</span>
-                          <span className="meta">{u.dept} · {u.employeeNo}</span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                  {formData.predecessor && (
-                    <div className="admin-selected-chip">
-                      선택됨: {formData.predecessor.name}
-                      <button className="rm" onClick={() => { setFormData(p => ({ ...p, predecessor: null })); setPredecessorSearch(''); }}>
+                  {!formData.predecessor ? (
+                    <button className="admin-action-btn" style={{width: '100%', justifyContent: 'center'}} onClick={() => setIsPredecessorModalOpen(true)}>
+                      직원 검색
+                    </button>
+                  ) : (
+                    <div className="admin-selected-chip" style={{marginTop: 0}}>
+                      {formData.predecessor.name} ({formData.predecessor.employeeNo})
+                      <button className="rm" onClick={() => { setFormData(p => ({ ...p, predecessor: null })); }}>
                         <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M18 6 6 18M6 6l12 12" /></svg>
                       </button>
                     </div>
@@ -460,13 +441,13 @@ export default function Admin() {
                   <label>재직 상태 *</label>
                   <div className="admin-radio-row">
                   {['재직', '휴직', '퇴직'].map(s => (
-  <div key={s} className="admin-radio" onClick={() => setFormData(p => ({ ...p, status: s }))}>
-    <input type="radio" name="ufStatus" value={s} checked={formData.status === s}
-      onChange={() => setFormData(p => ({ ...p, status: s }))} readOnly />
-    <span className="dot" />
-    <span>{s}</span>
-  </div>
-))}
+                    <div key={s} className="admin-radio" onClick={() => setFormData(p => ({ ...p, status: s }))}>
+                      <input type="radio" name="ufStatus" value={s} checked={formData.status === s}
+                        onChange={() => setFormData(p => ({ ...p, status: s }))} readOnly />
+                      <span className="dot" />
+                      <span>{s}</span>
+                    </div>
+                  ))}
                   </div>
                 </div>
               </div>
@@ -503,6 +484,13 @@ export default function Admin() {
         </div>
       )}
 
+      {isPredecessorModalOpen && (
+        <EmployeeSearchModal
+          onSelect={handleSelectPredecessor}
+          onClose={() => setIsPredecessorModalOpen(false)}
+        />
+      )}
+
       {/* 비밀번호 초기화 확인 모달 */}
       {isResetPwOpen && resetTarget && (
         <div className="modal-overlay" onClick={() => setIsResetPwOpen(false)}>
@@ -522,9 +510,6 @@ export default function Admin() {
           </div>
         </div>
       )}
-
-      {/* 토스트 */}
-      {toast && <div className="admin-toast">{toast}</div>}
-    </div>
+          </div>
   );
 }
