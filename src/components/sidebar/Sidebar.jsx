@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { NavLink } from 'react-router-dom';
 import "./Sidebar.css";
+import useAuthStore from '../../store/useAuthStore';
 
 import ChangePasswordModal from './ChangePasswordModal';
 
@@ -29,6 +30,7 @@ function UserActionPopover({ open, onClose, onOpenChangePasswordModal }) {
 function Sidebar() {
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
   const [isChangePasswordModalOpen, setIsChangePasswordModalOpen] = useState(false);
+  const user = useAuthStore((state) => state.user);
   return (
     <aside className="sidebar">
       <div className="brand">
@@ -77,11 +79,11 @@ function Sidebar() {
       </nav>
 
       <div className="sidebar-user">
-        <div className="avatar">박</div>
+        <div className="avatar">{user?.name?.charAt(0) || ''}</div>
 
         <div>
-          <div className="user-name">박주임</div>
-          <div className="user-dept">문화도시과</div>
+          <div className="user-name">{user?.name || '사용자'}</div>
+          <div className="user-dept">{user?.deptName || '부서없음'}</div>
         </div>
         <div className="user-actions">
           <button className="kebab-btn" onClick={() => setIsPopoverOpen(p => !p)}>

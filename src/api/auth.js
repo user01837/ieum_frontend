@@ -1,32 +1,22 @@
 import api from './axios';
 
 /**
- * [더미] 로그인 요청 API
- * @param {{ empId: string, password, deptName: string }} data - 로그인 데이터 (사원 ID, 비밀번호, 부서명)
+ * 로그인 요청 API
+ * @param {{ empId: string, password: string, deptName: string }} data - 로그인 데이터 (사원 ID, 비밀번호, 부서명)
  */
 export const login = data => {
-  console.log('Dummy login attempt with:', data);
-  // // 기존 실제 API 호출 코드 (주석 처리)
-  // return api.post('/auth/login', data);
+  console.log('Login attempt with:', data);
 
-  // 더미 데이터를 반환하는 Promise를 생성합니다.
-  return new Promise(resolve => {
-    setTimeout(() => {
-      resolve({
-        data: {
-          user: {
-            id: 1,
-            name: '홍길동',
-            empId: data.empId,
-            deptName: data.deptName,
-            profileImg: 'https://i.pravatar.cc/150?u=a042581f4e29026704d',
-            role: 'ROLE_USER',
-          },
-          accessToken: 'dummy-access-token-for-testing',
-        },
-      });
-    }, 500); // 0.5초 딜레이
-  });
+  // 백엔드 API가 기대하는 형식으로 데이터 변환
+  // 프론트엔드 (empId, deptName) -> 백엔드 (userId, position_code)
+  const requestData = {
+    userId: data.empId,
+    password: data.password,
+    position_code: data.deptName,
+  };
+
+  console.log('Sending login request to backend with:', requestData);
+  return api.post('/auth/login', requestData);
 };
 
 /**
@@ -34,7 +24,7 @@ export const login = data => {
  */
 export const logout = () => {
   console.log('Dummy logout attempt');
-  // // 기존 실제 API 호출 코드 (주석 처리)
+  // 기존 실제 API 호출 코드 (주석 처리)
   // return api.post('/auth/logout');
 
   // 더미 데이터를 반환하는 Promise를 생성합니다.
@@ -45,4 +35,11 @@ export const logout = () => {
       });
     }, 300); // 0.3초 딜레이
   });
+};
+
+/**
+ * 현재 로그인된 사용자 정보 조회 API
+ */
+export const getMe = () => {
+  return api.get('/auth/me'); // 백엔드에 해당 엔드포인트가 필요합니다.
 };

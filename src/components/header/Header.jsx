@@ -4,9 +4,10 @@ import { useLogoutMutation } from "../../hooks/mutations/useAuthMutation";
 import { useNavigate } from 'react-router-dom';
 import useAuthStore from '../../store/useAuthStore';
 
-function Header({ title, userName, currentDate }) {
+function Header({ title, currentDate }) {
   const { mutate: logoutMutate } = useLogoutMutation();
   const navigate = useNavigate();
+  const user = useAuthStore((state) => state.user);
   const authLogout = useAuthStore((state) => state.logout);
 
   const handleLogout = () => {
@@ -26,7 +27,7 @@ function Header({ title, userName, currentDate }) {
     <div className="topbar">
       <h1>{title}</h1>
       <div className="topbar-right">
-        <span>안녕하세요, <b>{userName}</b>님</span>
+        <span>안녕하세요, <b>{user?.name || '사용자'}</b>님</span>
         <span>|</span>
         <span>{currentDate}</span>
         <button className="logout-pill" onClick={handleLogout}>로그아웃</button>
