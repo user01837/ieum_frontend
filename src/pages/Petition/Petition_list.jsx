@@ -1,38 +1,82 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './Petition_list.css';
 import Pagination from '../../components/Pagination/Pagination.jsx';
 import useAuthStore from '../../store/useAuthStore.js';
-import { COMPLAINTS, PREDECESSOR, TASKS } from './data';
+import { usePetitionsQuery } from '../../hooks/queries/usePetitionQuery.js';
+import { useDepartmentsQuery } from '../../hooks/queries/useDeptQuery.js';
 
 // 다른 파일에서도 사용될 수 있으므로, 나중에 공통 데이터 파일로 옮기는 것을 고려해볼 수 있습니다.
 const ALL_DEPARTMENTS = ['행정복지과', '도로교통과', '문화도시과', '도시계획과', '정보통신과', '총무과'];
 
 const statusOptions = [
     { key: 'all', label: '전체' },
-    { key: 'wait', label: '대기중' },
-    { key: 'progress', label: '처리중' },
-    { key: 'done', label: '완료' },
+    { key: '01', label: '대기중' },
+    { key: '02', label: '처리중' },
+    { key: '03', label: '완료' },
 ];
+
+const STATUS_CLASS_MAP = {
+    '대기중': 'wait',
+    '처리중': 'progress',
+    '완료': 'done',
+};
 
 
 function PetitionList({ isAdmin = false }) {
     const user = useAuthStore((state) => state.user);
-    const [allComplaints, setAllComplaints] = useState([]); // 필터/정렬된 전체 데이터
-    const [complaints, setComplaints] = useState([]); // 현재 페이지에 보여줄 데이터 (10개)
     const [currentScope, setCurrentScope] = useState(isAdmin ? ALL_DEPARTMENTS[0] : 'dept');
     const [currentStatus, setCurrentStatus] = useState('all'); // 'all', 'wait', 'progress', 'done'
     const [isSortOn, setIsSortOn] = useState(true);
     const [currentPage, setCurrentPage] = useState(1);
+    const ITEMS_PER_PAGE = 10;
+
+    // 전체 부서 목록을 가져와서 code-name 맵을 만듭니다.
+    const { data: departments } = useDepartmentsQuery();
+    
+    // API 요청을 위한 파라미터 변환
+    const apiScope = useMemo(() => {
+        if (isAdmin) return 'ALL'; // 관리자는 항상 'ALL'
+        if (currentScope === 'dept') return 'ALL'; // 부서 전체 민원은 백엔드의 'ALL'과 동일
+        if (currentScope === 'mine') return 'MY';
+        if (currentScope === 'task') return 'TASK';
+        if (currentScope === 'predecessor') return 'PREDECESSOR';
+        return 'ALL';
+    }, [isAdmin, currentScope]);
+
+    const apiStatus = currentStatus === 'all' ? 'ALL' : currentStatus;
+
+    const { data: petitionData, isLoading, isError } = usePetitionsQuery({
+      scope: apiScope,
+      status: apiStatus,
+      page: currentPage - 1, // API는 0부터 시작, UI는 1부터 시작
+      size: ITEMS_PER_PAGE,
+      sort: isSortOn ? 'incomplete_first' : null,
+    });
+
+    const complaints = petitionData?.content || [];
+    const totalItems = petitionData?.totalElements || 0;
 
     const [isScopeDropdownOpen, setIsScopeDropdownOpen] = useState(false);
     const [isStatusDropdownOpen, setIsStatusDropdownOpen] = useState(false);
 
     const navigate = useNavigate();
-    const ITEMS_PER_PAGE = 10;
 
     const scopeDropdownRef = useRef(null);
     const statusDropdownRef = useRef(null);
+
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (scopeDropdownRef.current && !scopeDropdownRef.current.contains(event.target)) {
+                setIsScopeDropdownOpen(false);
+            }
+            if (statusDropdownRef.current && !statusDropdownRef.current.contains(event.target)) {
+                setIsStatusDropdownOpen(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
 
     // 로그인한 사용자 정보가 없으면 렌더링하지 않거나 로딩 상태를 표시할 수 있습니다.
     if (!user) {
@@ -40,7 +84,7 @@ function PetitionList({ isAdmin = false }) {
     }
 
     const nonAdminScopeOptions = [
-        { key: 'dept', label: '부서 전체 민원' },
+        { key: 'dept', label: '부서 전체 민원' }, // UI에서는 'dept'를 사용
         { key: 'task', label: '업무별' },
         { key: 'mine', label: '내 민원' },
         { key: 'predecessor', label: '전임자' },
@@ -62,66 +106,6 @@ function PetitionList({ isAdmin = false }) {
         : nonAdminScopeSubtitles[currentScope];
 
     const currentScopeLabel = scopeOptions.find(o => o.key === currentScope)?.label;
-
-    useEffect(() => {
-        const handleClickOutside = (event) => {
-            if (scopeDropdownRef.current && !scopeDropdownRef.current.contains(event.target)) {
-                setIsScopeDropdownOpen(false);
-            }
-            if (statusDropdownRef.current && !statusDropdownRef.current.contains(event.target)) {
-                setIsStatusDropdownOpen(false);
-            }
-        };
-        document.addEventListener('mousedown', handleClickOutside);
-        return () => document.removeEventListener('mousedown', handleClickOutside);
-    }, []);
-
-    useEffect(() => {
-        // 1. 데이터 소스 결정 및 필터링/정렬
-        if (!user) return;
-
-        let source;
-
-        if (isAdmin) {
-            // 관리자는 모든 민원(COMPLAINTS + PREDECESSOR)을 대상으로 부서별 필터링
-            source = [...COMPLAINTS, ...PREDECESSOR].filter(c => c.dept === currentScope);
-        } else if (currentScope === 'predecessor') {
-            source = [...PREDECESSOR];
-        } else if (currentScope === 'mine') {
-            source = [...COMPLAINTS, ...PREDECESSOR].filter(c => c.assignee === user.name);
-        } else if (currentScope === 'task') {
-            // 참고: user 객체에 taskIds가 포함되어 있어야 합니다.
-            source = [...COMPLAINTS, ...PREDECESSOR].filter(c => user.taskIds?.includes(c.taskId)).sort((a,b) => a.deadline.localeCompare(b.deadline));
-        } else { 
-            // 일반 사용자의 '부서 전체 민원'
-            source = [...COMPLAINTS, ...PREDECESSOR].filter(c => c.dept === user.deptName);
-        }
-        
-        if (currentStatus !== 'all') {
-            source = source.filter(c => c.status === currentStatus);
-        }
-
-        if (isSortOn) {
-            source.sort((a, b) => {
-                const aIsDone = a.status === 'done';
-                const bIsDone = b.status === 'done';
-                if (aIsDone !== bIsDone) {
-                    return aIsDone ? 1 : -1;
-                }
-                return a.received.localeCompare(b.received);
-            });
-        }
-        
-        setAllComplaints(source);
-        setCurrentPage(1); // 필터가 변경되면 1페이지로 리셋
-    }, [currentScope, currentStatus, isSortOn, isAdmin, user]);
-
-    useEffect(() => {
-        // 2. 현재 페이지에 맞는 데이터 10개 슬라이싱
-        const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-        const endIndex = startIndex + ITEMS_PER_PAGE;
-        setComplaints(allComplaints.slice(startIndex, endIndex));
-    }, [allComplaints, currentPage]);
 
     const handleScopeSelect = (scope) => {
         setCurrentScope(scope);
@@ -194,28 +178,33 @@ function PetitionList({ isAdmin = false }) {
                             <span></span>
                         </div>
                         <div id="listBody">
-                            {complaints.length > 0 ? (
+                            {isLoading ? (
+                                <div style={{padding:'40px 0', textAlign:'center', fontSize:'13px', color:'var(--ink-tertiary)'}}>민원 목록을 불러오는 중입니다...</div>
+                            ) : isError ? (
+                                <div style={{padding:'40px 0', textAlign:'center', fontSize:'13px', color:'var(--danger)'}}>오류가 발생했습니다.</div>
+                            ) : complaints.length > 0 ? (
                                 complaints.map(c => (
-                                    <div key={c.id} className="trow" onClick={() => navigate(`/petitions/${c.id}`)}>
-                                        <span className="date">{c.received}</span>
-                                        <span className="date">{c.deadline}</span>
+                                    <div key={c.complaintId} className="trow" onClick={() => navigate(`/petitions/${c.complaintId}`)}>
+                                        <span className="date">{c.receivedAt?.split('T')[0]}</span>
+                                        <span className="date due-date">{c.dueDate?.split('T')[0]}</span>
                                         <div className="title">{c.title}</div>
                                         <span className="deptname">
-                                            {currentScope === 'task' ? (TASKS[c.taskId]?.name || '미분류') : c.dept}
+                                            {/* 부서 코드를 부서 이름으로 매핑합니다. */}
+                                            {departments?.find(d => d.code === c.departmentCode)?.name || c.taskName || '미분류'}
                                         </span>
-                                        <span className={`status ${c.status}`}>
-                                            <span className="dot"></span>{c.statusText}
+                                        <span className={`status ${STATUS_CLASS_MAP[c.statusName] || ''}`}>
+                                            <span className="dot"></span>{c.statusName}
                                         </span>
                                         <svg className="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3"><path d="m9 18 6-6-6-6"/></svg>
                                     </div>
                                 ))
                             ) : (
-                                <div style={{padding:'40px 0', textAlign:'center', fontSize:'13px', color:'var(--ink-tertiary)'}}>표시할 항목이 없습니다.</div>
+                                <div style={{padding:'40px 0', textAlign:'center', fontSize:'13px', color:'var(--ink-tertiary)'}}>표시할 민원이 없습니다.</div>
                             )}
                         </div>
                         <div className="tablefoot">
                             <Pagination
-                                totalItems={allComplaints.length}
+                                totalItems={totalItems}
                                 itemsPerPage={ITEMS_PER_PAGE}
                                 currentPage={currentPage}
                                 onPageChange={handlePageChange}
