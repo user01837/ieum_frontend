@@ -1,103 +1,34 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+// [변경] useCallback, useEffect, useRef 제거 → useUserSearch hook으로 대체
+import React, { useState } from 'react';
 import './EmpSearchModal.css';
-
-/**
- * ===== Mock API =====
- * 실제 연동 시 이 함수 내부만 axios.get('/api/employees', { params }) 등으로 교체하면 됩니다.
- * scope: 'dept' | 'all'
- * currentDept: 현재 사용자 소속 부서 (scope=dept일 때 서버에서 필터링된다고 가정)
- * dept: scope=all일 때 부서 필터값 ('all' 포함)
- * query: 검색어 (이름 또는 사번)
- */
-const MOCK_EMPLOYEES = [
-  { id: 'm1', name: '김철수', dept: '행정복지과', role: '과장' },
-  { id: 'm2', name: '이영희', dept: '행정복지과', role: '팀장' },
-  { id: 'm3', name: '박민수', dept: '행정복지과', role: '주무관' },
-  { id: 'm4', name: '김하늘', dept: '행정복지과', role: '주무관' },
-  { id: 'P-2311', name: '정수민', dept: '도시계획과', role: '주무관' },
-  { id: 'P-2287', name: '최유진', dept: '정보통신과', role: '주무관' },
-  { id: 'P-2055', name: '한서준', dept: '총무과', role: '팀장' },
-  { id: 'P-2179', name: '오세현', dept: '도시계획과', role: '주무관' },
-  { id: 'P-2402', name: '강민지', dept: '정보통신과', role: '팀장' },
-];
-const DEPT_OPTIONS = ['행정복지과', '문화도시과', '도시계획과', '정보통신과', '총무과'];
-
-function fetchEmployees({ scope, currentDept, dept, query }) {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      let pool = MOCK_EMPLOYEES;
-
-      if (scope === 'dept') {
-        pool = pool.filter((e) => e.dept === currentDept);
-      } else if (dept && dept !== 'all') {
-        pool = pool.filter((e) => e.dept === dept);
-      }
-
-      if (query && query.trim()) {
-        const q = query.trim().toLowerCase();
-        pool = pool.filter(
-          (e) => e.name.toLowerCase().includes(q) || e.id.toLowerCase().includes(q)
-        );
-      }
-
-      resolve(pool);
-    }, 400); // 네트워크 지연 흉내
-  });
-}
+// [변경] useUserSearch hook import 추가
+import { useUserSearch } from '../../hooks/queries/useUserQuery';
+// [변경] useDeptList hook import 추가
+import { useDeptList } from '../../hooks/queries/useDeptQuery';
 
 function getInitials(name) {
   return name.slice(-2);
 }
 
-/**
- * EmployeeSearchModal
- * @param {string} currentDept - 현재 사용자 소속 부서 (scope=dept 기준)
- * @param {function} onSelect - 직원 선택 시 콜백 (employee 객체 전달)
- * @param {function} onClose - 모달 닫기 콜백
- */
 function EmployeeSearchModal({ currentDept = '문화도시과', onSelect, onClose, forceDeptScope }) {
-  const [scope, setScope] = useState(forceDeptScope ? 'dept' : 'dept'); // 'dept' | 'all'
+  const [scope, setScope] = useState(forceDeptScope ? 'dept' : 'dept');
   const [query, setQuery] = useState('');
   const [deptFilter, setDeptFilter] = useState('all');
-  const [employees, setEmployees] = useState([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState(null);
 
-  // 검색어 debounce 처리용
-  const debounceRef = useRef(null);
+  // [변경] fetchEmployees + useEffect + debounce 제거 → hook으로 대체
+  const actualScope = forceDeptScope ? 'dept' : scope;
 
-  const loadEmployees = useCallback(async (params) => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const data = await fetchEmployees(params);
-      setEmployees(data);
-    } catch (err) {
-      setError('직원 목록을 불러오지 못했습니다.');
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
+  const { data: employees = [], isLoading, isError } = useUserSearch({
+    scope: actualScope,
+    departmentCode: deptFilter !== 'all' ? deptFilter : undefined,
+    keyword: query || undefined,
+  });
 
-  // scope, deptFilter 변경 시 즉시 조회
-  useEffect(() => {
-    // forceDeptScope가 true이면 scope는 항상 'dept'로 고정
-    const actualScope = forceDeptScope ? 'dept' : scope;
-    loadEmployees({ scope: actualScope, currentDept, dept: deptFilter, query });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [scope, deptFilter, forceDeptScope]);
+  // [변경] 하드코딩 DEPT_OPTIONS 제거 → API로 교체
+  const { data: deptList = [] } = useDeptList();
 
-  // 검색어 입력은 debounce 적용
-  useEffect(() => {
-    if (debounceRef.current) clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(() => {
-      // forceDeptScope가 true이면 scope는 항상 'dept'로 고정
-      const actualScope = forceDeptScope ? 'dept' : scope;
-      loadEmployees({ scope: actualScope, currentDept, dept: deptFilter, query });
-    }, 250);
-    return () => clearTimeout(debounceRef.current);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [query, scope, deptFilter, forceDeptScope]);
+  // [변경] error state 제거 → isError로 대체
+  const error = isError ? '직원 목록을 불러오지 못했습니다.' : null;
 
   const handleSelect = (employee) => {
     if (onSelect) onSelect(employee);
@@ -139,8 +70,9 @@ function EmployeeSearchModal({ currentDept = '문화도시과', onSelect, onClos
               onChange={(e) => setDeptFilter(e.target.value)}
             >
               <option value="all">전체 부서</option>
-              {DEPT_OPTIONS.map((d) => (
-                <option key={d} value={d}>{d}</option>
+              {/* [변경] 하드코딩 DEPT_OPTIONS 제거 → deptList API 데이터로 교체 */}
+              {deptList.map((d) => (
+                <option key={d.code} value={d.code}>{d.name}</option>
               ))}
             </select>
           )}
@@ -165,20 +97,25 @@ function EmployeeSearchModal({ currentDept = '문화도시과', onSelect, onClos
               <div className="modal-empty-results">검색 결과가 없습니다.</div>
             ) : (
               employees.map((emp) => (
+                // [변경] key: emp.id → emp.userId (API 응답 필드명 변경)
                 <div
-                  key={emp.id}
+                  key={emp.userId}
                   className="modal-result-row"
                   onClick={() => handleSelect(emp)}
                 >
                   <div className="modal-avatar">{getInitials(emp.name)}</div>
                   <div className="modal-result-info">
                     <p className="modal-employee-name">
-                      {emp.name} <span className="modal-employee-role">{emp.role}</span>
+                      {emp.name}
+                      {/* [변경] emp.role → emp.positionName (API 응답 필드명 변경) */}
+                      <span className="modal-employee-role">{emp.positionName}</span>
                     </p>
-                    <p className="modal-employee-id">{emp.id}</p>
+                    {/* [변경] emp.id → emp.userId (API 응답 필드명 변경) */}
+                    <p className="modal-employee-id">{emp.userId}</p>
                   </div>
                   {(!forceDeptScope && scope === 'all') && (
-                    <span className="modal-employee-dept">{emp.dept}</span>
+                    // [변경] emp.dept → emp.departmentName (API 응답 필드명 변경)
+                    <span className="modal-employee-dept">{emp.departmentName}</span>
                   )}
                 </div>
               ))
