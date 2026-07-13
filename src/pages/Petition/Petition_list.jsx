@@ -2,28 +2,8 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './Petition_list.css';
 import Pagination from '../../components/Pagination/Pagination.jsx';
+import useAuthStore from '../../store/useAuthStore.js';
 import { COMPLAINTS, PREDECESSOR, TASKS } from './data';
-
-// 현재 로그인한 사용자 정보 (가상 데이터, 실제로는 useAuth() 등으로 가져와야 함)
-const CURRENT_USER = {
-  name: '박주임',
-  dept: '문화도시과',
-  taskIds: ['t-culture-1', 't-culture-2'],
-};
-
-const nonAdminScopeOptions = [
-    { key: 'dept', label: '부서 전체 민원' },
-    { key: 'task', label: '업무별' },
-    { key: 'mine', label: '내 민원' },
-    { key: 'predecessor', label: '전임자' },
-];
-
-const nonAdminScopeSubtitles = { 
-  dept:`${CURRENT_USER.dept} 소관 민원을 조회합니다. 항목을 클릭하면 상세 처리 화면으로 이동합니다.`, 
-  task:'처리기한이 임박한 순서로 업무를 조회합니다. 항목을 클릭하면 상세 처리 화면으로 이동합니다.', 
-  mine:'박주임님이 담당하고 있는 민원만 조회합니다. 항목을 클릭하면 상세 처리 화면으로 이동합니다.', 
-  predecessor:'전임자로부터 인계받은 업무 목록입니다. 항목을 클릭하면 상세 처리 화면으로 이동합니다.' 
-};
 
 // 다른 파일에서도 사용될 수 있으므로, 나중에 공통 데이터 파일로 옮기는 것을 고려해볼 수 있습니다.
 const ALL_DEPARTMENTS = ['행정복지과', '도로교통과', '문화도시과', '도시계획과', '정보통신과', '총무과'];
@@ -37,6 +17,27 @@ const statusOptions = [
 
 
 function PetitionList({ isAdmin = false }) {
+    const user = useAuthStore((state) => state.user);
+
+    // 로그인한 사용자 정보가 없으면 렌더링하지 않거나 로딩 상태를 표시할 수 있습니다.
+    if (!user) {
+        return <div>사용자 정보를 불러오는 중입니다...</div>;
+    }
+
+    const nonAdminScopeOptions = [
+        { key: 'dept', label: '부서 전체 민원' },
+        { key: 'task', label: '업무별' },
+        { key: 'mine', label: '내 민원' },
+        { key: 'predecessor', label: '전임자' },
+    ];
+
+    const nonAdminScopeSubtitles = {
+      dept:`${user.deptName} 소관 민원을 조회합니다. 항목을 클릭하면 상세 처리 화면으로 이동합니다.`,
+      task:'처리기한이 임박한 순서로 업무를 조회합니다. 항목을 클릭하면 상세 처리 화면으로 이동합니다.',
+      mine:`${user.name}님이 담당하고 있는 민원만 조회합니다. 항목을 클릭하면 상세 처리 화면으로 이동합니다.`,
+      predecessor:'전임자로부터 인계받은 업무 목록입니다. 항목을 클릭하면 상세 처리 화면으로 이동합니다.'
+    };
+
     const [allComplaints, setAllComplaints] = useState([]); // 필터/정렬된 전체 데이터
     const [complaints, setComplaints] = useState([]); // 현재 페이지에 보여줄 데이터 (10개)
     const [currentScope, setCurrentScope] = useState(isAdmin ? ALL_DEPARTMENTS[0] : 'dept');
@@ -86,12 +87,13 @@ function PetitionList({ isAdmin = false }) {
         } else if (currentScope === 'predecessor') {
             source = [...PREDECESSOR];
         } else if (currentScope === 'mine') {
-            source = [...COMPLAINTS, ...PREDECESSOR].filter(c => c.assignee === CURRENT_USER.name);
+            source = [...COMPLAINTS, ...PREDECESSOR].filter(c => c.assignee === user.name);
         } else if (currentScope === 'task') {
-            source = [...COMPLAINTS, ...PREDECESSOR].filter(c => CURRENT_USER.taskIds.includes(c.taskId)).sort((a,b) => a.deadline.localeCompare(b.deadline));
+            // 참고: user 객체에 taskIds가 포함되어 있어야 합니다.
+            source = [...COMPLAINTS, ...PREDECESSOR].filter(c => user.taskIds?.includes(c.taskId)).sort((a,b) => a.deadline.localeCompare(b.deadline));
         } else { 
             // 일반 사용자의 '부서 전체 민원'
-            source = [...COMPLAINTS, ...PREDECESSOR].filter(c => c.dept === CURRENT_USER.dept);
+            source = [...COMPLAINTS, ...PREDECESSOR].filter(c => c.dept === user.deptName);
         }
         
         if (currentStatus !== 'all') {
@@ -111,7 +113,7 @@ function PetitionList({ isAdmin = false }) {
         
         setAllComplaints(source);
         setCurrentPage(1); // 필터가 변경되면 1페이지로 리셋
-    }, [currentScope, currentStatus, isSortOn, isAdmin]);
+    }, [currentScope, currentStatus, isSortOn, isAdmin, user]);
 
     useEffect(() => {
         // 2. 현재 페이지에 맞는 데이터 10개 슬라이싱
