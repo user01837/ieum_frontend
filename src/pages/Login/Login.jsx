@@ -5,7 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useLoginMutation } from "../../hooks/mutations/useAuthMutation";
 import { useNavigate } from "react-router-dom";
 import useAuthStore from "../../store/useAuthStore";
-import { getDepartments } from "../../api/auth";
+import { getDepartments } from "../../api/dept";
 
 export default function Login() {
   const navigate = useNavigate();

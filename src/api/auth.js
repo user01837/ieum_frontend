@@ -46,11 +46,3 @@ export const changePassword = (data) => {
   };
   return api.post('/auth/password', requestData);
 };
-
-/**
- * 부서 목록 조회 API
- */
-export const getDepartments = async () => {
-  const { data } = await api.get('/departments'); // 백엔드에 해당 엔드포인트가 필요합니다.
-  return data;
-};
