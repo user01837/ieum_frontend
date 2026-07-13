@@ -22,4 +22,56 @@ api.interceptors.request.use(
   }
 );
 
+// 응답 인터셉터: 401 에러 발생 시 토큰 재발급 시도
+api.interceptors.response.use(
+  (response) => {
+    // 2xx 범위의 상태 코드는 이 함수를 트리거합니다.
+    return response;
+  },
+  async (error) => {
+    const originalRequest = error.config;
+    const { logout, refreshToken, setToken } = useAuthStore.getState();
+
+    // 401 에러이고, 재시도한 요청이 아닐 경우에만 토큰 재발급을 시도합니다.
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      originalRequest._retry = true; // 무한 재시도를 방지하기 위한 플래그
+
+      // 토큰 재발급 요청 자체에서 401이 발생하면 무한 루프에 빠지므로,
+      // 이 경우는 즉시 로그아웃 처리합니다.
+      if (originalRequest.url === '/auth/refresh') {
+        console.error('Refresh token is invalid or expired. Logging out.');
+        logout();
+        window.location.href = '/login'; // 로그인 페이지로 강제 이동
+        return Promise.reject(error);
+      }
+
+      if (refreshToken) {
+        try {
+          console.log('Access token expired. Attempting to refresh...');
+          // 새 Access Token 요청
+          const { data } = await api.post('/auth/refresh', { refreshToken });
+          const newAccessToken = data.accessToken;
+
+          // 스토어와 localStorage에 새 토큰 저장
+          setToken(newAccessToken);
+
+          // 원래 요청의 헤더에 새 토큰으로 교체
+          originalRequest.headers['Authorization'] = `Bearer ${newAccessToken}`;
+
+          // 원래 실패했던 요청을 새로운 토큰으로 재시도
+          console.log('Token refreshed. Retrying original request...');
+          return api(originalRequest);
+        } catch (refreshError) {
+          console.error('Failed to refresh token. Logging out.', refreshError);
+          logout();
+          window.location.href = '/login';
+          return Promise.reject(refreshError);
+        }
+      }
+    }
+
+    return Promise.reject(error);
+  }
+);
+
 export default api;

@@ -29,6 +29,12 @@ const useAuthStore = create((set, get) => ({
     set({ mustChangePassword: mustChange });
   },
 
+  // Access Token만 업데이트하는 액션
+  setToken: (accessToken) => {
+    set({ token: accessToken });
+    localStorage.setItem('accessToken', accessToken);
+  },
+
   // 앱 로드 시 토큰 유효성을 검사하고 사용자 정보를 가져오는 함수
   checkAuth: async () => {
     console.log('[checkAuth] 시작: 토큰 확인 중...');
