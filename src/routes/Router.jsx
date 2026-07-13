@@ -2,6 +2,7 @@ import { createBrowserRouter, redirect } from "react-router-dom";
 
 import MainLayout from "../layouts/MainLayout";
 import useAuthStore from "../store/useAuthStore";
+import { getMe } from "../api/auth";
 
 import Login from "../pages/Login/Login";
 import PetitionList from "../pages/Petition/Petition_list";
@@ -26,6 +27,36 @@ const protectedLoader = () => {
     return redirect("/login");
   }
   return null; // 인증된 경우 null을 반환하여 자식 라우트 렌더링을 허용.
+};
+
+/**
+ * 관리자 전용 라우트를 위한 loader 함수.
+ * 사용자가 시스템 관리자(02) 역할인지 확인합니다.
+ */
+const adminLoader = async () => {
+  // protectedLoader가 먼저 실행되므로 토큰 존재는 보장됩니다.
+  let { user } = useAuthStore.getState();
+
+  // 스토어에 사용자 정보가 아직 없는 경우 (예: 페이지 새로고침 직후)
+  // API를 직접 호출하여 사용자 정보를 가져옵니다.
+  if (!user) {
+    try {
+      const response = await getMe();
+      user = response.data; // 검사를 위해 임시로 사용자 정보 할당
+    } catch (error) {
+      // getMe API 호출 실패 시 (예: 유효하지 않은 토큰) 로그인 페이지로 리디렉션
+      console.error("Admin check failed: Could not fetch user.", error);
+      return redirect("/login");
+    }
+  }
+
+  // 사용자 역할 코드 확인
+  if (user?.system_role_code !== '02') {
+    alert('관리자만 접근할 수 있는 페이지입니다.');
+    return redirect("/home"); // 권한이 없으면 홈으로 리디렉션
+  }
+
+  return null; // 접근 허용
 };
 
 const router = createBrowserRouter([
@@ -81,6 +112,7 @@ const router = createBrowserRouter([
       {
         path: "admin",
         element: <Admin />,
+        loader: adminLoader, // 관리자 전용 loader 적용
       },
     ],
   },

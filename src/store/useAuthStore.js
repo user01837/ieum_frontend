@@ -1,5 +1,36 @@
 import { create } from 'zustand';
 import { getMe } from '../api/auth';
+import { getDepartments } from '../api/dept';
+import { queryClient } from '../main';
+
+const POSITION_MAP = {
+  "01": "부장",
+  "02": "팀장",
+  "03": "주무관",
+};
+
+// Helper function to map backend user data to frontend format
+const mapBackendUserToFrontend = async (backendUser) => {
+  if (!backendUser) {
+    return null;
+  }
+
+  // Fetch all departments to find the name for the user's department code
+  // This will use react-query's cache if available
+  const departments = await queryClient.fetchQuery({
+    queryKey: ['departments'],
+    queryFn: getDepartments,
+    staleTime: Infinity,
+  });
+
+  const userDept = departments.find(d => d.code === backendUser.department_code);
+
+  return {
+    ...backendUser,
+    deptName: userDept ? userDept.name : backendUser.department_code, // Map code to name, fallback to code
+    positionName: POSITION_MAP[backendUser.position_code] || '직책없음',
+  };
+};
 
 const useAuthStore = create((set, get) => ({
   user: null,
@@ -7,12 +38,8 @@ const useAuthStore = create((set, get) => ({
   refreshToken: localStorage.getItem('refreshToken') || null, // Refresh Token
   mustChangePassword: false, // 비밀번호 변경 필요 여부 상태
 
-  login: (backendUser, accessToken, refreshToken, mustChangePassword) => {
-    // 백엔드(position_code)와 프론트엔드(deptName)의 필드명을 맞춰줍니다.
-    const frontendUser = {
-      ...backendUser,
-      deptName: backendUser.position_code,
-    };
+  login: async (backendUser, accessToken, refreshToken, mustChangePassword) => {
+    const frontendUser = await mapBackendUserToFrontend(backendUser);
     set({ user: frontendUser, token: accessToken, refreshToken: refreshToken, mustChangePassword: mustChangePassword });
     localStorage.setItem('accessToken', accessToken); // 토큰을 localStorage에 저장
     localStorage.setItem('refreshToken', refreshToken);
@@ -46,11 +73,7 @@ const useAuthStore = create((set, get) => ({
         console.log('[checkAuth] API 응답 받음:', response.data);
 
         const backendUser = response.data;
-        // 백엔드(position_code)와 프론트엔드(deptName)의 필드명을 맞춰줍니다.
-        const frontendUser = {
-          ...backendUser,
-          deptName: backendUser.position_code,
-        };
+        const frontendUser = await mapBackendUserToFrontend(backendUser);
         console.log('[checkAuth] 프론트엔드용으로 변환된 사용자 정보:', frontendUser);
 
         // 백엔드 /auth/me 응답에 mustChangePassword가 포함되어 있는지 확인합니다.

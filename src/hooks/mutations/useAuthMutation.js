@@ -17,7 +17,7 @@ export const useLoginMutation = () => {
 
   return useMutation({
     mutationFn: login, // api/auth.js의 login 함수 사용
-    onSuccess: (response) => {
+    onSuccess: async (response) => {
       // 로그인 성공 시 처리
       console.log('Login successful:', response.data);
       // 서버 응답에서 사용자 데이터와 토큰 추출 (API 응답 형식에 따라 수정 필요)
@@ -28,7 +28,7 @@ export const useLoginMutation = () => {
 
       if (userData && accessToken && refreshToken) {
         // mustChangePassword 값과 함께 스토어에 로그인 정보 저장
-        authLogin(userData, accessToken, refreshToken, mustChangePassword);
+        await authLogin(userData, accessToken, refreshToken, mustChangePassword);
         
         // 비밀번호를 변경할 필요가 없을 때만 메인 페이지로 이동
         if (!mustChangePassword) {
