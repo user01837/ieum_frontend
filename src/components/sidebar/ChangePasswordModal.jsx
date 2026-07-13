@@ -1,21 +1,26 @@
 import React, { useState } from 'react';
 import './ChangePasswordModal.css';
+import { useChangePasswordMutation } from '../../hooks/mutations/useAuthMutation';
+import useAuthStore from '../../store/useAuthStore';
 
 /**
  * 비밀번호 변경 모달
  * @param {function} onClose - 모달 닫기 콜백
- * @param {function} onConfirm - 확인 버튼 클릭 시 콜백
  */
-function ChangePasswordModal({ onClose, onConfirm }) {
-  const [id, setId] = useState('');
+function ChangePasswordModal({ onClose }) {
+  const user = useAuthStore((state) => state.user);
+  const mustChangePassword = useAuthStore((state) => state.mustChangePassword);
+  const setMustChangePassword = useAuthStore((state) => state.setMustChangePassword);
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmNewPassword, setConfirmNewPassword] = useState('');
   const [errors, setErrors] = useState({});
 
+  const { mutate: changePasswordMutate, isPending } = useChangePasswordMutation();
+
   const validate = () => {
     const newErrors = {};
-    if (!id) newErrors.id = '아이디를 입력해주세요.';
+    if (!user?.userId) newErrors.id = '사용자 정보를 불러올 수 없습니다.';
     if (!currentPassword) newErrors.currentPassword = '현재 비밀번호를 입력해주세요.';
     if (!newPassword) {
       newErrors.newPassword = '새 비밀번호를 입력해주세요.';
@@ -36,16 +41,30 @@ function ChangePasswordModal({ onClose, onConfirm }) {
 
   const handleConfirm = () => {
     if (validate()) {
-      // 실제 API 호출 로직
-      console.log('비밀번호 변경 API 호출:', { id, currentPassword, newPassword });
-      alert('비밀번호가 성공적으로 변경되었습니다.');
-      onClose();
+      changePasswordMutate({ currentPassword, newPassword }, {
+        onSuccess: () => {
+          alert('비밀번호가 성공적으로 변경되었습니다.');
+          // 비밀번호 변경 필요 상태를 false로 업데이트합니다.
+          setMustChangePassword(false);
+          onClose();
+        },
+        onError: (error) => {
+          // 401: 현재 비밀번호 불일치, 422: 유효성 검사 실패 등
+          const errorMessage = error.response?.data?.detail || '비밀번호 변경에 실패했습니다. 다시 시도해주세요.';
+          alert(errorMessage);
+        },
+      });
     }
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault(); // 폼 제출 시 페이지가 새로고침되는 것을 방지합니다.
+    handleConfirm();
   };
 
   return (
     <div className="modal-overlay">
-      <div className="modal-container" role="dialog" aria-modal="true" style={{ width: '400px' }}>
+      <form className="modal-container" role="dialog" aria-modal="true" style={{ width: '400px' }} onSubmit={handleSubmit}>
         <div className="modal-header">
           <div>
             <p className="modal-title">비밀번호 변경</p>
@@ -53,7 +72,7 @@ function ChangePasswordModal({ onClose, onConfirm }) {
               계정 정보를 입력하고 새 비밀번호를 설정하세요.
             </p>
           </div>
-          <button aria-label="닫기" className="modal-close-btn" onClick={onClose}>
+          <button type="button" aria-label="닫기" className="modal-close-btn" onClick={onClose} disabled={mustChangePassword}>
             <i className="ti ti-x ic" aria-hidden="true"></i>
           </button>
         </div>
@@ -64,9 +83,10 @@ function ChangePasswordModal({ onClose, onConfirm }) {
             <input
               id="pw-id"
               type="text"
-              value={id}
-              onChange={(e) => setId(e.target.value)}
-              className={errors.id ? 'error' : ''}
+              value={user?.userId || ''}
+              readOnly
+              disabled
+              className={errors.id ? 'error' : ''} // 에러 스타일은 유지
             />
             {errors.id && <p className="error-message">{errors.id}</p>}
           </div>
@@ -109,10 +129,12 @@ function ChangePasswordModal({ onClose, onConfirm }) {
         </div>
 
         <div className="modal-footer">
-          <button className="modal-footer-btn" onClick={onClose}>취소</button>
-          <button className="modal-footer-btn primary" onClick={handleConfirm}>확인</button>
+          <button type="button" className="modal-footer-btn" onClick={onClose} disabled={mustChangePassword}>취소</button>
+          <button type="submit" className="modal-footer-btn primary" disabled={isPending || !user}>
+            {isPending ? '변경 중...' : '확인'}
+          </button>
         </div>
-      </div>
+      </form>
     </div>
   );
 }

@@ -18,6 +18,21 @@ const statusOptions = [
 
 function PetitionList({ isAdmin = false }) {
     const user = useAuthStore((state) => state.user);
+    const [allComplaints, setAllComplaints] = useState([]); // 필터/정렬된 전체 데이터
+    const [complaints, setComplaints] = useState([]); // 현재 페이지에 보여줄 데이터 (10개)
+    const [currentScope, setCurrentScope] = useState(isAdmin ? ALL_DEPARTMENTS[0] : 'dept');
+    const [currentStatus, setCurrentStatus] = useState('all'); // 'all', 'wait', 'progress', 'done'
+    const [isSortOn, setIsSortOn] = useState(true);
+    const [currentPage, setCurrentPage] = useState(1);
+
+    const [isScopeDropdownOpen, setIsScopeDropdownOpen] = useState(false);
+    const [isStatusDropdownOpen, setIsStatusDropdownOpen] = useState(false);
+
+    const navigate = useNavigate();
+    const ITEMS_PER_PAGE = 10;
+
+    const scopeDropdownRef = useRef(null);
+    const statusDropdownRef = useRef(null);
 
     // 로그인한 사용자 정보가 없으면 렌더링하지 않거나 로딩 상태를 표시할 수 있습니다.
     if (!user) {
@@ -38,19 +53,6 @@ function PetitionList({ isAdmin = false }) {
       predecessor:'전임자로부터 인계받은 업무 목록입니다. 항목을 클릭하면 상세 처리 화면으로 이동합니다.'
     };
 
-    const [allComplaints, setAllComplaints] = useState([]); // 필터/정렬된 전체 데이터
-    const [complaints, setComplaints] = useState([]); // 현재 페이지에 보여줄 데이터 (10개)
-    const [currentScope, setCurrentScope] = useState(isAdmin ? ALL_DEPARTMENTS[0] : 'dept');
-    const [currentStatus, setCurrentStatus] = useState('all'); // 'all', 'wait', 'progress', 'done'
-    const [isSortOn, setIsSortOn] = useState(true);
-    const [currentPage, setCurrentPage] = useState(1);
-
-    const [isScopeDropdownOpen, setIsScopeDropdownOpen] = useState(false);
-    const [isStatusDropdownOpen, setIsStatusDropdownOpen] = useState(false);
-
-    const navigate = useNavigate();
-    const ITEMS_PER_PAGE = 10;
-
     const scopeOptions = isAdmin
         ? ALL_DEPARTMENTS.map(dept => ({ key: dept, label: dept }))
         : nonAdminScopeOptions;
@@ -60,9 +62,6 @@ function PetitionList({ isAdmin = false }) {
         : nonAdminScopeSubtitles[currentScope];
 
     const currentScopeLabel = scopeOptions.find(o => o.key === currentScope)?.label;
-    
-    const scopeDropdownRef = useRef(null);
-    const statusDropdownRef = useRef(null);
 
     useEffect(() => {
         const handleClickOutside = (event) => {
@@ -79,6 +78,8 @@ function PetitionList({ isAdmin = false }) {
 
     useEffect(() => {
         // 1. 데이터 소스 결정 및 필터링/정렬
+        if (!user) return;
+
         let source;
 
         if (isAdmin) {

@@ -1,9 +1,11 @@
 import { useEffect, useRef, useState } from "react";
 import styles from "./Login.module.css";
 import logo from "../../assets/logo.png";
+import { useQuery } from "@tanstack/react-query";
 import { useLoginMutation } from "../../hooks/mutations/useAuthMutation";
 import { useNavigate } from "react-router-dom";
 import useAuthStore from "../../store/useAuthStore";
+import { getDepartments } from "../../api/auth";
 
 export default function Login() {
   const navigate = useNavigate();
@@ -21,25 +23,17 @@ export default function Login() {
 
   const wrapRef = useRef(null);
   const { mutate: loginMutate, isPending: isLoginPending } = useLoginMutation();
+  const { data: deptList, isLoading: isDeptLoading } = useQuery({
+    queryKey: ['departments'],
+    queryFn: getDepartments,
+    staleTime: Infinity, // 부서 목록은 자주 바뀌지 않으므로, 불필요한 재요청을 막기 위해 staleTime을 무한으로 설정
+  });
 
   useEffect(() => {
     if (token) {
       navigate("/home");
     }
   }, [token, navigate]);
-
-  const deptList = [
-    "문화도시과",
-    "재무과",
-    "건축과",
-    "도로과",
-    "환경과",
-    "지역경제과",
-    "주민자치과",
-    "정보통신과",
-    "공원녹지과",
-    "어르신복지과",
-  ];
 
   // 외부 클릭 닫기
   useEffect(() => {
@@ -68,7 +62,20 @@ export default function Login() {
       return;
     }
 
-    loginMutate({ empId: id, password: pw, deptName: dept });
+    const selectedDept = deptList?.find(d => d.name === dept);
+    if (!selectedDept) {
+      // 부서 목록에 없는 부서가 선택된 경우 (이론적으로는 발생하지 않음)
+      setDeptError(true);
+      alert('유효하지 않은 부서입니다. 목록에서 다시 선택해주세요.');
+      return;
+    }
+
+    loginMutate({ empId: id, password: pw, deptCode: selectedDept.code });
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault(); // 폼 제출 시 페이지 새로고침 방지
+    handleLogin();
   };
 
   return (
@@ -84,7 +91,7 @@ export default function Login() {
         </div>
 
         {/* 로그인 카드 */}
-        <div className={styles.card}>
+        <form className={styles.card} onSubmit={handleSubmit}>
           <div className={styles['card-title']}>로그인</div>
           <div className={styles['card-sub']}>소속 부서를 선택하고 계정 정보를 입력해 주세요.</div>
 
@@ -102,19 +109,25 @@ export default function Login() {
 
             {openDept && (
               <div className={styles['dropdown-menu']}>
-                {deptList.map((d) => (
-                  <div
-                    key={d}
-                    className={`${styles['dropdown-item']} ${dept === d ? styles.active : ""}`}
-                    onClick={() => {
-                      setDept(d);
-                      setOpenDept(false);
-                      setDeptError(false);
-                    }}
-                  >
-                    {d}
-                  </div>
-                ))}
+                {isDeptLoading ? (
+                  <div className={styles['dropdown-item']}>불러오는 중...</div>
+                ) : deptList && deptList.length > 0 ? (
+                  deptList.map((d) => (
+                    <div
+                      key={d.code}
+                      className={`${styles['dropdown-item']} ${dept === d.name ? styles.active : ""}`}
+                      onClick={() => {
+                        setDept(d.name);
+                        setOpenDept(false);
+                        setDeptError(false);
+                      }}
+                    >
+                      {d.name}
+                    </div>
+                  ))
+                ) : (
+                  <div className={styles['dropdown-item']}>부서 목록을 불러올 수 없습니다.</div>
+                )}
               </div>
             )}
 
@@ -166,10 +179,12 @@ export default function Login() {
           </div>
 
           {/* 버튼 */}
-          <div className={styles['btn-primary']} onClick={handleLogin}>
-            로그인 <span>→</span>
+          <div className={styles.buttonContainer}>
+            <button type="submit" className={styles['btn-primary']}>
+              로그인 <span>→</span>
+            </button>
           </div>
-        </div>
+        </form>
 
         {/* 푸터 */}
         <div className={styles.footlink}>

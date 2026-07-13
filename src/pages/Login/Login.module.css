@@ -120,7 +120,13 @@ label{font-size:12px;font-weight:700;color:var(--ink-soft);display:block;margin-
   padding:12px;
   border-radius:8px;
   cursor:pointer;
+  width: 100%;
+  border: none; /* <button> 태그의 기본 테두리 제거 */
   font-weight:700;
+}
+
+.buttonContainer {
+  text-align: center;
 }
 
 .field-error{

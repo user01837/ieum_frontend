@@ -2,17 +2,17 @@ import api from './axios';
 
 /**
  * 로그인 요청 API
- * @param {{ empId: string, password: string, deptName: string }} data - 로그인 데이터 (사원 ID, 비밀번호, 부서명)
+ * @param {{ empId: string, password: string, deptCode: string }} data - 로그인 데이터 (사원 ID, 비밀번호, 부서 코드)
  */
 export const login = data => {
   console.log('Login attempt with:', data);
 
   // 백엔드 API가 기대하는 형식으로 데이터 변환
-  // 프론트엔드 (empId, deptName) -> 백엔드 (userId, position_code)
+  // 프론트엔드 (empId, deptCode) -> 백엔드 (userId, department_code)
   const requestData = {
     userId: data.empId,
     password: data.password,
-    position_code: data.deptName,
+    department_code: data.deptCode,
   };
 
   console.log('Sending login request to backend with:', requestData);
@@ -20,21 +20,12 @@ export const login = data => {
 };
 
 /**
- * [더미] 로그아웃 요청 API
+ * 로그아웃 요청 API
  */
-export const logout = () => {
-  console.log('Dummy logout attempt');
-  // 기존 실제 API 호출 코드 (주석 처리)
-  // return api.post('/auth/logout');
-
-  // 더미 데이터를 반환하는 Promise를 생성합니다.
-  return new Promise(resolve => {
-    setTimeout(() => {
-      resolve({
-        data: { message: 'Logout successful' },
-      });
-    }, 300); // 0.3초 딜레이
-  });
+export const logout = (refreshToken) => {
+  // 서버에 로그아웃을 요청합니다. 성공 시 204 No Content를 반환합니다.
+  // 백엔드는 body에 refreshToken을 담아 보내는 것을 기대합니다.
+  return api.post('/auth/logout', { refreshToken });
 };
 
 /**
@@ -42,4 +33,24 @@ export const logout = () => {
  */
 export const getMe = () => {
   return api.get('/auth/me'); // 백엔드에 해당 엔드포인트가 필요합니다.
+};
+
+/**
+ * 비밀번호 변경 API
+ * @param {{ currentPassword, newPassword }} data - 현재 비밀번호, 새 비밀번호
+ */
+export const changePassword = (data) => {
+  const requestData = {
+    oldPassword: data.currentPassword,
+    newPassword: data.newPassword,
+  };
+  return api.post('/auth/password', requestData);
+};
+
+/**
+ * 부서 목록 조회 API
+ */
+export const getDepartments = async () => {
+  const { data } = await api.get('/departments'); // 백엔드에 해당 엔드포인트가 필요합니다.
+  return data;
 };

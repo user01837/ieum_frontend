@@ -1,5 +1,5 @@
 import { useMutation } from '@tanstack/react-query';
-import { login, logout } from '../../api/auth'; // api/auth.js에서 login 함수를 가져옴
+import { login, logout, changePassword } from '../../api/auth'; // api/auth.js에서 login 함수를 가져옴
 import useAuthStore from '../../store/useAuthStore'; // Auth Store 가져옴
 import { useNavigate } from 'react-router-dom'; // 페이지 이동을 위한 useNavigate
 
@@ -23,10 +23,17 @@ export const useLoginMutation = () => {
       // 서버 응답에서 사용자 데이터와 토큰 추출 (API 응답 형식에 따라 수정 필요)
       const userData = response.data.user; // 예시: { id: 1, name: '사용자명', ... }
       const accessToken = response.data.accessToken; // 예시: 'eyJ...'
+      const refreshToken = response.data.refreshToken;
+      const mustChangePassword = response.data.mustChangePassword;
 
-      if (userData && accessToken) {
-        authLogin(userData, accessToken); // Zustand store에 로그인 정보 저장
-        navigate('/home'); // 메인 페이지로 이동
+      if (userData && accessToken && refreshToken) {
+        // mustChangePassword 값과 함께 스토어에 로그인 정보 저장
+        authLogin(userData, accessToken, refreshToken, mustChangePassword);
+        
+        // 비밀번호를 변경할 필요가 없을 때만 메인 페이지로 이동
+        if (!mustChangePassword) {
+          navigate('/home');
+        }
       } else {
         // 응답 데이터가 예상과 다를 경우 처리
         console.error('Login successful, but user data or token missing in response.', response.data);
@@ -48,5 +55,15 @@ export const useLogoutMutation = () => {
   return useMutation({
     mutationFn: logout, // api/auth.js의 logout 함수 사용
     // onSuccess 및 onError 처리는 이 훅을 사용하는 컴포넌트에서 직접 정의합니다.
+  });
+};
+
+/**
+ * 비밀번호 변경 뮤테이션 Hook
+ */
+export const useChangePasswordMutation = () => {
+  return useMutation({
+    mutationFn: changePassword,
+    // 성공/실패 처리는 사용하는 컴포넌트에서 직접 정의합니다.
   });
 };

@@ -31,6 +31,25 @@ function Sidebar() {
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
   const [isChangePasswordModalOpen, setIsChangePasswordModalOpen] = useState(false);
   const user = useAuthStore((state) => state.user);
+  const mustChangePassword = useAuthStore((state) => state.mustChangePassword);
+
+  useEffect(() => {
+    // mustChangePassword 상태가 true로 변경될 때, 사용자에게 알림을 표시합니다.
+    if (mustChangePassword) {
+      alert('보안을 위해 비밀번호를 먼저 변경해주세요.');
+    }
+  }, [mustChangePassword]);
+
+  const handleCloseModal = () => {
+    // 비밀번호를 강제로 변경해야 하는 경우에는 모달을 닫을 수 없습니다.
+    // 컴포넌트의 상태가 아닌, 스토어의 최신 상태를 직접 읽어와서 확인합니다.
+    // 비밀번호 변경 성공 직후 이 함수가 호출될 때, 컴포넌트의 mustChangePassword는 아직 true일 수 있기 때문입니다. (stale state)
+    if (useAuthStore.getState().mustChangePassword) {
+      alert('보안을 위해 비밀번호를 먼저 변경해주세요.');
+      return;
+    }
+    setIsChangePasswordModalOpen(false);
+  };
   return (
     <aside className="sidebar">
       <div className="brand">
@@ -99,8 +118,8 @@ function Sidebar() {
           />
         </div>
       </div>
-      {isChangePasswordModalOpen && (
-        <ChangePasswordModal onClose={() => setIsChangePasswordModalOpen(false)} />
+      {(isChangePasswordModalOpen || mustChangePassword) && (
+        <ChangePasswordModal onClose={handleCloseModal} />
       )}
     </aside>
   );
