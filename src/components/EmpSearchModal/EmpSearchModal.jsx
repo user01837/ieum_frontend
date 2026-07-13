@@ -3,8 +3,7 @@ import React, { useState } from 'react';
 import './EmpSearchModal.css';
 // [변경] useUserSearch hook import 추가
 import { useUserSearch } from '../../hooks/queries/useUserQuery';
-// [변경] useDeptList hook import 추가
-import { useDeptList } from '../../hooks/queries/useDeptQuery';
+import { useDepartmentsQuery } from '../../hooks/queries/useDeptQuery';
 
 function getInitials(name) {
   return name.slice(-2);
@@ -25,7 +24,7 @@ function EmployeeSearchModal({ currentDept = '문화도시과', onSelect, onClos
   });
 
   // [변경] 하드코딩 DEPT_OPTIONS 제거 → API로 교체
-  const { data: deptList = [] } = useDeptList();
+  const { data: deptList = [] } = useDepartmentsQuery();
 
   // [변경] error state 제거 → isError로 대체
   const error = isError ? '직원 목록을 불러오지 못했습니다.' : null;
