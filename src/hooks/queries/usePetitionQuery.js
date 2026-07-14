@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { getPetitions } from '../../api/petition';
+import { getPetitions, getPetitionDetail } from '../../api/petition';
 
 /**
  * 민원 목록을 가져오는 쿼리 Hook
@@ -25,5 +25,20 @@ export const usePetitionsQuery = (params) => {
     queryKey: ['petitions', { ...cleanParams }],
     queryFn: () => getPetitions(cleanParams),
     enabled: !!params?.scope, // scope 값이 있을 때만 쿼리를 실행합니다.
+  });
+};
+
+/**
+ * 특정 민원의 상세 정보를 가져오는 쿼리 Hook
+ * @param {string | number} complaintId - 민원 ID
+ */
+export const usePetitionDetailQuery = (complaintId) => {
+  return useQuery({
+    queryKey: ['petition', complaintId],
+    queryFn: () => getPetitionDetail(complaintId),
+    // complaintId가 있을 때만 쿼리를 실행하고,
+    // 404, 403 등 에러 발생 시 재시도하지 않습니다.
+    enabled: !!complaintId,
+    retry: false,
   });
 };
