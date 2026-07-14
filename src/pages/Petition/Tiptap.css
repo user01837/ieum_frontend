@@ -52,6 +52,7 @@
   min-height: 120px;
   background: var(--surface);
   outline: none;
+  white-space: pre-wrap; /* ProseMirror가 올바르게 공백과 줄바꿈을 처리하도록 이 속성을 추가합니다. */
   border-radius: 0 0 13px 13px;
 }
 
@@ -65,4 +66,16 @@
   color: #adb5bd;
   pointer-events: none;
   height: 0;
+}
+
+/* Tiptap Editor List Styling */
+.tiptap-editor .ProseMirror ul,
+.tiptap-editor .ProseMirror ol {
+  /* This padding creates space on the left for the bullet points. */
+  padding-left: 2rem;
+}
+
+.tiptap-editor .ProseMirror li p {
+  /* Tiptap wraps list item content in <p> tags. Remove their default margins for tighter list spacing. */
+  margin: 0;
 }
