@@ -93,7 +93,4 @@ const useAuthStore = create((set, get) => ({
   },
 }));
 
-// 앱이 로드될 때 checkAuth를 호출하여 로그인 상태를 복원합니다.
-useAuthStore.getState().checkAuth();
-
 export default useAuthStore;

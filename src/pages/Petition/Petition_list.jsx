@@ -25,6 +25,14 @@ const STATUS_CLASS_MAP = {
 
 function PetitionList({ isAdmin = false }) {
     const user = useAuthStore((state) => state.user);
+    const [isClient, setIsClient] = useState(false);
+
+    useEffect(() => {
+        // 컴포넌트가 마운트된 후에 isClient를 true로 설정하여
+        // 서버 사이드 렌더링과 클라이언트 사이드 렌더링의 불일치를 방지합니다.
+        setIsClient(true);
+    }, []);
+
     const [currentScope, setCurrentScope] = useState(isAdmin ? ALL_DEPARTMENTS[0] : 'dept');
     const [currentStatus, setCurrentStatus] = useState('all'); // 'all', 'wait', 'progress', 'done'
     const [isSortOn, setIsSortOn] = useState(true);
@@ -51,7 +59,7 @@ function PetitionList({ isAdmin = false }) {
       status: apiStatus,
       page: currentPage - 1, // API는 0부터 시작, UI는 1부터 시작
       size: ITEMS_PER_PAGE,
-      sort: isSortOn ? 'incomplete_first' : null,
+      sort: isSortOn ? 'due_date_impending' : null,
     });
 
     const complaints = petitionData?.content || [];
@@ -78,8 +86,9 @@ function PetitionList({ isAdmin = false }) {
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
-    // 로그인한 사용자 정보가 없으면 렌더링하지 않거나 로딩 상태를 표시할 수 있습니다.
-    if (!user) {
+    // 클라이언트에서 마운트되기 전이거나, 사용자 정보가 없다면 로딩 상태를 표시합니다.
+    // 이렇게 하면 localStorage에서 상태를 불러오는 동안 발생할 수 있는 UI 깜빡임이나 오류를 방지합니다.
+    if (!isClient || !user) {
         return <div>사용자 정보를 불러오는 중입니다...</div>;
     }
 
@@ -164,7 +173,7 @@ function PetitionList({ isAdmin = false }) {
                             }}>
                                 <svg viewBox="0 0 24 24" fill="none" strokeLinecap="round" style={{ opacity: isSortOn ? 1 : 0 }}><path d="M20 6 9 17l-5-5"/></svg>
                             </div>
-                            미완료 민원 우선 표시 (접수순)
+                            처리기한 임박 민원 우선 표시
                         </div>
                     </div>
 
@@ -189,8 +198,10 @@ function PetitionList({ isAdmin = false }) {
                                         <span className="date due-date">{c.dueDate?.split('T')[0]}</span>
                                         <div className="title">{c.title}</div>
                                         <span className="deptname">
-                                            {/* 부서 코드를 부서 이름으로 매핑합니다. */}
-                                            {departments?.find(d => d.code === c.departmentCode)?.name || c.taskName || '미분류'}
+                                            {currentScope === 'task'
+                                                ? c.taskName || '업무 미지정'
+                                                : (departments?.find(d => d.code === c.departmentCode)?.name || c.departmentName || '부서 미분류')
+                                            }
                                         </span>
                                         <span className={`status ${STATUS_CLASS_MAP[c.statusName] || ''}`}>
                                             <span className="dot"></span>{c.statusName}

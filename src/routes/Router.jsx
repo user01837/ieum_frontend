@@ -1,6 +1,7 @@
 import { createBrowserRouter, redirect } from "react-router-dom";
 
 import MainLayout from "../layouts/MainLayout";
+import AuthLoader from "../store/AuthLoader"; // 1. AuthLoader를 올바른 경로에서 가져옵니다.
 import useAuthStore from "../store/useAuthStore";
 import { getMe } from "../api/auth";
 
@@ -72,8 +73,12 @@ const router = createBrowserRouter([
 
   // 일반 인증
   {
-    element: <MainLayout />,
-    loader: protectedLoader, // MainLayout과 그 모든 자식 페이지에 loader를 적용합니다.
+    // 2. MainLayout을 AuthLoader로 감싸줍니다.
+    // 이렇게 하면 보호된 페이지에 접근하기 전에 항상 인증 상태 확인이 먼저 완료됩니다.
+    element: (
+      <AuthLoader><MainLayout /></AuthLoader>
+    ),
+    loader: protectedLoader,
     children: [
       {
         path: "home",
