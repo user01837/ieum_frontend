@@ -459,28 +459,10 @@
   gap: 0; /* 자식 요소 간의 간격 제거 */
 }
 
-/*
-  body에 이 클래스가 추가되면, 페이지 전체의 스크롤을 막습니다.
-  Detail_petition.jsx의 useEffect에서 패널이 열릴 때 동적으로 추가/제거합니다.
+/* 
+  독립 스크롤 기능과 관련된 모든 스타일을 제거하고,
+  페이지 전체가 스크롤되는 기본 동작으로 롤백합니다.
 */
-body.body-no-scroll {
-  overflow: hidden;
-}
-
-/* 패널이 열렸을 때만 독립 스크롤을 적용합니다. */
-.split-layout.split-active {
-  position: fixed;
-  /* 헤더 높이만큼 아래에서 시작 */
-  top: var(--header-height, 60px);
-  /* 사이드바 너비만큼 왼쪽에서 시작 (값은 실제 사이드바 너비에 맞게 조정 필요) */
-  left: var(--sidebar-width, 240px);
-  right: 0;
-  bottom: 0;
-}
-
-.split-layout.split-active .dcontent {
-  overflow-y: auto; /* 내용이 길어질 경우 이 영역만 스크롤되도록 설정 */
-}
 
 .split-layout .dcontent {
   /* 패널이 닫혔을 때 전체 너비 사용, 열렸을 때 너비 고정 */
@@ -509,6 +491,8 @@ body.body-no-scroll {
   opacity: 0;
   display: flex;
   flex-direction: column;
+  /* [너비 잘림 최종 해결] flex 아이템이 내용물(content) 크기보다 작게 줄어들 수 있도록 허용합니다. */
+  min-width: 0;
 }
 
 .case-detail-panel.open {
@@ -586,8 +570,8 @@ body.body-no-scroll {
 
 .cdp-body {
   flex-grow: 1; /* 헤더와 푸터를 제외한 모든 남은 공간을 채우도록 설정 */
-  overflow-y: auto; /* 내용이 길어지면 이 영역만 스크롤되도록 설정 */
   padding: 20px 24px;
+  /* 독립 스크롤을 제거했으므로 overflow-y 속성을 제거합니다. */
 }
 
 .cdp-section-label {
@@ -606,6 +590,9 @@ body.body-no-scroll {
   line-height: 1.75;
   color: var(--ink);
   margin: 0 0 4px;
+  /* [너비 잘림 문제 해결] 긴 단어나 URL이 패널 너비를 넘어서는 것을 방지합니다. */
+  /* 이 속성은 단어가 너무 길어 오버플로우가 발생할 경우, 단어 중간을 잘라 줄바꿈을 수행합니다. */
+  overflow-wrap: break-word;
 }
 
 .cdp-footer {

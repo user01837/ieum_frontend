@@ -299,20 +299,6 @@ function DetailPetition({ isAdmin = false }) {
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [isCaseDetailOpen]);
 
-  // [스크롤 문제 해결] 분할 패널이 열렸을 때 body의 스크롤을 막기 위한 useEffect
-  useEffect(() => {
-    // 패널이 열리면 body에 'body-no-scroll' 클래스를 추가하여 스크롤을 막습니다.
-    if (isCaseDetailOpen) {
-      document.body.classList.add('body-no-scroll');
-    } else {
-      // 패널이 닫히면 클래스를 제거하여 스크롤을 복원합니다.
-      document.body.classList.remove('body-no-scroll');
-    }
-
-    // 컴포넌트가 언마운트될 때(예: 다른 페이지로 이동) 클래스가 남아있지 않도록 정리합니다.
-    return () => document.body.classList.remove('body-no-scroll');
-  }, [isCaseDetailOpen]);
-
   const handleSave = () => {
     if (newAssignee) {
       const isConfirmed = window.confirm(
