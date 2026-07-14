@@ -43,7 +43,7 @@
 
 .project-trow {
   display: grid;
-  grid-template-columns: 1fr 108px 108px 65px 28px;
+  grid-template-columns: 90px 90px 1fr 70px 65px 28px;
   align-items: center;
   padding: 15px 20px;
   border-bottom: 1px solid var(--line);
@@ -78,4 +78,25 @@
   padding: 16px 20px;
   background: var(--bg);
   border-top: 1px solid var(--line);
+}
+
+.project-trow.head span:nth-child(4),
+.project-trow.head span:nth-child(5) {
+  text-align: center;
+}
+
+.status {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  justify-content: center;
+  white-space: nowrap;
+}
+
+.status .dot {
+  width: 7px !important;
+  height: 7px !important;
+  border-radius: 50% !important;
+  flex-shrink: 0;
+  display: inline-block;
 }
