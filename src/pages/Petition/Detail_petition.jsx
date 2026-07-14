@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
@@ -6,7 +6,7 @@ import Placeholder from '@tiptap/extension-placeholder';
 import { useDropzone } from 'react-dropzone';
 import EmployeeSearchModal from '../../components/EmpSearchModal/EmpSearchModal';
 import { usePetitionDetailQuery } from '../../hooks/queries/usePetitionQuery';
-import { useUpdatePetitionMutation, useTempSavePetitionMutation } from '../../hooks/mutations/usePetitionMutations';
+import { useCompletePetitionMutation, useTempSavePetitionMutation, useDeleteAttachmentMutation } from '../../hooks/mutations/usePetitionMutations';
 
 import './Detail_petition.css';
 import './Tiptap.css';
@@ -103,8 +103,9 @@ function DetailPetition({ isAdmin = false }) {
   // React Query를 사용하여 민원 상세 정보 조회
   const { data: complaint, isLoading, isError, error } = usePetitionDetailQuery(id);
   // React Query를 사용하여 민원 정보 업데이트 (저장, 완료)
-  const completePetitionMutation = useUpdatePetitionMutation();
+  const completePetitionMutation = useCompletePetitionMutation();
   const tempSavePetitionMutation = useTempSavePetitionMutation();
+  const deleteAttachmentMutation = useDeleteAttachmentMutation();
 
   const [isSimilarCasesOpen, setIsSimilarCasesOpen] = useState(false);
   const [isSimilarCasesLoading, setIsSimilarCasesLoading] = useState(false);
@@ -117,6 +118,22 @@ function DetailPetition({ isAdmin = false }) {
   const [newAssignee, setNewAssignee] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [imageModalUrl, setImageModalUrl] = useState(null);
+
+  const { petitionerAttachments, staffAttachments } = useMemo(() => {
+    if (!complaint?.attachments) {
+      return { petitionerAttachments: [], staffAttachments: [] };
+    }
+    const petitioner = [];
+    const staff = [];
+    complaint.attachments.forEach(file => {
+      if (file.isStaffUpload) {
+        staff.push(file);
+      } else {
+        petitioner.push(file);
+      }
+    });
+    return { petitionerAttachments: petitioner, staffAttachments: staff };
+  }, [complaint?.attachments]);
 
   const handleCloseImageModal = useCallback(() => {
     setImageModalUrl(null);
@@ -291,13 +308,23 @@ function DetailPetition({ isAdmin = false }) {
         tempSavePetitionMutation.mutate({
           complaintId: id,
           manualAnswer: editor.getHTML(),
-          assigneeUserId: newAssignee.userId,
+          assigneeUserId: newAssignee.id,
+          files: attachedFiles,
+        }, {
+          onSuccess: () => {
+            setAttachedFiles([]); // 로컬에서 관리하던 첨부파일 목록 초기화
+          }
         });
       }
     } else {
       tempSavePetitionMutation.mutate({
         complaintId: id,
         manualAnswer: editor.getHTML(),
+        files: attachedFiles,
+      }, {
+        onSuccess: () => {
+          setAttachedFiles([]); // 로컬에서 관리하던 첨부파일 목록 초기화
+        }
       });
     }
   };
@@ -313,10 +340,20 @@ function DetailPetition({ isAdmin = false }) {
       // '완료' 상태로 데이터 저장 API 호출
       completePetitionMutation.mutate({
         complaintId: id,
-        status_code: '03', // 완료
-        manual_answer: editor.getHTML(),
-        assignee_user_id: newAssignee?.userId, // 담당자 변경이 있다면 함께 전송
+        manualAnswer: editor.getHTML(),
+        files: attachedFiles,
+      }, {
+        onSuccess: () => {
+          // 저장이 성공하면 로컬에서 관리하던 첨부파일 목록을 비웁니다.
+          setAttachedFiles([]);
+        }
       });
+    }
+  };
+
+  const handleDeleteAttachment = (attachmentId) => {
+    if (window.confirm("이 첨부파일을 삭제하시겠습니까? 삭제된 파일은 복구할 수 없습니다.")) {
+      deleteAttachmentMutation.mutate({ attachmentId, complaintId: id });
     }
   };
 
@@ -376,8 +413,8 @@ function DetailPetition({ isAdmin = false }) {
           <div className="body-text">{complaint.content}</div>
           <div className="field-label">첨부 파일</div>
           <div className="attach-list">
-            {complaint.attachments && complaint.attachments.length > 0 ? (
-              complaint.attachments.map((file) => {
+            {petitionerAttachments.length > 0 ? (
+              petitionerAttachments.map((file) => {
                 const isImage = isImageFile(file.fileName);
                 return (
                   <a
@@ -420,7 +457,7 @@ function DetailPetition({ isAdmin = false }) {
                     <div
                       key={simCase.id}
                       className={`simcase ${selectedCase?.id === simCase.id && isCaseDetailOpen ? 'active' : ''}`}
-                      onClick={() => {}} // TODO: 유사사례 데이터는 현재 Mock 데이터이므로 API 연동 후 구현
+                      onClick={() => handleOpenCaseDetail(simCase)}
                     >
                       <div>
                         <div className="sim-title">{simCase.title}</div>
@@ -472,6 +509,34 @@ function DetailPetition({ isAdmin = false }) {
           <div className="dcard">
             <h3 className="dtitle" style={{ fontSize: '15px', margin: '0 0 16px' }}>최종 답변 내용</h3>
             <div className="body-text" dangerouslySetInnerHTML={{ __html: complaint.manualAnswer || '답변 내용이 없습니다.' }} />
+            {staffAttachments.length > 0 && (
+              <>
+                <div className="field-label" style={{ marginTop: '20px', paddingTop: '20px', borderTop: '1px solid var(--line)' }}>담당자 첨부 파일</div>
+                <div className="attach-list">
+                  {staffAttachments.map((file) => {
+                    const isImage = isImageFile(file.fileName);
+                    return (
+                      <a
+                        href={file.fileUrl}
+                        key={`staff-${file.attachmentId}`}
+                        className="attach-chip"
+                        onClick={(e) => {
+                          if (isImage) {
+                            e.preventDefault();
+                            setImageModalUrl(file.fileUrl);
+                          }
+                        }}
+                        target={isImage ? '_self' : '_blank'}
+                        rel="noopener noreferrer"
+                      >
+                        <svg className="ic" viewBox="0 0 24 24"><path fill="currentColor" d="M16.5 6v11.5c0 2.21-1.79 4-4 4s-4-1.79-4-4V5a2.5 2.5 0 0 1 5 0v10.5c0 .83-.67 1.5-1.5 1.5s-1.5-.67-1.5-1.5V6H10v9.5c0 1.38 1.12 2.5 2.5 2.5s2.5-1.12 2.5-2.5V5c-1.93 0-3.5 1.57-3.5 3.5v11.5c0 2.76 2.24 5 5 5s5-2.24 5-5V6h-1.5z"></path></svg>
+                        <span>{file.fileName}</span>
+                      </a>
+                    );
+                  })}
+                </div>
+              </>
+            )}
           </div>
         ) : (<div className="tiptap-wrapper">
           <h3 className="dtitle" style={{ fontSize: '15px', margin: '16px 20px' }}>민원 답변 작성</h3>
@@ -490,11 +555,26 @@ function DetailPetition({ isAdmin = false }) {
                   <p style={{ fontSize: '10px', color: 'var(--ink-tertiary)', marginTop: '2px' }}>파일을 드래그하거나 클릭하세요</p>
                 </div>
 
-              </div>
-              {attachedFiles.length > 0 && (
+              </div>{(staffAttachments.length > 0 || attachedFiles.length > 0) &&
                 <div className="attach-list" style={{ marginTop: '10px', width: '100%' }}>
+                  {staffAttachments.map((file) => {
+                    const isImage = isImageFile(file.fileName);
+                    return (
+                      <div
+                        key={`staff-${file.attachmentId}`}
+                        className="reply-attach-chip"
+                      >
+                        <svg className="ic" viewBox="0 0 24 24"><path fill="currentColor" d="M16.5 6v11.5c0 2.21-1.79 4-4 4s-4-1.79-4-4V5a2.5 2.5 0 0 1 5 0v10.5c0 .83-.67 1.5-1.5 1.5s-1.5-.67-1.5-1.5V6H10v9.5c0 1.38 1.12 2.5 2.5 2.5s2.5-1.12 2.5-2.5V5c-1.93 0-3.5 1.57-3.5 3.5v11.5c0 2.76 2.24 5 5 5s5-2.24 5-5V6h-1.5z"></path></svg>
+                        <a href={file.fileUrl} onClick={(e) => { if (isImage) { e.preventDefault(); setImageModalUrl(file.fileUrl); } }} target={isImage ? '_self' : '_blank'} rel="noopener noreferrer">{file.fileName}</a>
+                        <button onClick={() => handleDeleteAttachment(file.attachmentId)} className="rm" aria-label="첨부파일 삭제">
+                          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.47 2 2 6.47 2 12s4.47 10 10 10 10-4.47 10-10S17.53 2 12 2zm5 13.59L15.59 17 12 13.41 8.41 17 7 15.59 10.59 12 7 8.41 8.41 7 12 10.59 15.59 7 17 8.41 13.41 12 17 15.59z"></path></svg>
+                        </button>
+                      </div>
+                    );
+                  })}
+                  {/* 새로 첨부하는 파일 목록 */}
                   {attachedFiles.map((file, idx) => (
-                    <div key={idx} className="reply-attach-chip">
+                    <div key={`new-${idx}`} className="reply-attach-chip">
                       <svg className="ic" viewBox="0 0 24 24"><path fill="currentColor" d="M16.5 6v11.5c0 2.21-1.79 4-4 4s-4-1.79-4-4V5a2.5 2.5 0 0 1 5 0v10.5c0 .83-.67 1.5-1.5 1.5s-1.5-.67-1.5-1.5V6H10v9.5c0 1.38 1.12 2.5 2.5 2.5s2.5-1.12 2.5-2.5V5c-1.93 0-3.5 1.57-3.5 3.5v11.5c0 2.76 2.24 5 5 5s5-2.24 5-5V6h-1.5z"></path></svg>
                       <span>{file.name} - {(file.size / 1024).toFixed(2)} KB</span>
                       <button onClick={() => removeFile(file)} className="rm">
@@ -502,8 +582,7 @@ function DetailPetition({ isAdmin = false }) {
                       </button>
                     </div>
                   ))}
-                </div>
-              )}
+                </div>}
             </div>
             }
           </div>

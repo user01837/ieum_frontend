@@ -381,6 +381,16 @@
   background: var(--line-strong);
 }
 
+.reply-attach-chip a {
+  color: inherit;
+  text-decoration: none;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.reply-attach-chip a:hover { text-decoration: underline; }
+
 .reply-attach-chip .rm svg { width: 9px; height: 9px; fill: currentColor; }
 
 .stepnav {
@@ -445,13 +455,20 @@
   display: flex;
   width: 100%;
   align-items: stretch;
+  min-height: 0; /* flex 아이템으로 작동할 때 내용에 따라 늘어나는 것을 방지 */
   gap: 0; /* 자식 요소 간의 간격 제거 */
 }
+
+/* 
+  독립 스크롤 기능과 관련된 모든 스타일을 제거하고,
+  페이지 전체가 스크롤되는 기본 동작으로 롤백합니다.
+*/
 
 .split-layout .dcontent {
   /* 패널이 닫혔을 때 전체 너비 사용, 열렸을 때 너비 고정 */
   flex: 1 1 100%;
   min-width: 0;
+  min-height: 0; /* flex 아이템이 내용보다 작아질 수 있도록 허용하여 스크롤이 올바르게 동작하도록 합니다. */
   transition: flex-basis 0.3s ease;
 }
 
@@ -468,13 +485,14 @@
   /* flex-basis를 사용하여 너비를 제어하고, 남는 공간을 채우도록 설정 */
   flex-basis: 0;
   flex-grow: 0;
-  overflow-y: auto;
   background: var(--surface);
   border-left: 1px solid var(--line);
   transition: flex-basis 0.3s ease, opacity 0.25s ease;
   opacity: 0;
   display: flex;
   flex-direction: column;
+  /* [너비 잘림 최종 해결] flex 아이템이 내용물(content) 크기보다 작게 줄어들 수 있도록 허용합니다. */
+  min-width: 0;
 }
 
 .case-detail-panel.open {
@@ -551,9 +569,9 @@
 }
 
 .cdp-body {
-  flex: 1 1 auto;
-  overflow-y: auto;
+  flex-grow: 1; /* 헤더와 푸터를 제외한 모든 남은 공간을 채우도록 설정 */
   padding: 20px 24px;
+  /* 독립 스크롤을 제거했으므로 overflow-y 속성을 제거합니다. */
 }
 
 .cdp-section-label {
@@ -572,6 +590,9 @@
   line-height: 1.75;
   color: var(--ink);
   margin: 0 0 4px;
+  /* [너비 잘림 문제 해결] 긴 단어나 URL이 패널 너비를 넘어서는 것을 방지합니다. */
+  /* 이 속성은 단어가 너무 길어 오버플로우가 발생할 경우, 단어 중간을 잘라 줄바꿈을 수행합니다. */
+  overflow-wrap: break-word;
 }
 
 .cdp-footer {
