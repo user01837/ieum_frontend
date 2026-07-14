@@ -381,6 +381,16 @@
   background: var(--line-strong);
 }
 
+.reply-attach-chip a {
+  color: inherit;
+  text-decoration: none;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.reply-attach-chip a:hover { text-decoration: underline; }
+
 .reply-attach-chip .rm svg { width: 9px; height: 9px; fill: currentColor; }
 
 .stepnav {
@@ -445,13 +455,38 @@
   display: flex;
   width: 100%;
   align-items: stretch;
+  min-height: 0; /* flex 아이템으로 작동할 때 내용에 따라 늘어나는 것을 방지 */
   gap: 0; /* 자식 요소 간의 간격 제거 */
+}
+
+/*
+  body에 이 클래스가 추가되면, 페이지 전체의 스크롤을 막습니다.
+  Detail_petition.jsx의 useEffect에서 패널이 열릴 때 동적으로 추가/제거합니다.
+*/
+body.body-no-scroll {
+  overflow: hidden;
+}
+
+/* 패널이 열렸을 때만 독립 스크롤을 적용합니다. */
+.split-layout.split-active {
+  position: fixed;
+  /* 헤더 높이만큼 아래에서 시작 */
+  top: var(--header-height, 60px);
+  /* 사이드바 너비만큼 왼쪽에서 시작 (값은 실제 사이드바 너비에 맞게 조정 필요) */
+  left: var(--sidebar-width, 240px);
+  right: 0;
+  bottom: 0;
+}
+
+.split-layout.split-active .dcontent {
+  overflow-y: auto; /* 내용이 길어질 경우 이 영역만 스크롤되도록 설정 */
 }
 
 .split-layout .dcontent {
   /* 패널이 닫혔을 때 전체 너비 사용, 열렸을 때 너비 고정 */
   flex: 1 1 100%;
   min-width: 0;
+  min-height: 0; /* flex 아이템이 내용보다 작아질 수 있도록 허용하여 스크롤이 올바르게 동작하도록 합니다. */
   transition: flex-basis 0.3s ease;
 }
 
@@ -468,7 +503,6 @@
   /* flex-basis를 사용하여 너비를 제어하고, 남는 공간을 채우도록 설정 */
   flex-basis: 0;
   flex-grow: 0;
-  overflow-y: auto;
   background: var(--surface);
   border-left: 1px solid var(--line);
   transition: flex-basis 0.3s ease, opacity 0.25s ease;
@@ -551,8 +585,8 @@
 }
 
 .cdp-body {
-  flex: 1 1 auto;
-  overflow-y: auto;
+  flex-grow: 1; /* 헤더와 푸터를 제외한 모든 남은 공간을 채우도록 설정 */
+  overflow-y: auto; /* 내용이 길어지면 이 영역만 스크롤되도록 설정 */
   padding: 20px 24px;
 }
 

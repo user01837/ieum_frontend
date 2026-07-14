@@ -24,9 +24,58 @@ export const getPetitionDetail = async (complaintId) => {
  * @param {string | number} data.complaintId - 민원 ID
  * @param {string} data.manualAnswer - 답변 내용 (HTML)
  * @param {string | number} [data.assigneeUserId] - 변경할 담당자 ID
+ * @param {File[]} [data.files] - 업로드할 파일 목록
  */
-export const tempSavePetition = async ({ complaintId, ...saveData }) => {
-  const response = await api.put(`/petitions/${complaintId}/temp-save`, saveData);
+export const tempSavePetition = async ({ complaintId, manualAnswer, assigneeUserId, files }) => {
+  const formData = new FormData();
+
+  // FormData는 null이나 undefined를 보내면 "null" 또는 "undefined" 문자열로 변환하므로,
+  // 값이 있을 때만 추가합니다.
+  if (manualAnswer !== null && manualAnswer !== undefined) {
+    formData.append('manualAnswer', manualAnswer);
+  }
+  if (assigneeUserId !== null && assigneeUserId !== undefined) {
+    formData.append('assigneeUserId', assigneeUserId);
+  }
+
+  // 파일이 있는 경우, 각 파일을 'files'라는 동일한 키로 추가합니다.
+  if (files && files.length > 0) {
+    files.forEach(file => {
+      formData.append('files', file);
+    });
+  }
+
+  const response = await api.put(`/petitions/${complaintId}/temp-save`, formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  });
+  return response.data;
+};
+
+/**
+ * 민원 답변을 최종 완료하는 API
+ * @param {object} data - 완료 데이터
+ * @param {string | number} data.complaintId - 민원 ID
+ * @param {string} data.manualAnswer - 답변 내용 (HTML)
+ * @param {File[]} [data.files] - 업로드할 파일 목록
+ */
+export const answerPetition = async ({ complaintId, manualAnswer, files }) => {
+  const formData = new FormData();
+
+  formData.append('manualAnswer', manualAnswer);
+
+  if (files && files.length > 0) {
+    files.forEach(file => {
+      formData.append('files', file);
+    });
+  }
+
+  const response = await api.post(`/petitions/${complaintId}/answer`, formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  });
   return response.data;
 };
 
@@ -44,5 +93,14 @@ export const updatePetition = async ({ complaintId, ...updateData }) => {
   // 실제 엔드포인트와 필드명은 백엔드 API 명세에 따라야 합니다.
   // FormData를 사용한 파일 업로드는 추후 구현이 필요합니다.
   const response = await api.patch(`/petitions/${complaintId}`, updateData);
+  return response.data;
+};
+
+/**
+ * 첨부파일을 삭제하는 API (소프트 삭제)
+ * @param {number} attachmentId - 삭제할 첨부파일 ID
+ */
+export const deleteAttachment = async (attachmentId) => {
+  const response = await api.delete(`/petitions/attachments/${attachmentId}`);
   return response.data;
 };

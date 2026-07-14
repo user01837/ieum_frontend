@@ -1,28 +1,44 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { updatePetition, tempSavePetition } from '../../api/petition';
+import { answerPetition, tempSavePetition, deleteAttachment } from '../../api/petition';
 import { useNavigate } from 'react-router-dom';
 
-export const useUpdatePetitionMutation = () => {
+export const useCompletePetitionMutation = () => {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
 
   return useMutation({
-    mutationFn: updatePetition,
+    mutationFn: answerPetition,
     onSuccess: (data, variables) => {
       // 성공 시, 목록과 상세 정보 쿼리를 무효화하여 최신 데이터로 갱신
       queryClient.invalidateQueries({ queryKey: ['petitions'], exact: false });
       queryClient.invalidateQueries({ queryKey: ['petition', variables.complaintId] });
 
-      if (variables.status_code === '03') { // 완료
-        alert("민원 처리가 완료되었습니다.");
-      } else { // 저장 또는 담당자 변경
-        alert("저장되었습니다.");
-      }
+      alert(data.message || "답변이 완료되었습니다.");
       navigate('/petitions');
     },
     onError: (error) => {
-      console.error("민원 업데이트 실패:", error);
+      console.error("민원 답변 완료 실패:", error);
       const message = error.response?.data?.detail || "처리 중 오류가 발생했습니다. 다시 시도해주세요.";
+      alert(message);
+    },
+  });
+};
+
+export const useDeleteAttachmentMutation = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ attachmentId }) => deleteAttachment(attachmentId),
+    onSuccess: (data, variables) => {
+      alert(data.message || '첨부파일이 삭제되었습니다.');
+      // mutation 변수에서 complaintId를 받아와 해당 민원의 상세 정보 쿼리만 무효화합니다.
+      if (variables.complaintId) {
+        queryClient.invalidateQueries({ queryKey: ['petition', variables.complaintId] });
+      }
+    },
+    onError: (error) => {
+      console.error("첨부파일 삭제 실패:", error);
+      const message = error.response?.data?.detail || "파일 삭제 중 오류가 발생했습니다.";
       alert(message);
     },
   });
