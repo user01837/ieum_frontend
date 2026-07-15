@@ -5,6 +5,22 @@ const api = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL, //백엔드 주소를 env파일에서 설정된 내용으로 가지고옴
 });
 
+// 토큰 재발급 중인지 여부와 대기 중인 요청을 관리하기 위한 변수
+let isRefreshing = false;
+let failedQueue = [];
+
+const processQueue = (error, token = null) => {
+  failedQueue.forEach(prom => {
+    if (error) {
+      prom.reject(error);
+    } else {
+      prom.resolve(token);
+    }
+  });
+
+  failedQueue = [];
+};
+
 // 요청 인터셉터: 모든 API 요청이 보내지기 전에 호출됩니다.
 api.interceptors.request.use(
   (config) => {
@@ -30,43 +46,56 @@ api.interceptors.response.use(
   },
   async (error) => {
     const originalRequest = error.config;
-    const { logout, refreshToken, setToken } = useAuthStore.getState();
 
-    // 401 에러이고, 재시도한 요청이 아닐 경우에만 토큰 재발급을 시도합니다.
+    // 401 에러이고, 재시도된 요청이 아닐 경우
     if (error.response?.status === 401 && !originalRequest._retry) {
-      originalRequest._retry = true; // 무한 재시도를 방지하기 위한 플래그
+      // 이미 토큰 재발급이 진행 중인 경우, 현재 요청을 큐에 추가하고 대기
+      if (isRefreshing) {
+        return new Promise(function (resolve, reject) {
+          failedQueue.push({ resolve, reject });
+        })
+          .then(token => {
+            originalRequest.headers['Authorization'] = 'Bearer ' + token;
+            return api(originalRequest); // 새 토큰으로 재시도
+          })
+          .catch(err => {
+            return Promise.reject(err);
+          });
+      }
 
-      // 토큰 재발급 요청 자체에서 401이 발생하면 무한 루프에 빠지므로,
-      // 이 경우는 즉시 로그아웃 처리합니다.
-      if (originalRequest.url === '/auth/refresh') {
-        console.error('Refresh token is invalid or expired. Logging out.');
+      originalRequest._retry = true;
+      isRefreshing = true;
+
+      const { refreshToken, setToken, logout } = useAuthStore.getState();
+
+      // 리프레시 토큰이 없거나, 재발급 요청 자체가 실패한 경우 즉시 로그아웃
+      if (originalRequest.url === '/auth/refresh' || !refreshToken) {
+        console.error('Refresh token is invalid, expired, or missing. Logging out.');
+        processQueue(error, null);
+        isRefreshing = false;
         logout();
-        window.location.href = '/login'; // 로그인 페이지로 강제 이동
+        window.location.href = '/login';
         return Promise.reject(error);
       }
 
-      if (refreshToken) {
-        try {
-          console.log('Access token expired. Attempting to refresh...');
-          // 새 Access Token 요청
-          const { data } = await api.post('/auth/refresh', { refreshToken });
-          const newAccessToken = data.accessToken;
+      try {
+        console.log('Access token expired. Attempting to refresh...');
+        const { data } = await api.post('/auth/refresh', { refreshToken });
+        const newAccessToken = data.accessToken;
 
-          // 스토어와 localStorage에 새 토큰 저장
-          setToken(newAccessToken);
+        setToken(newAccessToken);
+        processQueue(null, newAccessToken); // 대기열의 모든 요청에 새 토큰 전파
 
-          // 원래 요청의 헤더에 새 토큰으로 교체
-          originalRequest.headers['Authorization'] = `Bearer ${newAccessToken}`;
-
-          // 원래 실패했던 요청을 새로운 토큰으로 재시도
-          console.log('Token refreshed. Retrying original request...');
-          return api(originalRequest);
-        } catch (refreshError) {
-          console.error('Failed to refresh token. Logging out.', refreshError);
-          logout();
-          window.location.href = '/login';
-          return Promise.reject(refreshError);
-        }
+        originalRequest.headers['Authorization'] = `Bearer ${newAccessToken}`;
+        return api(originalRequest); // 원래 요청 재시도
+      } catch (refreshError) {
+        console.error('Failed to refresh token. Logging out.', refreshError);
+        processQueue(refreshError, null); // 대기열의 모든 요청 실패 처리
+        logout();
+        window.location.href = '/login';
+        return Promise.reject(refreshError);
+      } finally {
+        isRefreshing = false;
       }
     }
 
