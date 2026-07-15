@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { answerPetition, tempSavePetition, deleteAttachment } from '../../api/petition';
+import { answerPetition, tempSavePetition, deleteAttachment, findSimilarPetitions } from '../../api/petition';
 import { useNavigate } from 'react-router-dom';
 
 export const useCompletePetitionMutation = () => {
@@ -21,6 +21,17 @@ export const useCompletePetitionMutation = () => {
       const message = error.response?.data?.detail || "처리 중 오류가 발생했습니다. 다시 시도해주세요.";
       alert(message);
     },
+  });
+};
+
+/**
+ * AI 유사 민원 검색을 위한 Mutation
+ * @param {object} options - react-query useMutation options
+ */
+export const useFindSimilarPetitionsMutation = (options) => {
+  return useMutation({
+    mutationFn: findSimilarPetitions,
+    ...options,
   });
 };
 

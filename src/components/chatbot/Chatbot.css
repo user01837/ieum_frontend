@@ -150,20 +150,84 @@
 
 .referenced-articles ul {
   margin: 0;
-  padding-left: 18px;
-  list-style-type: decimal;
+  padding: 0; /* ul의 기본 패딩 제거 */
+  list-style: none; /* ul의 기본 list-style 제거 */
 }
 
-.referenced-articles li {
-  margin-bottom: 5px;
+/* 개별 참고 법령 아이템 */
+.ref-article-item {
+  margin-bottom: 4px;
+  border: 1px solid transparent; /* for smooth transition */
+  border-radius: 8px;
 }
 
-.referenced-articles a {
+.ref-article-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background-color 0.2s;
+}
+
+.ref-article-header:hover {
+  background-color: var(--bg);
+}
+
+.ref-article-header > span {
+  color: var(--blue);
+}
+
+.ref-article-chevron {
+  width: 14px;
+  height: 14px;
+  color: var(--ink-soft);
+  transition: transform 0.2s ease-in-out;
+  flex-shrink: 0;
+  margin-left: 8px;
+}
+
+.ref-article-chevron.expanded {
+  transform: rotate(180deg);
+}
+
+.ref-article-body {
+  padding: 10px 8px 12px;
+  border-top: 1px solid var(--line);
+  margin: 4px 8px 0;
+  animation: fade-in 0.3s ease-out;
+}
+
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(-5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.ref-article-document {
+  white-space: pre-wrap; /* 줄바꿈과 공백 유지 */
+  word-wrap: break-word; /* 긴 단어 줄바꿈 */
+  font-family: inherit; /* 부모 폰트 상속 */
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--ink-soft);
+  background-color: var(--bg);
+  padding: 10px;
+  border-radius: 6px;
+  margin: 0 0 12px;
+  max-height: 150px; /* 너무 길 경우 스크롤 */
+  overflow-y: auto;
+}
+
+.ref-article-link {
+  font-size: 11px;
+  font-weight: 700;
   color: var(--blue);
   text-decoration: none;
 }
 
-.referenced-articles a:hover {
+.ref-article-link:hover {
   text-decoration: underline;
 }
 
