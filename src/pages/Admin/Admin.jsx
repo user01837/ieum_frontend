@@ -2,31 +2,40 @@ import { useState, useEffect, useRef } from "react";
 import "./Admin.css";
 import EmployeeSearchModal from "../../components/EmpSearchModal/EmpSearchModal";
 import Pagination from "../../components/Pagination/Pagination.jsx";
-
-// 더미 데이터
-const USERS = [
-  { id: 'u1', loginId: 'park01', name: '박주임', employeeNo: '20210034', dept: '문화도시과', grade: '7급', position: '주무관', tasks: ['민원처리', '도로교통정비', '행사기획'], predecessor: { name: '김전임', employeeNo: '20180021' }, status: '재직' },
-  { id: 'u2', loginId: 'kim02', name: '김팀장', employeeNo: '20150012', dept: '문화도시과', grade: '6급', position: '팀장', tasks: ['예산관리'], predecessor: null, status: '재직' },
-  { id: 'u3', loginId: 'lee03', name: '이과장', employeeNo: '20100005', dept: '행정복지과', grade: '6급', position: '과장', tasks: ['행정관리', '복지기획'], predecessor: null, status: '재직' },
-  { id: 'u4', loginId: 'choi04', name: '최주무', employeeNo: '20220041', dept: '도로교통과', grade: '9급', position: '주무관', tasks: ['도로점검'], predecessor: null, status: '휴직' },
-  { id: 'u5', loginId: 'jung05', name: '정주임', employeeNo: '20190028', dept: '환경과', grade: '8급', position: '주무관', tasks: ['환경감시', '민원처리'], predecessor: null, status: '재직' },
-  { id: 'u6', loginId: 'han06', name: '한팀장', employeeNo: '20120008', dept: '건설과', grade: '6급', position: '팀장', tasks: ['건설감독'], predecessor: null, status: '퇴직' },
-  { id: 'u7', loginId: 'park01', name: '박주임', employeeNo: '20210034', dept: '문화도시과', grade: '7급', position: '주무관', tasks: ['민원처리', '도로교통정비', '행사기획'], predecessor: { name: '김전임', employeeNo: '20180021' }, status: '재직' },
-  { id: 'u8', loginId: 'kim02', name: '김팀장', employeeNo: '20150012', dept: '문화도시과', grade: '6급', position: '팀장', tasks: ['예산관리'], predecessor: null, status: '재직' },
-  { id: 'u9', loginId: 'lee03', name: '이과장', employeeNo: '20100005', dept: '행정복지과', grade: '6급', position: '과장', tasks: ['행정관리', '복지기획'], predecessor: null, status: '재직' },
-  { id: 'u10', loginId: 'choi04', name: '최주무', employeeNo: '20220041', dept: '도로교통과', grade: '9급', position: '주무관', tasks: ['도로점검'], predecessor: null, status: '휴직' },
-  { id: 'u11', loginId: 'jung05', name: '정주임', employeeNo: '20190028', dept: '환경과', grade: '8급', position: '주무관', tasks: ['환경감시', '민원처리'], predecessor: null, status: '재직' },
-];
+import { useDepartmentsQuery } from "../../hooks/queries/useDeptQuery";
+import { useUsersQuery } from "../../hooks/queries/useUserQuery";
+import {
+  useCreateUserMutation,
+  useUpdateUserMutation,
+  useResetPasswordMutation,
+} from "../../hooks/mutations/useUserMutations";
 
 const TEMP_PASSWORD = '1234'
 
-const DEPT_OPTIONS = ['전체 부서', '문화도시과', '행정복지과', '도로교통과', '환경과', '건설과', '기획예산과'];
-const STATUS_OPTIONS = ['전체 상태', '재직', '휴직', '퇴직'];
+const statusOptions = [
+  { key: 'ALL', label: '전체 상태' },
+  { key: '01', label: '재직' },
+  { key: '02', label: '휴직' },
+  { key: '03', label: '퇴직' },
+];
 const PAGE_SIZE_OPTIONS = [10, 20, 50];
 
 const INIT_FORM = {
   loginId: '', pw: '', name: '', employeeNo: '',
-  dept: '', grade: '', position: '', status: '재직', predecessor: null,
+  dept: '', position: '', status: '01', predecessor: null,
+};
+
+// API 응답의 이름을 코드로 변환하기 위한 역방향 맵
+const REVERSE_POSITION_MAP = {
+  "부장": "01",
+  "팀장": "02",
+  "주무관": "03",
+};
+
+const REVERSE_USER_STATUS_MAP = {
+  "재직": "01",
+  "휴직": "02",
+  "퇴직": "03",
 };
 
 export default function Admin() {
@@ -34,8 +43,8 @@ export default function Admin() {
   const [activeTab, setActiveTab] = useState('list');
 
   // 목록 필터
-  const [deptFilter, setDeptFilter] = useState('전체 부서');
-  const [statusFilter, setStatusFilter] = useState('전체 상태');
+  const [deptFilter, setDeptFilter] = useState('ALL');
+  const [statusFilter, setStatusFilter] = useState('ALL');
   const [searchInputValue, setSearchInputValue] = useState(''); // 입력창의 값
   const [appliedSearchKeyword, setAppliedSearchKeyword] = useState(''); // 실제 필터링에 적용될 값
   const [currentPage, setCurrentPage] = useState(1);
@@ -58,6 +67,26 @@ export default function Admin() {
   // 토스트
   const [toast, setToast] = useState('');
   const toastTimerRef = useRef(null);
+
+  // API Hooks
+  const { data: departmentsData } = useDepartmentsQuery();
+  const deptOptions = [{ code: 'ALL', name: '전체 부서' }, ...(departmentsData || [])];
+
+  const { data: usersData, isLoading, isError } = useUsersQuery({
+    departmentCode: deptFilter === 'ALL' ? null : deptFilter,
+    status: statusFilter === 'ALL' ? null : statusFilter,
+    keyword: appliedSearchKeyword,
+    page: currentPage - 1,
+    size: pageSize,
+  });
+
+  const users = usersData?.content || [];
+  const totalUsers = usersData?.totalElements || 0;
+
+  // Mutation Hooks
+  const createUserMutation = useCreateUserMutation();
+  const updateUserMutation = useUpdateUserMutation();
+  const resetPasswordMutation = useResetPasswordMutation();
 
   const deptRef = useRef(null);
   const statusRef = useRef(null);
@@ -90,27 +119,15 @@ export default function Admin() {
     }, 2500);
   };
 
-  // 필터링된 유저 목록
-  const filteredUsers = USERS.filter((u) => {
-    const deptMatch = deptFilter === '전체 부서' || u.dept === deptFilter;
-    const statusMatch = statusFilter === '전체 상태' || u.status === statusFilter;
-    const keyword = appliedSearchKeyword.trim().toLowerCase();
-    const keywordMatch = !keyword || u.name.includes(keyword) || u.employeeNo.includes(keyword);
-    return deptMatch && statusMatch && keywordMatch;
-  });
-
   // 통계
+  // TODO: 통계 API 연동 필요
   const stats = {
-    total: USERS.length,
-    active: USERS.filter(u => u.status === '재직').length,
-    leave: USERS.filter(u => u.status === '휴직').length,
-    retired: USERS.filter(u => u.status === '퇴직').length,
-    depts: [...new Set(USERS.map(u => u.dept))].length,
+    total: totalUsers,
+    active: 0,
+    leave: 0,
+    retired: 0,
+    depts: departmentsData?.length || 0,
   };
-
-  // 페이지네이션
-  const totalPages = Math.ceil(filteredUsers.length / pageSize);
-  const pagedUsers = filteredUsers.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
   // 신규 등록 모달 열기
   const openCreateModal = () => {
@@ -122,16 +139,15 @@ export default function Admin() {
   // 수정 모달 열기
   const openEditModal = (user) => {
     setIsEditMode(true);
-    setEditTargetId(user.id);
+    setEditTargetId(user.userId);
     setFormData({
-      loginId: user.loginId,
+      loginId: user.userId,
       pw: '',
       name: user.name,
-      employeeNo: user.employeeNo,
-      dept: user.dept,
-      grade: user.grade,
-      position: user.position,
-      status: user.status,
+      employeeNo: user.userId,
+      dept: departmentsData?.find(d => d.name === user.departmentName)?.code || '',
+      position: REVERSE_POSITION_MAP[user.positionName] || '',
+      status: REVERSE_USER_STATUS_MAP[user.statusName] || '',
       predecessor: user.predecessor,
     });
     setIsUserFormOpen(true);
@@ -142,10 +158,18 @@ export default function Admin() {
     if (!formData.name || !formData.employeeNo || !formData.dept || !formData.position) {
       alert('필수 항목을 모두 입력해 주세요.'); return;
     }
-    // TODO: useUserMutation 연결
-    console.log(isEditMode ? '수정:' : '생성:', formData);
-    setIsUserFormOpen(false);
-    showToast(isEditMode ? '직원 정보가 수정되었습니다.' : '신규 직원이 등록되었습니다.');
+    const mutation = isEditMode ? updateUserMutation : createUserMutation;
+    const variables = isEditMode ? { userId: editTargetId, userData: formData } : formData;
+
+    mutation.mutate(variables, {
+      onSuccess: (data) => {
+        setIsUserFormOpen(false);
+        showToast(data.message || (isEditMode ? '직원 정보가 수정되었습니다.' : '신규 직원이 등록되었습니다.'));
+      },
+      onError: (error) => {
+        alert(`오류: ${error.response?.data?.detail || error.message}`);
+      }
+    });
   };
 
   // 비밀번호 초기화
@@ -155,16 +179,22 @@ export default function Admin() {
   };
 
   const handleResetPw = () => {
-    // TODO: useUserMutation 연결
-    console.log('비밀번호 초기화:', resetTarget);
-    setIsResetPwOpen(false);
-    showToast(`${resetTarget.name}님의 비밀번호가 초기화되었습니다.`);
+    if (!resetTarget) return;
+    resetPasswordMutation.mutate(resetTarget.userId, {
+      onSuccess: (data) => {
+        setIsResetPwOpen(false);
+        showToast(data.message || `${resetTarget.name}님의 비밀번호가 초기화되었습니다.`);
+        setResetTarget(null);
+      },
+      onError: (error) => {
+        alert(`오류: ${error.response?.data?.detail || error.message}`);
+      }
+    });
   };
 
   const handleSelectPredecessor = (employee) => {
     setFormData(p => ({
-      ...p,
-      predecessor: { name: employee.name, employeeNo: employee.id }
+      ...p, predecessor: { name: employee.name, userId: employee.userId }
     }));
     setIsPredecessorModalOpen(false);
   };
@@ -218,14 +248,14 @@ export default function Admin() {
             {/* 부서 필터 */}
             <div className={`dropdown-wrap ${isDeptOpen ? 'open' : ''}`} ref={deptRef}>
               <div className="dropdown" onClick={() => setIsDeptOpen(p => !p)}>
-                <span>{deptFilter}</span>
+                <span>{deptOptions.find(d => d.code === deptFilter)?.name || '전체 부서'}</span>
                 <svg className="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="m6 9 6 6 6-6" /></svg>
               </div>
               <div className="dropdown-menu">
-                {DEPT_OPTIONS.map(d => (
-                  <div key={d} className={`dropdown-item ${deptFilter === d ? 'active' : ''}`}
-                    onClick={() => { setDeptFilter(d); setIsDeptOpen(false); setCurrentPage(1); }}>
-                    {d}
+                {deptOptions.map(d => (
+                  <div key={d.code} className={`dropdown-item ${deptFilter === d.code ? 'active' : ''}`}
+                    onClick={() => { setDeptFilter(d.code); setIsDeptOpen(false); setCurrentPage(1); }}>
+                    {d.name}
                   </div>
                 ))}
               </div>
@@ -234,14 +264,14 @@ export default function Admin() {
             {/* 상태 필터 */}
             <div className={`dropdown-wrap ${isStatusOpen ? 'open' : ''}`} ref={statusRef}>
               <div className="dropdown" onClick={() => setIsStatusOpen(p => !p)}>
-                <span>{statusFilter}</span>
+                <span>{statusOptions.find(s => s.key === statusFilter)?.label || '전체 상태'}</span>
                 <svg className="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="m6 9 6 6 6-6" /></svg>
               </div>
               <div className="dropdown-menu">
-                {STATUS_OPTIONS.map(s => (
-                  <div key={s} className={`dropdown-item ${statusFilter === s ? 'active' : ''}`}
-                    onClick={() => { setStatusFilter(s); setIsStatusOpen(false); setCurrentPage(1); }}>
-                    {s}
+                {statusOptions.map(s => (
+                  <div key={s.key} className={`dropdown-item ${statusFilter === s.key ? 'active' : ''}`}
+                    onClick={() => { setStatusFilter(s.key); setIsStatusOpen(false); setCurrentPage(1); }}>
+                    {s.label}
                   </div>
                 ))}
               </div>
@@ -274,7 +304,7 @@ export default function Admin() {
 
             {/* 초기화 */}
             <button className="admin-action-btn" onClick={() => {
-              setDeptFilter('전체 부서'); setStatusFilter('전체 상태');
+              setDeptFilter('ALL'); setStatusFilter('ALL');
               setSearchInputValue(''); setAppliedSearchKeyword(''); setCurrentPage(1);
             }}>초기화</button>
 
@@ -286,7 +316,7 @@ export default function Admin() {
           </div>
 
           <div>
-            <span className="admin-count-label">전체 {filteredUsers.length}명</span>
+            <span className="admin-count-label">전체 {totalUsers}명</span>
           </div>
 
           {/* 테이블 */}
@@ -297,47 +327,53 @@ export default function Admin() {
               <span>전임자</span><span>상태</span><span className="task-span">작업</span>
             </div>
 
-            {pagedUsers.length === 0 ? (
-              <div className="admin-empty">표시할 직원이 없습니다.</div>
+            {isLoading ? (
+              <div className="admin-empty">직원 목록을 불러오는 중입니다...</div>
+            ) : isError ? (
+              <div className="admin-empty" style={{ color: 'var(--danger)' }}>오류가 발생했습니다.</div>
+            ) : users.length === 0 ? (
+              <div className="admin-empty">조건에 맞는 직원이 없습니다.</div>
             ) : (
-              pagedUsers.map((user) => (
-                <div key={user.id} className="admin-trow">
-                  <span className="admin-user-id-cell">{user.employeeNo}</span>
+              users.map((user) => (
+                <div key={user.userId} className="admin-trow">
+                  <span className="admin-user-id-cell">{user.userId}</span>
                   <span className="admin-user-name">{user.name}</span>
-                  <span className="admin-user-dept">{user.dept}</span>
-                  <span className="admin-grade-text">{user.grade}</span>
-                  <span><span className={`admin-rank-badge ${user.position}`}>{user.position}</span></span>
+                  <span className="admin-user-dept">{user.departmentName}</span>
+                  <span className="admin-grade-text"></span> {/* 직급 정보 없음 */}
+                  <span><span className={`admin-rank-badge ${user.positionName}`}>{user.positionName}</span></span>
                   <div className="admin-task-tags">
-                    {user.tasks.slice(0, 2).map(t => <span key={t} className="admin-task-tag">{t}</span>)}
-                    {user.tasks.length > 2 && (
+                    {user.taskNames?.slice(0, 2).map(t => <span key={t} className="admin-task-tag">{t}</span>)}
+                    {user.taskNames?.length > 2 && (
                       <>
                         <span className="admin-task-tag">...</span>
-                        <div className="admin-task-tooltip">{user.tasks.join(', ')}</div>
+                        <div className="admin-task-tooltip">{user.taskNames.join(', ')}</div>
                       </>
                     )}
                   </div>
                   <div className={`admin-predecessor ${user.predecessor ? '' : 'none'}`}>
-                    {user.predecessor ? <>{user.predecessor.name}<div style={{ fontSize: '10.5px', color: 'var(--ink-tertiary)' }}>{user.predecessor.employeeNo}</div></> : '없음'}
+                    {user.predecessor ? <>{user.predecessor.name}<div style={{ fontSize: '10.5px', color: 'var(--ink-tertiary)' }}>{user.predecessor.userId}</div></> : '없음'}
                   </div>
-                  <span><span className={`admin-status-pill ${user.status}`}>{user.status}</span></span>
+                  <span><span className={`admin-status-pill ${user.statusName}`}>{user.statusName}</span></span>
 
                   {/* 메뉴 */}
                   <div className="admin-row-actions">
                     <button className="admin-action-btn" onClick={() => openEditModal(user)}>수정</button>
-                    <button className="admin-action-btn" onClick={() => openResetPw(user)}>비밀번호 초기화</button>
+                    <button className="admin-action-btn" onClick={() => openResetPw(user)} disabled={resetPasswordMutation.isLoading}>비밀번호 초기화</button>
                   </div>
                 </div>
               ))
             )}
 
             {/* 페이지네이션 */}
-            <div className="admin-tablefoot">
+            <div className="admin-tablefoot" style={{ justifyContent: users.length > 0 ? 'center' : 'flex-end' }}>
+              {users.length > 0 && (
               <Pagination
-                totalItems={filteredUsers.length}
+                totalItems={totalUsers}
                 itemsPerPage={pageSize}
                 currentPage={currentPage}
                 onPageChange={setCurrentPage}
               />
+              )}
 
               {/* 페이지 크기 */}
               <div style={{ position: 'absolute', right: 16 }}>
@@ -411,15 +447,11 @@ export default function Admin() {
                     <label>부서 *</label>
                     <select className="admin-input" value={formData.dept} onChange={(e) => setFormData(p => ({ ...p, dept: e.target.value }))}>
                       <option value="">부서를 선택하세요</option>
-                      {['문화도시과', '행정복지과', '도로교통과', '환경과', '건설과', '기획예산과'].map(d => <option key={d}>{d}</option>)}
+                      {departmentsData?.map(d => <option key={d.code} value={d.code}>{d.name}</option>)}
                     </select>
                   </div>
                   <div className="admin-field">
-                    <label>직급 *</label>
-                    <select className="admin-input" value={formData.grade} onChange={(e) => setFormData(p => ({ ...p, grade: e.target.value }))}>
-                      <option value="">직급을 선택하세요</option>
-                      {['6급', '7급', '8급', '9급'].map(g => <option key={g}>{g}</option>)}
-                    </select>
+                    {/* 직급 필드 제거됨 */}
                   </div>
                 </div>
 
@@ -427,7 +459,7 @@ export default function Admin() {
                   <label>직책 *</label>
                   <select className="admin-input" value={formData.position} onChange={(e) => setFormData(p => ({ ...p, position: e.target.value }))}>
                     <option value="">직책을 선택하세요</option>
-                    {['과장', '팀장', '주무관'].map(pos => <option key={pos}>{pos}</option>)}
+                    {Object.entries({ "01": "부장", "02": "팀장", "03": "주무관" }).map(([code, name]) => <option key={code} value={code}>{name}</option>)}
                   </select>
                 </div>
 
@@ -439,7 +471,7 @@ export default function Admin() {
                     </button>
                   ) : (
                     <div className="admin-selected-chip" style={{ marginTop: 0 }}>
-                      {formData.predecessor.name} ({formData.predecessor.employeeNo})
+                      {formData.predecessor.name} ({formData.predecessor.userId})
                       <button className="rm" onClick={() => { setFormData(p => ({ ...p, predecessor: null })); }}>
                         <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M18 6 6 18M6 6l12 12" /></svg>
                       </button>
@@ -450,12 +482,12 @@ export default function Admin() {
                 <div className="admin-field">
                   <label>재직 상태 *</label>
                   <div className="admin-radio-row">
-                    {['재직', '휴직', '퇴직'].map(s => (
-                      <div key={s} className="admin-radio" onClick={() => setFormData(p => ({ ...p, status: s }))}>
-                        <input type="radio" name="ufStatus" value={s} checked={formData.status === s}
-                          onChange={() => setFormData(p => ({ ...p, status: s }))} readOnly />
+                    {statusOptions.filter(s => s.key !== 'ALL').map(s => (
+                      <div key={s.key} className="admin-radio" onClick={() => setFormData(p => ({ ...p, status: s.key }))}>
+                        <input type="radio" name="ufStatus" value={s.key} checked={formData.status === s.key}
+                          onChange={() => setFormData(p => ({ ...p, status: s.key }))} readOnly />
                         <span className="dot" />
-                        <span>{s}</span>
+                        <span>{s.label}</span>
                       </div>
                     ))}
                   </div>
@@ -485,7 +517,7 @@ export default function Admin() {
             <div className="modal-footer">
               <div style={{ marginLeft: 'auto', display: 'flex', gap: 8 }}>
                 <button className="modal-footer-btn" onClick={() => setIsUserFormOpen(false)}>취소</button>
-                <button className="btn btn-navy" style={{ padding: '9px 16px' }} onClick={handleFormSave}>
+                <button className="btn btn-navy" style={{ padding: '9px 16px' }} onClick={handleFormSave} disabled={createUserMutation.isLoading || updateUserMutation.isLoading}>
                   {isEditMode ? '저장' : '계정 생성'}
                 </button>
               </div>
@@ -516,7 +548,7 @@ export default function Admin() {
             </div>
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
               <button className="modal-footer-btn" onClick={() => setIsResetPwOpen(false)}>취소</button>
-              <button className="btn btn-navy" style={{ padding: '9px 16px' }} onClick={handleResetPw}>초기화</button>
+              <button className="btn btn-navy" style={{ padding: '9px 16px' }} onClick={handleResetPw} disabled={resetPasswordMutation.isLoading}>초기화</button>
             </div>
           </div>
         </div>

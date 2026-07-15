@@ -133,3 +133,81 @@
   align-self: flex-start; /* 왼쪽 정렬 */
   margin-right: auto; /* 왼쪽 정렬 */
 }
+
+/* 참고 법령 */
+.referenced-articles {
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--line);
+  font-size: 11px;
+}
+
+.referenced-articles p {
+  margin: 0 0 6px;
+  color: var(--ink-soft);
+  font-weight: 600;
+}
+
+.referenced-articles ul {
+  margin: 0;
+  padding-left: 18px;
+  list-style-type: decimal;
+}
+
+.referenced-articles li {
+  margin-bottom: 5px;
+}
+
+.referenced-articles a {
+  color: var(--blue);
+  text-decoration: none;
+}
+
+.referenced-articles a:hover {
+  text-decoration: underline;
+}
+
+/* 에러 메시지 */
+.chat-message.error {
+  background-color: var(--danger-soft);
+  color: var(--danger);
+}
+
+/* 입력 중 표시 */
+.typing-indicator {
+  display: flex;
+  align-items: center;
+}
+
+.typing-indicator span {
+  height: 8px;
+  width: 8px;
+  background-color: #9E9EA1;
+  border-radius: 50%;
+  display: inline-block;
+  margin: 0 2px;
+  animation: bounce 1.2s infinite ease-in-out;
+}
+
+.typing-indicator span:nth-of-type(1) { animation-delay: -0.32s; }
+.typing-indicator span:nth-of-type(2) { animation-delay: -0.16s; }
+
+@keyframes bounce {
+  0%, 80%, 100% { transform: scale(0); }
+  40% { transform: scale(1.0); }
+}
+
+/* 답변 생성중 래퍼 */
+.loading-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  /* typing-indicator에서 제거된 패딩을 여기로 이동하여 래퍼 전체에 적용합니다. */
+  padding: 8px 0;
+}
+
+/* "답변 생성중..." 텍스트에 스타일을 적용합니다. */
+.loading-wrapper > span {
+  color: var(--ink);
+  font-size: 13px;
+}
