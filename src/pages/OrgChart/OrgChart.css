@@ -49,6 +49,21 @@ select#deptSelect {
 
 .org-stem { width: 1px; height: 22px; background: #cbd5e1; }
 
+.org-userid {
+  font-size: 11px;
+  color: #6b7280;
+  margin-left: 4px;
+  font-weight: 400;
+}
+
+.org-node-manager .org-userid {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.org-node-lead .org-userid {
+  color: #2563eb;
+}
+
 .org-lead-row {
   display: flex;
   gap: 28px;

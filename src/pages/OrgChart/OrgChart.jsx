@@ -94,7 +94,7 @@ export default function OrgChart() {
                     <div className="org-avatar">{getInitials(manager.name)}</div>
                     <div>
                       <div className="org-rank">{manager.positionName}</div>
-                      <div className="org-name">{manager.name}</div>
+                    <div className="org-name">{manager.name} <span className="org-userid">({manager.userId})</span></div>
                     </div>
                   </div>
                   {(leads.length > 0 || staff.length > 0 || others.length > 0) && <div className="org-stem"></div>}
@@ -109,7 +109,7 @@ export default function OrgChart() {
                       <div className="org-avatar">{getInitials(p.name)}</div>
                       <div>
                         <div className="org-rank">{p.positionName}</div>
-                        <div className="org-name">{p.name}</div>
+                        <div className="org-name">{p.name} <span className="org-userid">({p.userId})</span></div>
                       </div>
                     </div>
                   ))}
@@ -123,8 +123,7 @@ export default function OrgChart() {
                   <div className="org-staff-chips">
                     {staff.map(p => (
                       <span className="org-chip" key={p.userId}>
-                        <span className="org-avatar">{getInitials(p.name)}</span>
-                        {p.name}
+                        <span className="org-avatar">{getInitials(p.name)}</span>{p.name} <span className="org-userid">({p.userId})</span>
                       </span>
                     ))}
                   </div>
@@ -138,8 +137,7 @@ export default function OrgChart() {
                   <div className="org-other-chips">
                     {others.map(p => (
                       <span className="org-chip-other" key={p.userId}>
-                        <span className="org-avatar">{getInitials(p.name)}</span>
-                        {p.name}
+                        <span className="org-avatar">{getInitials(p.name)}</span>{p.name} <span className="org-userid">({p.userId})</span>
                         <span className="org-raw-position">({p.positionName || '미지정'})</span>
                       </span>
                     ))}
