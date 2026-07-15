@@ -51,7 +51,7 @@ export default function ProjectList() {
         <div>
           <h2>기획서 목록</h2>
           <div className="sub">
-            개인 작성 중인 사업/프로젝트 기획서를 관리합니다. 항목을 클릭하면 기획서 작성 화면으로 이동합니다.
+            개인이 작성 중인 사업 및 프로젝트 기획서를 관리합니다. 목록 선택 시 해당 기획서 작성 화면으로 이동하며, 시작일 기준으로 정렬됩니다.
           </div>
         </div>
       </div>
@@ -70,7 +70,7 @@ export default function ProjectList() {
               <div
                 key={s}
                 className={`dropdown-item ${scopeFilter === s ? "active" : ""}`}
-                onClick={() => { setScopeFilter(s); setIsScopeOpen(false); setCurrentPage(1); }}
+                onClick={() => { setScopeFilter(s); setIsScopeOpen(false); setCurrentPage(1); if (s === "PREDECESSOR") setStatusFilter("02"); }}
               >
                 {SCOPE_LABEL[s]}
               </div>
@@ -133,11 +133,6 @@ export default function ProjectList() {
                 <div className="project-subline">{project.departmentName}</div>
               </div>
               <span className="status">
-                <span className="dot" style={{
-                  background: project.roleType === "MY" ? "var(--blue)" :
-                    project.roleType === "JOINED" ? "var(--good)" :
-                      "var(--warn)"
-                }} />
                 {SCOPE_LABEL[project.roleType]}
               </span>
               <span className="status">

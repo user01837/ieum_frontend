@@ -3,6 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { useEditor, EditorContent } from '@tiptap/react';
 import { useProjectDetailQuery } from "../../hooks/queries/useProjectQuery";
 import { useUpdateProjectMutation, useApproveProjectMutation, useDeleteProjectMutation } from "../../hooks/mutations/useProjectMutation";
+import useAuthStore from "../../store/useAuthStore";
 import StarterKit from '@tiptap/starter-kit';
 import Placeholder from '@tiptap/extension-placeholder';
 import EmpSearchModal from "../../components/EmpSearchModal/EmpSearchModal";
@@ -53,7 +54,9 @@ export default function ProjectDetail() {
   const [startDate, setStartDate] = useState("");
   const [dueDate, setDueDate] = useState("");
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isApproved, setIsApproved] = useState(false);
   const exportRef = useRef(null);
+  const user = useAuthStore((state) => state.user);
 
   const editor = useEditor({
     extensions: [
@@ -78,11 +81,15 @@ export default function ProjectDetail() {
       setDesc(project.businessContent || "");
       setStartDate(project.startDate || "");
       setDueDate(project.deadline || "");
-      setIsLocked(project.stageCode === "02");
+      const approved = project.stageCode === "02";
+      const myRole = project.members.find((m) => String(m.userId) === String(user?.userId));
+      const isOwner = myRole?.roleName === "주관";
+      setIsApproved(approved);
+      setIsLocked(approved || !isOwner);
       setTeamMembers(
         project.members
           .filter((m) => m.roleName === "협력")
-          .map((m) => ({ id: m.userId, name: m.name, dept: "" }))
+          .map((m) => ({ userId: m.userId, name: m.name, departmentName: m.departmentName || "" }))
       );
       if (editor && project.reportContent) {
         editor.commands.setContent(project.reportContent);
@@ -91,21 +98,20 @@ export default function ProjectDetail() {
   }, [project, editor]);
 
   const handleAddMember = (employee) => {
-    const isDuplicate = teamMembers.some((m) => m.id === employee.id);
+    const isDuplicate = teamMembers.some((m) => m.userId === employee.userId);
     if (isDuplicate) return;
     setTeamMembers((prev) => [...prev, employee]);
     setIsEmpModalOpen(false);
   };
 
   const handleRemoveMember = (id) => {
-    setTeamMembers((prev) => prev.filter((m) => m.id !== id));
+    setTeamMembers((prev) => prev.filter((m) => m.userId !== id));
   };
 
   const handleGenDraft = () => {
     if (!title.trim()) { alert("사업명을 먼저 입력해 주세요."); return; }
     setIsAiLoading(true);
     setAiDraft("");
-    // TODO: AI API 연결
     setTimeout(() => {
       setAiDraft(
         `[${title}] 사업 기획서 초안입니다.\n\n` +
@@ -125,6 +131,10 @@ export default function ProjectDetail() {
   };
 
   const handleSave = () => {
+    if (startDate && dueDate && new Date(dueDate) < new Date(startDate)) {
+      alert("목표일은 시작일 이후여야 합니다.");
+      return;
+    }
     updateProject(
       {
         name: title,
@@ -133,7 +143,7 @@ export default function ProjectDetail() {
         deadline: dueDate,
         overview: desc,
         reportContent: editor?.getHTML(),
-        memberUserIds: teamMembers.map((m) => m.id),
+        memberUserIds: teamMembers.map((m) => m.userId),
       },
       {
         onSuccess: () => {
@@ -174,8 +184,7 @@ export default function ProjectDetail() {
         </div>
       </div>
       <div className="crumb">
-        홈 &gt; 사업/프로젝트 기획 &gt; <b>기획서 수정</b>
-
+        홈 &gt; 사업/프로젝트 기획 &gt; <b>기획서 작성</b>
       </div>
 
       {isLocked && (
@@ -184,11 +193,12 @@ export default function ProjectDetail() {
             <rect x="4" y="10" width="16" height="10" rx="2" />
             <path d="M8 10V7a4 4 0 0 1 8 0v3" />
           </svg>
-          승인 완료된 기획서입니다. 더 이상 수정할 수 없습니다.
+          {isApproved
+            ? "승인 완료된 기획서입니다. 더 이상 수정할 수 없습니다."
+            : "열람 전용입니다. 기획서 수정은 주관자만 가능합니다."}
         </div>
       )}
 
-      {/* 사업명 / 개요 */}
       <div className="dcard">
         <div className="dcard-title-row">
           <div className="section-title" style={{ margin: 0 }}>사업명</div>
@@ -243,9 +253,8 @@ export default function ProjectDetail() {
             />
           </div>
         </div>
-      </div>  {/* dcard 닫기 */}
+      </div>
 
-      {/* 참여 부서 */}
       <div className="dcard">
         <div className="dept-head-row">
           <div className="section-title" style={{ margin: 0 }}>참여 부서</div>
@@ -265,11 +274,16 @@ export default function ProjectDetail() {
         <div className="participant-summary">총 {teamMembers.length}명</div>
         <div className="member-chips">
           {teamMembers.map((m) => (
-            <div key={m.id} className="member-chip">
-              <span className="mname">{m.name}</span>
-              <span className="mdept">{m.dept}</span>
+            <div key={m.userId} className="member-chip">
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', alignItems: 'center' }}>
+                <span className="mdept">{m.userId}</span>
+                <div>
+                  <span className="mname">{m.name}</span>
+                  <span className="mdept" style={{ marginLeft: '4px' }}>{m.departmentName}</span>
+                </div>
+              </div>
               {!isLocked && (
-                <button className="rm" onClick={() => handleRemoveMember(m.id)}>
+                <button className="rm" onClick={() => handleRemoveMember(m.userId)}>
                   <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                     <path d="M18 6 6 18M6 6l12 12" />
                   </svg>
@@ -280,7 +294,6 @@ export default function ProjectDetail() {
         </div>
       </div>
 
-      {/* AI 초안 */}
       <div className="panel">
         <div className="panel-head">
           <svg width="15" height="15" style={{ marginTop: '5px' }} viewBox="0 0 24 24" fill="none" stroke="var(--blue)" strokeWidth="2">
@@ -298,17 +311,31 @@ export default function ProjectDetail() {
             <>
               <div className="draftbox">{aiDraft}</div>
               <div style={{ display: 'flex', gap: '8px', marginTop: '4px' }}>
-                <div className="applybtn" onClick={handleApplyDraft}>답변 초안 사용</div>
-                <div className="applybtn" onClick={handleGenDraft}>다시 생성</div>
+                <div className="applybtn"
+                  onClick={!isLocked ? handleApplyDraft : undefined}
+                  style={{ opacity: isLocked ? 0.4 : 1, cursor: isLocked ? 'not-allowed' : 'pointer' }}
+                >
+                  답변 초안 사용
+                </div>
+                <div className="applybtn"
+                  onClick={!isLocked ? handleGenDraft : undefined}
+                  style={{ opacity: isLocked ? 0.4 : 1, cursor: isLocked ? 'not-allowed' : 'pointer' }}
+                >
+                  다시 생성
+                </div>
               </div>
             </>
           ) : (
-            <div className="applybtn" onClick={handleGenDraft}>AI 답변 초안 생성</div>
+            <div className="applybtn"
+              onClick={!isLocked ? handleGenDraft : undefined}
+              style={{ opacity: isLocked ? 0.4 : 1, cursor: isLocked ? 'not-allowed' : 'pointer' }}
+            >
+              AI 답변 초안 생성
+            </div>
           )}
         </div>
       </div>
 
-      {/* 기획서 작성 */}
       <div className="tiptap-wrapper">
         <h3 className="dtitle" style={{ fontSize: '15px', margin: '16px 20px' }}>기획서 작성</h3>
         <div className="tiptap-editor-wrapper">
@@ -333,7 +360,7 @@ export default function ProjectDetail() {
                   <div
                     key={item.label}
                     className="export-item"
-                    onClick={() => { console.log(item.label); setIsExportOpen(false); }}
+                    onClick={() => { setIsExportOpen(false); }}
                   >
                     <span className="dot" style={{ background: item.color, width: 8, height: 8, borderRadius: "50%", display: "inline-block" }} />
                     {item.label}로 내보내기

@@ -20,20 +20,20 @@ export default function ProjectCreate() {
   const [isEmpModalOpen, setIsEmpModalOpen] = useState(false);
 
   const handleAddMember = (employee) => {
-    const isDuplicate = teamMembers.some((m) => m.id === employee.id);
+    const isDuplicate = teamMembers.some((m) => m.userId === employee.userId);
     if (isDuplicate) return;
     setTeamMembers((prev) => [...prev, employee]);
     setIsEmpModalOpen(false);
   };
 
   const handleRemoveMember = (id) => {
-    setTeamMembers((prev) => prev.filter((m) => m.id !== id));
+    setTeamMembers((prev) => prev.filter((m) => m.userId !== id));
   };
 
   const handleSubmit = () => {
     if (!title.trim()) { alert("사업명을 입력해 주세요."); return; }
     if (!startDate || !dueDate) { alert("시작일과 목표일을 입력해 주세요."); return; }
-    if (new Date(dueDate) < new Date(startDate)) { alert("목표일은 시작일 이후여야 합니다."); return; }  // ← 여기 추가
+    if (new Date(dueDate) < new Date(startDate)) { alert("목표일은 시작일 이후여야 합니다."); return; }
 
     createProject(
       {
@@ -98,7 +98,6 @@ export default function ProjectCreate() {
             value={user?.deptName || ""}
             readOnly
           />
-          {/* TODO: useAuth()로 로그인 유저 부서 표시 */}
         </div>
 
         <div className="formrow2">
@@ -135,9 +134,9 @@ export default function ProjectCreate() {
           </div>
           <div className="teamchips">
             {teamMembers.map((m) => (
-              <div key={m.id} className="teamchip">
-                {m.name} ({m.dept})
-                <button className="rm" onClick={() => handleRemoveMember(m.id)}>
+              <div key={m.userId} className="teamchip">
+                {m.name} ({m.departmentName})
+                <button className="rm" onClick={() => handleRemoveMember(m.userId)}>
                   <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                     <path d="M18 6 6 18M6 6l12 12" />
                   </svg>

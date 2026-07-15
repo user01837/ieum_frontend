@@ -1,7 +1,5 @@
-// [변경] useCallback, useEffect, useRef 제거 → useUserSearch hook으로 대체
 import React, { useState } from 'react';
 import './EmpSearchModal.css';
-// [변경] useUserSearch hook import 추가
 import { useUserSearch } from '../../hooks/queries/useUserQuery';
 import { useDepartmentsQuery } from '../../hooks/queries/useDeptQuery';
 
@@ -14,7 +12,6 @@ function EmployeeSearchModal({ currentDept = '문화도시과', onSelect, onClos
   const [query, setQuery] = useState('');
   const [deptFilter, setDeptFilter] = useState('all');
 
-  // [변경] fetchEmployees + useEffect + debounce 제거 → hook으로 대체
   const actualScope = forceDeptScope ? 'dept' : scope;
 
   const { data: employees = [], isLoading, isError } = useUserSearch({
@@ -23,10 +20,8 @@ function EmployeeSearchModal({ currentDept = '문화도시과', onSelect, onClos
     keyword: query || undefined,
   });
 
-  // [변경] 하드코딩 DEPT_OPTIONS 제거 → API로 교체
   const { data: deptList = [] } = useDepartmentsQuery();
 
-  // [변경] error state 제거 → isError로 대체
   const error = isError ? '직원 목록을 불러오지 못했습니다.' : null;
 
   const handleSelect = (employee) => {
@@ -69,7 +64,6 @@ function EmployeeSearchModal({ currentDept = '문화도시과', onSelect, onClos
               onChange={(e) => setDeptFilter(e.target.value)}
             >
               <option value="all">전체 부서</option>
-              {/* [변경] 하드코딩 DEPT_OPTIONS 제거 → deptList API 데이터로 교체 */}
               {deptList.map((d) => (
                 <option key={d.code} value={d.code}>{d.name}</option>
               ))}
@@ -96,7 +90,6 @@ function EmployeeSearchModal({ currentDept = '문화도시과', onSelect, onClos
               <div className="modal-empty-results">검색 결과가 없습니다.</div>
             ) : (
               employees.map((emp) => (
-                // [변경] key: emp.id → emp.userId (API 응답 필드명 변경)
                 <div
                   key={emp.userId}
                   className="modal-result-row"
@@ -106,14 +99,11 @@ function EmployeeSearchModal({ currentDept = '문화도시과', onSelect, onClos
                   <div className="modal-result-info">
                     <p className="modal-employee-name">
                       {emp.name}
-                      {/* [변경] emp.role → emp.positionName (API 응답 필드명 변경) */}
                       <span className="modal-employee-role">{emp.positionName}</span>
                     </p>
-                    {/* [변경] emp.id → emp.userId (API 응답 필드명 변경) */}
                     <p className="modal-employee-id">{emp.userId}</p>
                   </div>
                   {(!forceDeptScope && scope === 'all') && (
-                    // [변경] emp.dept → emp.departmentName (API 응답 필드명 변경)
                     <span className="modal-employee-dept">{emp.departmentName}</span>
                   )}
                 </div>
