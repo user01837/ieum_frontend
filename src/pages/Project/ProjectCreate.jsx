@@ -33,6 +33,7 @@ export default function ProjectCreate() {
   const handleSubmit = () => {
     if (!title.trim()) { alert("사업명을 입력해 주세요."); return; }
     if (!startDate || !dueDate) { alert("시작일과 목표일을 입력해 주세요."); return; }
+    if (new Date(dueDate) < new Date(startDate)) { alert("목표일은 시작일 이후여야 합니다."); return; }  // ← 여기 추가
 
     createProject(
       {
@@ -85,7 +86,7 @@ export default function ProjectCreate() {
             className="input"
             value={desc}
             onChange={(e) => setDesc(e.target.value)}
-            placeholder="이 사업의 목적과 추진 배경을 간략히 작성해 주세요."
+            placeholder="이 사업의 목적, 배경, 주요 내용을 작성해 주세요."
           />
         </div>
 
