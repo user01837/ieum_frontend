@@ -299,6 +299,21 @@ function DetailPetition({ isAdmin = false }) {
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [isCaseDetailOpen]);
 
+  // isCaseDetailOpen 상태가 바뀔 때마다 body 클래스 토글
+  useEffect(() => {
+    if (isCaseDetailOpen) {
+      document.documentElement.classList.add('split-view-active');
+    } else {
+      document.documentElement.classList.remove('split-view-active');
+    }
+
+    // 컴포넌트 언마운트 시 반드시 클래스 제거
+    return () => {
+      document.documentElement.classList.remove('split-view-active');
+    };
+  }, [isCaseDetailOpen]);
+
+
   const handleSave = () => {
     if (newAssignee) {
       const isConfirmed = window.confirm(
