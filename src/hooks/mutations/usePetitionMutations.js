@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { answerPetition, tempSavePetition, deleteAttachment, findSimilarPetitions } from '../../api/petition';
+import { answerPetition, tempSavePetition, deleteAttachment, findSimilarPetitions, createDraftAnswer } from '../../api/petition';
 import { useNavigate } from 'react-router-dom';
 
 export const useCompletePetitionMutation = () => {
@@ -31,6 +31,17 @@ export const useCompletePetitionMutation = () => {
 export const useFindSimilarPetitionsMutation = (options) => {
   return useMutation({
     mutationFn: findSimilarPetitions,
+    ...options,
+  });
+};
+
+/**
+ * AI 답변 초안 생성을 위한 Mutation
+ * @param {object} options - react-query useMutation options
+ */
+export const useCreateDraftAnswerMutation = (options) => {
+  return useMutation({
+    mutationFn: createDraftAnswer,
     ...options,
   });
 };

@@ -120,3 +120,16 @@ export const findSimilarPetitions = async (payload) => {
   const response = await api.post('/ai/similar-petitions', payload);
   return response.data;
 };
+
+/**
+ * AI를 통해 답변 초안을 생성하는 API
+ * @param {object} payload - 요청 데이터
+ * @param {string} payload.title - 현재 민원 제목
+ * @param {string} payload.content - 현재 민원 내용
+ * @param {string} payload.department_code - 현재 민원 부서 코드
+ * @returns {Promise<object>} - AI 답변 초안 생성 결과
+ */
+export const createDraftAnswer = async (payload) => {
+  const response = await api.post('/ai/draft-answer', payload);
+  return response.data;
+};

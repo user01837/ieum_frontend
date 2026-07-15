@@ -7,7 +7,7 @@ import { useDropzone } from 'react-dropzone';
 import EmployeeSearchModal from '../../components/EmpSearchModal/EmpSearchModal';
 import { usePetitionDetailQuery } from '../../hooks/queries/usePetitionQuery';
 import { useDepartmentsQuery } from '../../hooks/queries/useDeptQuery';
-import { useCompletePetitionMutation, useTempSavePetitionMutation, useDeleteAttachmentMutation, useFindSimilarPetitionsMutation } from '../../hooks/mutations/usePetitionMutations';
+import { useCompletePetitionMutation, useTempSavePetitionMutation, useDeleteAttachmentMutation, useFindSimilarPetitionsMutation, useCreateDraftAnswerMutation } from '../../hooks/mutations/usePetitionMutations';
 
 import './Detail_petition.css';
 import './Tiptap.css';
@@ -122,12 +122,12 @@ function DetailPetition({ isAdmin: propIsAdmin = false }) {
   const [isSimilarCasesOpen, setIsSimilarCasesOpen] = useState(false);
   const [similarCases, setSimilarCases] = useState([]);
   const [isAiDraftOpen, setIsAiDraftOpen] = useState(false);
-  const [isAiDraftLoading, setIsAiDraftLoading] = useState(false);
   const [aiDraft, setAiDraft] = useState('');
   const [attachedFiles, setAttachedFiles] = useState([]);
   const [newAssignee, setNewAssignee] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [imageModalUrl, setImageModalUrl] = useState(null);
+  const [hasNoMoreCases, setHasNoMoreCases] = useState(false);
 
   const { petitionerAttachments, staffAttachments } = useMemo(() => {
     if (!complaint?.attachments) {
@@ -238,27 +238,39 @@ function DetailPetition({ isAdmin: propIsAdmin = false }) {
         id: result.complaint_id,
         title: result.title,
         dept: departmentsData?.find(d => d.code === result.department_code)?.name || result.department_code,
-        date: '날짜 정보 없음', // API 응답에 날짜 정보가 없습니다.
-        status: STATUS_CODE_MAP[result.status_code] || '상태 미지정',
+        date: '날짜 정보 없음',
+        status: STATUS_CODE_MAP[result.status_code] || result.status_code || '상태 미지정',
         fullContent: `[민원 요지]\n${result.content}\n\n[답변 내용]\n${result.answer}`,
         answerContent: result.answer || ''
       }));
 
       if (variables.exclude_ids && variables.exclude_ids.length > 0) {
         // '더 찾아보기'의 경우
-        setSimilarCases(prevCases => [...prevCases, ...newCases]);
         if (newCases.length === 0) {
-          // 더 이상 찾은 사례가 없을 때 사용자에게 알림
-          alert('더 이상 유사한 사례를 찾지 못했습니다.');
+          setHasNoMoreCases(true); // 더 이상 없음 표시
+        } else {
+          setSimilarCases(prevCases => [...prevCases, ...newCases]);
         }
       } else {
         // 첫 검색의 경우
         setSimilarCases(newCases);
+        setHasNoMoreCases(false); // 새 검색 시 초기화
         setIsSimilarCasesOpen(true);
       }
     },
     onError: (error) => {
       alert(`유사 민원 검색 중 오류가 발생했습니다: ${error.response?.data?.detail || error.message}`);
+    }
+  });
+
+  const createDraftAnswerMutation = useCreateDraftAnswerMutation({
+    onSuccess: (data) => {
+      // TODO: 응답에 따라 가드레일, 검토 필요 여부 처리 (data.guardrail_triggered, data.needs_review)
+      setAiDraft(data.draft);
+      setIsAiDraftOpen(true);
+    },
+    onError: (error) => {
+      alert(`AI 답변 초안 생성 중 오류가 발생했습니다: ${error.response?.data?.detail || error.message}`);
     }
   });
 
@@ -295,12 +307,16 @@ function DetailPetition({ isAdmin: propIsAdmin = false }) {
   };
 
   const handleLoadAiDraft = () => {
-    setIsAiDraftLoading(true);
-    setTimeout(() => {
-      setAiDraft(`안녕하세요, 민원인님. ${complaint.departmentName} ${complaint.assignee?.name || ''}입니다. 보내주신 민원은 잘 접수되었습니다. 현장 확인 후 조치하여 결과를 다시 안내해 드리겠습니다.`);
-      setIsAiDraftLoading(false);
-      setIsAiDraftOpen(true);
-    }, 1500);
+    const departmentCode = departmentsData?.find(d => d.name === complaint.departmentName)?.code;
+    if (!departmentCode) {
+      alert("민원의 부서 정보가 없어 AI 답변 초안을 생성할 수 없습니다.");
+      return;
+    }
+    createDraftAnswerMutation.mutate({
+      title: complaint.title,
+      content: complaint.content,
+      department_code: departmentCode,
+    });
   };
 
   const applyAiDraftToEditor = () => {
@@ -535,17 +551,27 @@ function DetailPetition({ isAdmin: propIsAdmin = false }) {
                   ) : (
                     <div className="loading-box">유사한 사례를 찾지 못했습니다.</div>
                   )}
-                  <div
-                    className="morelink"
-                    onClick={!(findSimilarPetitionsMutation.isPending || findSimilarPetitionsMutation.isLoading) ? handleLoadMoreSimilarCases : undefined}
-                    style={{ display: similarCases.length > 0 ? 'flex' : 'none' }}
-                  >
-                    {(findSimilarPetitionsMutation.isPending || findSimilarPetitionsMutation.isLoading) ? (
-                      <div className="spinner small" style={{ margin: '0 auto' }}></div>
+                  {hasNoMoreCases ? (
+  <div style={{ textAlign: 'center', fontSize: '12px', color: 'var(--ink-tertiary)', marginTop: '12px' }}>
+    더 이상 유사한 사례가 없습니다.
+  </div>
                     ) : (
-                      <>유사 사례 더 찾아보기 <svg viewBox="0 0 24 24"><path fill="currentColor" d="M16.59 8.59L12 13.17 7.41 8.59 6 10l6 6 6-6z"></path></svg></>
+                      <div
+                        className="morelink"
+                        onClick={!(findSimilarPetitionsMutation.isPending || findSimilarPetitionsMutation.isLoading) ? handleLoadMoreSimilarCases : undefined}
+                        style={{
+                          display: similarCases.length > 0 ? 'flex' : 'none',
+                          opacity: (findSimilarPetitionsMutation.isPending || findSimilarPetitionsMutation.isLoading) ? 0.5 : 1,
+                          cursor: (findSimilarPetitionsMutation.isPending || findSimilarPetitionsMutation.isLoading) ? 'default' : 'pointer',
+                        }}
+                      >
+                        {(findSimilarPetitionsMutation.isPending || findSimilarPetitionsMutation.isLoading) ? (
+                          <div className="spinner small" style={{ margin: '0 auto' }}></div>
+                        ) : (
+                          <>유사 사례 더 찾아보기 <svg viewBox="0 0 24 24"><path fill="currentColor" d="M16.59 8.59L12 13.17 7.41 8.59 6 10l6 6 6-6z"></path></svg></>
+                        )}
+                      </div>
                     )}
-                  </div>
                 </>
               ) : (findSimilarPetitionsMutation.isPending || findSimilarPetitionsMutation.isLoading) ? (
                 <div className="loading-box">
@@ -569,7 +595,7 @@ function DetailPetition({ isAdmin: propIsAdmin = false }) {
               <p style={{ fontSize: '12.5px', color: 'var(--ink-soft)', lineHeight: '1.7', marginBottom: '15px' }}>
                 AI가 민원 내용을 바탕으로 답변 초안을 생성합니다. 초안은 참고용이며, 검토 후 작성란에 반영할 수 있습니다.
               </p>
-              {isAiDraftLoading ? <div className="spinner"></div> : isAiDraftOpen ? (
+              {createDraftAnswerMutation.isPending ? <div className="spinner"></div> : isAiDraftOpen ? (
                 <>
                   <div className="draftbox">{aiDraft}</div>
                   <div className="applybtn" onClick={applyAiDraftToEditor}>답변 초안 사용</div>
