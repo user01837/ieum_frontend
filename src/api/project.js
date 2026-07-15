@@ -71,3 +71,16 @@ export const getAiDraft = async (projectId) => {
   const { data } = await api.get(`/projects/${projectId}/ai-draft`);
   return data;
 };
+
+/**
+ * 기획서 내보내기 API
+ * @param {number} projectId - 프로젝트 ID
+ * @param {string} format - 파일 형식 ('pdf' | 'docx' | 'hwpx')
+ */
+export const exportProject = async (projectId, format) => {
+  const response = await api.get(`/projects/${projectId}/export`, {
+    params: { format },
+    responseType: 'blob',
+  });
+  return response;
+};

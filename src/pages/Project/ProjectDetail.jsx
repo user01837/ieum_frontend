@@ -3,6 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { useEditor, EditorContent } from '@tiptap/react';
 import { useProjectDetailQuery } from "../../hooks/queries/useProjectQuery";
 import { useUpdateProjectMutation, useApproveProjectMutation, useDeleteProjectMutation } from "../../hooks/mutations/useProjectMutation";
+import { exportProject } from '../../api/project';
 import useAuthStore from "../../store/useAuthStore";
 import StarterKit from '@tiptap/starter-kit';
 import Placeholder from '@tiptap/extension-placeholder';
@@ -161,6 +162,22 @@ export default function ProjectDetail() {
       onSuccess: () => setIsLocked(true),
       onError: () => alert("승인 처리에 실패했습니다."),
     });
+  };
+
+  const handleExport = async (format) => {
+    try {
+      const response = await exportProject(id, format);
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `${title}.${format}`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch {
+      alert('내보내기에 실패했습니다.');
+    }
   };
 
   useEffect(() => {
@@ -353,14 +370,14 @@ export default function ProjectDetail() {
             {isExportOpen && (
               <div className="export-menu">
                 {[
-                  { label: "Word (.docx)", color: "#2453D8" },
-                  { label: "한글 (.hwp)", color: "#189A5C" },
-                  { label: "PDF (.pdf)", color: "#C1503D" },
+                  { label: "Word (.docx)", color: "#2B579A", format: "docx" },
+                  { label: "한글 (.hwpx)", color: "#4CAF50", format: "hwpx" },
+                  { label: "PDF (.pdf)", color: "#EC1C24", format: "pdf" },
                 ].map((item) => (
                   <div
                     key={item.label}
                     className="export-item"
-                    onClick={() => { setIsExportOpen(false); }}
+                    onClick={() => { handleExport(item.format); setIsExportOpen(false); }}
                   >
                     <span className="dot" style={{ background: item.color, width: 8, height: 8, borderRadius: "50%", display: "inline-block" }} />
                     {item.label}로 내보내기
