@@ -1,5 +1,5 @@
-import { useState, useEffect, useRef, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import './Petition_list.css';
 import Pagination from '../../components/Pagination/Pagination.jsx';
 import useAuthStore from '../../store/useAuthStore.js';
@@ -7,7 +7,6 @@ import { usePetitionsQuery } from '../../hooks/queries/usePetitionQuery.js';
 import { useDepartmentsQuery } from '../../hooks/queries/useDeptQuery.js';
 
 // 다른 파일에서도 사용될 수 있으므로, 나중에 공통 데이터 파일로 옮기는 것을 고려해볼 수 있습니다.
-const ALL_DEPARTMENTS = ['행정복지과', '도로교통과', '문화도시과', '도시계획과', '정보통신과', '총무과'];
 
 const statusOptions = [
     { key: 'all', label: '전체' },
@@ -23,8 +22,9 @@ const STATUS_CLASS_MAP = {
 };
 
 
-function PetitionList({ isAdmin = false }) {
+function PetitionList() {
     const user = useAuthStore((state) => state.user);
+    const isAdmin = useMemo(() => user?.system_role_code === '02', [user]);
     const [isClient, setIsClient] = useState(false);
 
     useEffect(() => {
@@ -32,15 +32,16 @@ function PetitionList({ isAdmin = false }) {
         // 서버 사이드 렌더링과 클라이언트 사이드 렌더링의 불일치를 방지합니다.
         setIsClient(true);
     }, []);
+    
+    // 전체 부서 목록을 가져와서 code-name 맵을 만듭니다.
+    const { data: departmentsData } = useDepartmentsQuery();
+    const departments = departmentsData || [];
 
-    const [currentScope, setCurrentScope] = useState(isAdmin ? ALL_DEPARTMENTS[0] : 'dept');
+    const [currentScope, setCurrentScope] = useState(isAdmin ? 'ALL_DEPTS' : 'dept');
     const [currentStatus, setCurrentStatus] = useState('all'); // 'all', 'wait', 'progress', 'done'
     const [isSortOn, setIsSortOn] = useState(true);
     const [currentPage, setCurrentPage] = useState(1);
     const ITEMS_PER_PAGE = 10;
-
-    // 전체 부서 목록을 가져와서 code-name 맵을 만듭니다.
-    const { data: departments } = useDepartmentsQuery();
     
     // API 요청을 위한 파라미터 변환
     const apiScope = useMemo(() => {
@@ -53,13 +54,15 @@ function PetitionList({ isAdmin = false }) {
     }, [isAdmin, currentScope]);
 
     const apiStatus = currentStatus === 'all' ? 'ALL' : currentStatus;
+    const apiDepartmentCode = (isAdmin && currentScope !== 'ALL_DEPTS') ? currentScope : null;
 
     const { data: petitionData, isLoading, isError } = usePetitionsQuery({
-      scope: apiScope,
+      scope: isAdmin ? 'ALL' : apiScope,
       status: apiStatus,
       page: currentPage - 1, // API는 0부터 시작, UI는 1부터 시작
       size: ITEMS_PER_PAGE,
       sort: isSortOn ? 'due_date_impending' : null,
+      departmentCode: apiDepartmentCode,
     });
 
     const complaints = petitionData?.content || [];
@@ -86,12 +89,6 @@ function PetitionList({ isAdmin = false }) {
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
-    // 클라이언트에서 마운트되기 전이거나, 사용자 정보가 없다면 로딩 상태를 표시합니다.
-    // 이렇게 하면 localStorage에서 상태를 불러오는 동안 발생할 수 있는 UI 깜빡임이나 오류를 방지합니다.
-    if (!isClient || !user) {
-        return <div>사용자 정보를 불러오는 중입니다...</div>;
-    }
-
     const nonAdminScopeOptions = [
         { key: 'dept', label: '부서 전체 민원' }, // UI에서는 'dept'를 사용
         { key: 'task', label: '업무별' },
@@ -99,22 +96,33 @@ function PetitionList({ isAdmin = false }) {
         { key: 'predecessor', label: '전임자' },
     ];
 
+    const scopeOptions = useMemo(() => {
+        if (isAdmin) {
+            const deptOptions = departments.map(d => ({ key: d.code, label: d.name }));
+            return [{ key: 'ALL_DEPTS', label: '전체 부서' }, ...deptOptions];
+        }
+        return nonAdminScopeOptions;
+    }, [isAdmin, departments]);
+
+    // `user`가 로드되기 전에도 안전하게 접근하기 위해 옵셔널 체이닝(`?.`)을 사용합니다.
     const nonAdminScopeSubtitles = {
-      dept:`${user.deptName} 소관 민원을 조회합니다. 항목을 클릭하면 상세 처리 화면으로 이동합니다.`,
+      dept:`${user?.deptName} 소관 민원을 조회합니다. 항목을 클릭하면 상세 처리 화면으로 이동합니다.`,
       task:'처리기한이 임박한 순서로 업무를 조회합니다. 항목을 클릭하면 상세 처리 화면으로 이동합니다.',
-      mine:`${user.name}님이 담당하고 있는 민원만 조회합니다. 항목을 클릭하면 상세 처리 화면으로 이동합니다.`,
+      mine:`${user?.name}님이 담당하고 있는 민원만 조회합니다. 항목을 클릭하면 상세 처리 화면으로 이동합니다.`,
       predecessor:'전임자로부터 인계받은 업무 목록입니다. 항목을 클릭하면 상세 처리 화면으로 이동합니다.'
     };
 
-    const scopeOptions = isAdmin
-        ? ALL_DEPARTMENTS.map(dept => ({ key: dept, label: dept }))
-        : nonAdminScopeOptions;
-
     const currentSubtitle = isAdmin
-        ? `${currentScope} 소관 민원을 조회하고 관리합니다.`
+        ? `${scopeOptions.find(o => o.key === currentScope)?.label || '전체'} 소관 민원을 조회하고 관리합니다.`
         : nonAdminScopeSubtitles[currentScope];
 
     const currentScopeLabel = scopeOptions.find(o => o.key === currentScope)?.label;
+
+    // 클라이언트에서 마운트되기 전이거나, 사용자 정보가 없다면 로딩 상태를 표시합니다.
+    // 이렇게 하면 localStorage에서 상태를 불러오는 동안 발생할 수 있는 UI 깜빡임이나 오류를 방지합니다.
+    if (!isClient || !user) {
+        return <div>사용자 정보를 불러오는 중입니다...</div>;
+    }
 
     const handleScopeSelect = (scope) => {
         setCurrentScope(scope);
@@ -193,14 +201,14 @@ function PetitionList({ isAdmin = false }) {
                                 <div style={{padding:'40px 0', textAlign:'center', fontSize:'13px', color:'var(--danger)'}}>오류가 발생했습니다.</div>
                             ) : complaints.length > 0 ? (
                                 complaints.map(c => (
-                                    <div key={c.complaintId} className="trow" onClick={() => navigate(`/petitions/${c.complaintId}`)}>
+                                    <div key={c.complaintId} className="trow" onClick={() => navigate(`/petitions/${c.complaintId}`, { state: { isAdmin } })}>
                                         <span className="date">{c.receivedAt?.split('T')[0]}</span>
                                         <span className="date due-date">{c.dueDate?.split('T')[0]}</span>
                                         <div className="title">{c.title}</div>
                                         <span className="deptname">
                                             {currentScope === 'task'
                                                 ? c.taskName || '업무 미지정'
-                                                : (departments?.find(d => d.code === c.departmentCode)?.name || c.departmentName || '부서 미분류')
+                                                : (departments.find(d => d.code === c.departmentCode)?.name || c.departmentName || '부서 미분류')
                                             }
                                         </span>
                                         <span className={`status ${STATUS_CLASS_MAP[c.statusName] || ''}`}>

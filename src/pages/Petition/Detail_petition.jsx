@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Placeholder from '@tiptap/extension-placeholder';
@@ -96,10 +96,14 @@ const TiptapToolbar = ({ editor }) => {
  * 민원 상세 처리 페이지
  * @param {boolean} isAdmin - 관리자 여부 (읽기 전용 모드 활성화)
  */
-function DetailPetition({ isAdmin = false }) {
+function DetailPetition({ isAdmin: propIsAdmin = false }) {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
 
+  // 라우터 state로 전달된 isAdmin 값을 우선적으로 사용하고, 없으면 prop을 사용합니다.
+  const isAdmin = location.state?.isAdmin ?? propIsAdmin;
+  
   // React Query를 사용하여 민원 상세 정보 조회
   const { data: complaint, isLoading, isError, error } = usePetitionDetailQuery(id);
   // React Query를 사용하여 민원 정보 업데이트 (저장, 완료)
@@ -301,29 +305,13 @@ function DetailPetition({ isAdmin = false }) {
 
   // isCaseDetailOpen 상태가 바뀔 때마다 body 클래스 토글
   useEffect(() => {
-  if (isCaseDetailOpen) {
-    // 현재 스크롤 위치 저장 후 body를 fixed로 고정
-    const scrollY = window.scrollY;
-    document.body.style.position = 'fixed';
-    document.body.style.top = `-${scrollY}px`;
-    document.body.style.width = '100%';
-  } else {
-    // 고정 해제 후 원래 스크롤 위치 복원
-    const scrollY = document.body.style.top;
-    document.body.style.position = '';
-    document.body.style.top = '';
-    document.body.style.width = '';
-    window.scrollTo(0, parseInt(scrollY || '0') * -1);
-  }
-
-  return () => {
-    const scrollY = document.body.style.top;
-    document.body.style.position = '';
-    document.body.style.top = '';
-    document.body.style.width = '';
-    window.scrollTo(0, parseInt(scrollY || '0') * -1);
-  };
-}, [isCaseDetailOpen]);
+    if (isCaseDetailOpen) {
+      document.documentElement.classList.add('split-view-active');
+    } else {
+      document.documentElement.classList.remove('split-view-active');
+    }
+    return () => document.documentElement.classList.remove('split-view-active');
+  }, [isCaseDetailOpen]);
 
 
   const handleSave = () => {
