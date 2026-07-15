@@ -18,9 +18,6 @@ function MainLayout() {
     if (path.startsWith("/orgchart")) {
       return "조직도";
     }
-    if (path.startsWith("/home")) {
-      return "홈";
-    }
     if (path.startsWith("/projects")) {
       return "사업/프로젝트 기획";
     }

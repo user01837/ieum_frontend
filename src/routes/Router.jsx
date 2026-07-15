@@ -54,7 +54,7 @@ const adminLoader = async () => {
   // 사용자 역할 코드 확인
   if (user?.system_role_code !== '02') {
     alert('관리자만 접근할 수 있는 페이지입니다.');
-    return redirect("/home"); // 권한이 없으면 홈으로 리디렉션
+    return redirect("/petitions"); // 권한이 없으면 홈으로 리디렉션
   }
 
   return null; // 접근 허용
@@ -80,10 +80,6 @@ const router = createBrowserRouter([
     ),
     loader: protectedLoader,
     children: [
-      {
-        path: "home",
-        element: <Home />,
-      },
       {
         path: "petitions",
         element: <PetitionList //isAdmin={true}

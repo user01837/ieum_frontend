@@ -32,7 +32,7 @@ export const useLoginMutation = () => {
         
         // 비밀번호를 변경할 필요가 없을 때만 메인 페이지로 이동
         if (!mustChangePassword) {
-          navigate('/home');
+          navigate('/petitions');
         }
       } else {
         // 응답 데이터가 예상과 다를 경우 처리
