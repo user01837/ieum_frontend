@@ -1,11 +1,34 @@
 import React, { useState, useEffect, useRef } from 'react';
 import './Chatbot.css';
 import botIcon from '../../assets/bot.png';
+import { useLegalChatMutation } from '../../hooks/mutations/useChatbotMutations';
+
+// 참고 법령을 표시하는 서브 컴포넌트
+const ReferencedArticles = ({ articles }) => {
+  if (!articles || articles.length === 0) {
+    return null;
+  }
+
+  return (
+    <div className="referenced-articles">
+      <p><strong>참고 법령:</strong></p>
+      <ul>
+        {articles.map((article, index) => (
+          <li key={index}>
+            <a href={article.document} target="_blank" rel="noopener noreferrer" title={article.document}>
+              {article.law_title} 제{article.article_no}조 ({article.article_title})
+            </a>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+};
 
 function Chatbot() {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState([
-    { id: 1, text: '안녕하세요! 무엇을 도와드릴까요?', sender: 'bot' },
+    { id: 1, text: '안녕하세요! 법률 관련 질문에 답변해 드립니다.', sender: 'bot' },
   ]);
   const [inputMessage, setInputMessage] = useState('');
   const fabRef = useRef(null);
@@ -35,30 +58,59 @@ function Chatbot() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
+  const chatMutation = useLegalChatMutation({
+    onSuccess: (data) => {
+      const botResponse = {
+        id: Date.now(),
+        text: data.answer,
+        sender: 'bot',
+        referenced_articles: data.referenced_articles,
+      };
+      // "법률을 찾는중..." 메시지를 실제 답변으로 교체합니다.
+      setMessages((prevMessages) => [
+        ...prevMessages.filter(m => m.id !== 'loading'),
+        botResponse,
+      ]);
+    },
+    onError: (error) => {
+      const errorMessage = {
+        id: Date.now(),
+        text: `죄송합니다, 오류가 발생했습니다. 잠시 후 다시 시도해주세요. (에러: ${error.response?.data?.detail || error.message})`,
+        sender: 'bot',
+        isError: true,
+      };
+      // "법률을 찾는중..." 메시지를 에러 메시지로 교체합니다.
+      setMessages((prevMessages) => [
+        ...prevMessages.filter(m => m.id !== 'loading'),
+        errorMessage,
+      ]);
+    },
+  });
+
   const handleSendMessage = () => {
-    if (inputMessage.trim() === '') return;
+    if (inputMessage.trim() === '' || chatMutation.isLoading) return;
 
     const newUserMessage = {
-      id: messages.length + 1,
+      id: Date.now(),
       text: inputMessage,
       sender: 'user',
     };
-    setMessages((prevMessages) => [...prevMessages, newUserMessage]);
+
+    // "법률을 찾는중..." 메시지를 미리 추가합니다.
+    const loadingMessage = {
+      id: 'loading', // 고유 ID로 로딩 메시지를 식별합니다.
+      sender: 'bot',
+      type: 'loading', // 렌더링 시 로딩 상태임을 구분하기 위한 타입
+    };
+
+    setMessages((prevMessages) => [...prevMessages, newUserMessage, loadingMessage]);
     setInputMessage('');
 
-    // 더미 챗봇 응답 시뮬레이션 (API 호출 가정)
-    setTimeout(() => {
-      const botResponse = {
-        id: messages.length + 2,
-        text: `"${newUserMessage.text}" 에 대한 응답입니다. 현재 챗봇은 개발 중입니다.`,
-        sender: 'bot',
-      };
-      setMessages((prevMessages) => [...prevMessages, botResponse]);
-    }, 1000); // 1초 후 응답
+    chatMutation.mutate({ question: inputMessage });
   };
 
   const handleKeyPress = (e) => {
-    if (e.key === 'Enter') {
+    if (e.key === 'Enter' && !e.nativeEvent.isComposing) {
       handleSendMessage();
     }
   };
@@ -72,14 +124,31 @@ function Chatbot() {
             <button className="chatbot-close-btn" onClick={() => setIsOpen(false)}>&times;</button>
           </div>
           <div className="chatbot-body">
-            {messages.map((message) => (
-              <div
-                key={message.id}
-                className={`chat-message ${message.sender === 'user' ? 'user' : 'bot'}`}
-              >
-                {message.text}
-              </div>
-            ))}
+            {messages.map((message) => {
+              // 메시지 타입이 'loading'이면 로딩 인디케이터를 렌더링합니다.
+              if (message.type === 'loading') {
+                return (
+                  <div key={message.id} className="chat-message bot">
+                    <div className="loading-wrapper">
+                      <div className="typing-indicator">
+                        <span></span><span></span><span></span>
+                      </div>
+                      <span>법률을 찾는중...</span>
+                    </div>
+                  </div>
+                );
+              }
+              // 그 외의 경우 일반 메시지를 렌더링합니다.
+              return (
+                <div
+                  key={message.id}
+                  className={`chat-message ${message.sender === 'user' ? 'user' : 'bot'} ${message.isError ? 'error' : ''}`}
+                >
+                  {message.text}
+                  {message.referenced_articles && <ReferencedArticles articles={message.referenced_articles} />}
+                </div>
+              );
+            })}
             <div ref={messagesEndRef} /> {/* 자동 스크롤을 위한 빈 div */}
           </div>
           <div className="chatbot-input-area">
@@ -89,8 +158,9 @@ function Chatbot() {
               value={inputMessage}
               onChange={(e) => setInputMessage(e.target.value)}
               onKeyPress={handleKeyPress}
+              disabled={chatMutation.isLoading}
             />
-            <button onClick={handleSendMessage}>전송</button>
+            <button onClick={handleSendMessage} disabled={chatMutation.isLoading}>전송</button>
           </div>
         </div>
       )}

@@ -306,11 +306,27 @@ function DetailPetition({ isAdmin: propIsAdmin = false }) {
   // isCaseDetailOpen 상태가 바뀔 때마다 body 클래스 토글
   useEffect(() => {
     if (isCaseDetailOpen) {
-      document.documentElement.classList.add('split-view-active');
+      // 현재 스크롤 위치 저장 후 body를 fixed로 고정
+      const scrollY = window.scrollY;
+      document.body.style.position = 'fixed';
+      document.body.style.top = `-${scrollY}px`;
+      document.body.style.width = '100%';
     } else {
-      document.documentElement.classList.remove('split-view-active');
+      // 고정 해제 후 원래 스크롤 위치 복원
+      const scrollY = document.body.style.top;
+      document.body.style.position = '';
+      document.body.style.top = '';
+      document.body.style.width = '';
+      window.scrollTo(0, parseInt(scrollY || '0') * -1);
     }
-    return () => document.documentElement.classList.remove('split-view-active');
+
+    return () => {
+      const scrollY = document.body.style.top;
+      document.body.style.position = '';
+      document.body.style.top = '';
+      document.body.style.width = '';
+      window.scrollTo(0, parseInt(scrollY || '0') * -1);
+    };
   }, [isCaseDetailOpen]);
 
 
