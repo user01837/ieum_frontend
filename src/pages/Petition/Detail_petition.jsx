@@ -6,7 +6,8 @@ import Placeholder from '@tiptap/extension-placeholder';
 import { useDropzone } from 'react-dropzone';
 import EmployeeSearchModal from '../../components/EmpSearchModal/EmpSearchModal';
 import { usePetitionDetailQuery } from '../../hooks/queries/usePetitionQuery';
-import { useCompletePetitionMutation, useTempSavePetitionMutation, useDeleteAttachmentMutation } from '../../hooks/mutations/usePetitionMutations';
+import { useDepartmentsQuery } from '../../hooks/queries/useDeptQuery';
+import { useCompletePetitionMutation, useTempSavePetitionMutation, useDeleteAttachmentMutation, useFindSimilarPetitionsMutation } from '../../hooks/mutations/usePetitionMutations';
 
 import './Detail_petition.css';
 import './Tiptap.css';
@@ -16,6 +17,12 @@ const STATUS_CLASS_MAP = {
   '처리중': 'progress',
   '완료': 'done',
 };
+
+const STATUS_CODE_MAP = {
+  "01": "대기중",
+  "02": "처리중",
+  "03": "완료",
+}
 
 const isImageFile = (fileName) => {
   if (!fileName) return false;
@@ -110,11 +117,10 @@ function DetailPetition({ isAdmin: propIsAdmin = false }) {
   const completePetitionMutation = useCompletePetitionMutation();
   const tempSavePetitionMutation = useTempSavePetitionMutation();
   const deleteAttachmentMutation = useDeleteAttachmentMutation();
+  const { data: departmentsData } = useDepartmentsQuery();
 
   const [isSimilarCasesOpen, setIsSimilarCasesOpen] = useState(false);
-  const [isSimilarCasesLoading, setIsSimilarCasesLoading] = useState(false);
   const [similarCases, setSimilarCases] = useState([]);
-  const [isMoreCasesLoading, setIsMoreCasesLoading] = useState(false);
   const [isAiDraftOpen, setIsAiDraftOpen] = useState(false);
   const [isAiDraftLoading, setIsAiDraftLoading] = useState(false);
   const [aiDraft, setAiDraft] = useState('');
@@ -226,40 +232,66 @@ function DetailPetition({ isAdmin: propIsAdmin = false }) {
     }
   }, [complaint, editor]);
 
-  const handleLoadSimilarCases = () => {
-    setIsSimilarCasesLoading(true);
-    setTimeout(() => {
-      setSimilarCases(complaint.similarCases || []);
-      setIsSimilarCasesLoading(false);
-      setIsSimilarCasesOpen(true);
-    }, 1500);
-  };
+  const findSimilarPetitionsMutation = useFindSimilarPetitionsMutation({
+    onSuccess: (data, variables) => {
+      const newCases = data.results.map(result => ({
+        id: result.complaint_id,
+        title: result.title,
+        dept: departmentsData?.find(d => d.code === result.department_code)?.name || result.department_code,
+        date: '날짜 정보 없음', // API 응답에 날짜 정보가 없습니다.
+        status: STATUS_CODE_MAP[result.status_code] || '상태 미지정',
+        fullContent: `[민원 요지]\n${result.content}\n\n[답변 내용]\n${result.answer}`,
+        answerContent: result.answer || ''
+      }));
 
-  // 추가 유사사례를 생성하는 함수 (API 호출 시뮬레이션)
-  // TODO: 이 부분은 향후 실제 유사사례 검색 API로 대체되어야 합니다.
-  const generateMoreCases = (complaint, existingCount) => {
-    const newCases = [];
-    for (let i = 1; i <= 2; i++) { // 2개의 새로운 사례 생성
-      const newIndex = existingCount + i;
-      newCases.push({
-        id: `s${complaint.id}-more-${newIndex}`,
-        title: `추가된 유사 민원 사례 ${newIndex}`,
-        dept: complaint.departmentName,
-        date: '2024.10.21',
-        status: '처리완료',
-        fullContent: `[민원 요지]\n추가적으로 검색된 유사 민원 사례입니다. (사례 ${newIndex})\n\n[처리 경과]\n담당 부서에서 신속하게 현장을 확인하고 필요한 조치를 계획했습니다.\n\n[답변 내용]\n안녕하세요. 추가로 문의주신 사안에 대해 검토 후 조치하였음을 알려드립니다.`
-      });
+      if (variables.exclude_ids && variables.exclude_ids.length > 0) {
+        // '더 찾아보기'의 경우
+        setSimilarCases(prevCases => [...prevCases, ...newCases]);
+        if (newCases.length === 0) {
+          // 더 이상 찾은 사례가 없을 때 사용자에게 알림
+          alert('더 이상 유사한 사례를 찾지 못했습니다.');
+        }
+      } else {
+        // 첫 검색의 경우
+        setSimilarCases(newCases);
+        setIsSimilarCasesOpen(true);
+      }
+    },
+    onError: (error) => {
+      alert(`유사 민원 검색 중 오류가 발생했습니다: ${error.response?.data?.detail || error.message}`);
     }
-    return newCases;
+  });
+
+  const handleLoadSimilarCases = () => {
+    // 상세 정보 API는 부서 코드를 반환하지 않으므로, 부서 이름으로 코드를 찾습니다.
+    const departmentCode = departmentsData?.find(d => d.name === complaint.departmentName)?.code;
+    if (!departmentCode) {
+      alert("민원의 부서 정보가 없어 유사 사례를 검색할 수 없습니다.");
+      return;
+    }
+    findSimilarPetitionsMutation.mutate({
+      title: complaint.title,
+      content: complaint.content,
+      department_code: departmentCode,
+      top_k: 2,
+      exclude_ids: [],
+    });
   };
 
   const handleLoadMoreSimilarCases = () => {
-    setIsMoreCasesLoading(true);
-    setTimeout(() => {
-      const newCases = generateMoreCases(complaint, similarCases.length);
-      setSimilarCases(prevCases => [...prevCases, ...newCases]);
-      setIsMoreCasesLoading(false);
-    }, 1000);
+    const departmentCode = departmentsData?.find(d => d.name === complaint.departmentName)?.code;
+    if (!departmentCode) {
+      alert("민원의 부서 정보가 없어 유사 사례를 검색할 수 없습니다.");
+      return;
+    }
+    const exclude_ids = similarCases.map(c => c.id);
+    findSimilarPetitionsMutation.mutate({
+      title: complaint.title,
+      content: complaint.content,
+      department_code: departmentCode,
+      top_k: 2,
+      exclude_ids: exclude_ids,
+    });
   };
 
   const handleLoadAiDraft = () => {
@@ -482,31 +514,44 @@ function DetailPetition({ isAdmin: propIsAdmin = false }) {
               <p style={{ fontSize: '12.5px', color: 'var(--ink-soft)', lineHeight: '1.7', marginBottom: '15px' }}>
                 현재 민원과 유사한 과거 처리 사례를 검색합니다. 사례는 참고용으로만 활용할 수 있습니다.
               </p>
-              {isSimilarCasesLoading ? <div className="spinner"></div> : isSimilarCasesOpen ? (
+              {isSimilarCasesOpen ? (
                 <>
-                  {similarCases.map((simCase) => (
-                    <div
-                      key={simCase.id}
-                      className={`simcase ${selectedCase?.id === simCase.id && isCaseDetailOpen ? 'active' : ''}`}
-                      onClick={() => handleOpenCaseDetail(simCase)}
-                    >
-                      <div>
-                        <div className="sim-title">{simCase.title}</div>
-                        <div className="sim-meta">{simCase.dept} | {simCase.date}</div>
+                  {similarCases.length > 0 ? (
+                    similarCases.map((simCase) => (
+                      <div
+                        key={simCase.id}
+                        className={`simcase ${selectedCase?.id === simCase.id && isCaseDetailOpen ? 'active' : ''}`}
+                        onClick={() => handleOpenCaseDetail(simCase)}
+                      >
+                        <div>
+                          <div className="sim-title">{simCase.title}</div>
+                          <div className="sim-meta">{simCase.dept} | {simCase.date}</div>
+                        </div>
+                        <div className="chev-btn">
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3"><path d="m9 18 6-6-6-6"></path></svg>
+                        </div>
                       </div>
-                      <div className="chev-btn">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3"><path d="m9 18 6-6-6-6"></path></svg>
-                      </div>
-                    </div>
-                  ))}
-                  <div className="morelink" onClick={!isMoreCasesLoading ? handleLoadMoreSimilarCases : undefined}>
-                    {isMoreCasesLoading ? (
+                    ))
+                  ) : (
+                    <div className="loading-box">유사한 사례를 찾지 못했습니다.</div>
+                  )}
+                  <div
+                    className="morelink"
+                    onClick={!(findSimilarPetitionsMutation.isPending || findSimilarPetitionsMutation.isLoading) ? handleLoadMoreSimilarCases : undefined}
+                    style={{ display: similarCases.length > 0 ? 'flex' : 'none' }}
+                  >
+                    {(findSimilarPetitionsMutation.isPending || findSimilarPetitionsMutation.isLoading) ? (
                       <div className="spinner small" style={{ margin: '0 auto' }}></div>
                     ) : (
                       <>유사 사례 더 찾아보기 <svg viewBox="0 0 24 24"><path fill="currentColor" d="M16.59 8.59L12 13.17 7.41 8.59 6 10l6 6 6-6z"></path></svg></>
                     )}
                   </div>
                 </>
+              ) : (findSimilarPetitionsMutation.isPending || findSimilarPetitionsMutation.isLoading) ? (
+                <div className="loading-box">
+                  <div className="spinner"></div>
+                  {/* <span>유사 민원 사례를 불러오는 중입니다...</span> */}
+                </div>
               ) : (
                 <div className="applybtn" onClick={handleLoadSimilarCases}>유사 민원 불러오기</div>
               )}
@@ -712,7 +757,7 @@ function DetailPetition({ isAdmin: propIsAdmin = false }) {
               {!isAdmin && <div
                 className="applybtn"
                 onClick={() => {
-                  if (editor) editor.commands.setContent(selectedCase.fullContent.replace(/\n/g, '<br/>'));
+                  if (editor) editor.commands.setContent((selectedCase.answerContent || '').replace(/\n/g, '<br/>'));
                 }}
               >
                 이 사례 내용 답변에 참고하기

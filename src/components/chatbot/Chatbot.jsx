@@ -5,19 +5,40 @@ import { useLegalChatMutation } from '../../hooks/mutations/useChatbotMutations'
 
 // 참고 법령을 표시하는 서브 컴포넌트
 const ReferencedArticles = ({ articles }) => {
+  const [expandedIndex, setExpandedIndex] = useState(null); // 확장된 항목의 인덱스를 추적하는 상태
+
   if (!articles || articles.length === 0) {
     return null;
   }
+
+  const toggleExpand = (index) => {
+    // 이미 열려있는 항목을 다시 클릭하면 닫고, 다른 항목을 클릭하면 해당 항목을 엽니다.
+    setExpandedIndex(expandedIndex === index ? null : index);
+  };
 
   return (
     <div className="referenced-articles">
       <p><strong>참고 법령:</strong></p>
       <ul>
         {articles.map((article, index) => (
-          <li key={index}>
-            <a href={article.document} target="_blank" rel="noopener noreferrer" title={article.document}>
-              {article.law_title} 제{article.article_no}조 ({article.article_title})
-            </a>
+          <li key={index} className="ref-article-item">
+            <div className="ref-article-header" onClick={() => toggleExpand(index)}>
+              <span>{article.law_title} 제{article.article_no}조 ({article.article_title})</span>
+              <svg className={`ref-article-chevron ${expandedIndex === index ? 'expanded' : ''}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="m6 9 6 6 6-6"/></svg>
+            </div>
+            {expandedIndex === index && (
+              <div className="ref-article-body">
+                <pre className="ref-article-document">{article.document}</pre>
+                <a
+                  href={`https://www.law.go.kr/LSW/lsSc.do?menuId=1&subMenuId=15&tabMenuId=81&query=${encodeURIComponent(`${article.law_title} 제${article.article_no}조`)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="ref-article-link"
+                >
+                  국가법령정보센터에서 보기
+                </a>
+              </div>
+            )}
           </li>
         ))}
       </ul>

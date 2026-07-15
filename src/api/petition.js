@@ -104,3 +104,19 @@ export const deleteAttachment = async (attachmentId) => {
   const response = await api.delete(`/petitions/attachments/${attachmentId}`);
   return response.data;
 };
+
+/**
+ * AI를 통해 유사 민원을 검색하는 API
+ * @param {object} payload - 검색 요청 데이터
+ * @param {string} payload.title - 현재 민원 제목
+ * @param {string} payload.content - 현재 민원 내용
+ * @param {string} payload.department_code - 현재 민원 부서 코드
+ * @param {number} [payload.top_k=2] - 반환할 최대 결과 수
+ * @param {number[]} [payload.exclude_ids=[]] - 결과에서 제외할 민원 ID 목록
+ * @param {number} [payload.min_similarity=0.0] - 최소 유사도
+ * @returns {Promise<object>} - 유사 민원 검색 결과
+ */
+export const findSimilarPetitions = async (payload) => {
+  const response = await api.post('/ai/similar-petitions', payload);
+  return response.data;
+};
