@@ -110,7 +110,7 @@ export default function ProjectList() {
         <div className="project-trow head">
           <span>시작일</span>
           <span>목표일</span>
-          <span>프로젝트명 / 부서</span>
+          <span>프로젝트명 / 부서명</span>
           <span>구분</span>
           <span>진행상태</span>
           <span></span>
@@ -133,7 +133,11 @@ export default function ProjectList() {
                 <div className="project-subline">{project.departmentName}</div>
               </div>
               <span className="status">
-                <span className="dot" style={{ background: "var(--blue)" }} />
+                <span className="dot" style={{
+                  background: project.roleType === "MY" ? "var(--blue)" :
+                    project.roleType === "JOINED" ? "var(--good)" :
+                      "var(--warn)"
+                }} />
                 {SCOPE_LABEL[project.roleType]}
               </span>
               <span className="status">

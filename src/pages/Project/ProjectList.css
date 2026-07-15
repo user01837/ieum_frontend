@@ -1,6 +1,8 @@
 /* ProjectList 고유 스타일만 */
 .project-content {
   padding: 26px 34px 50px;
+  max-width: 1400px;
+  margin: 0 auto;
 }
 
 .project-newbtn {

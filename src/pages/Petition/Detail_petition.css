@@ -6,7 +6,7 @@ html.split-view-active {
 /* ===== 상세 뷰 디자인 레이아웃 ===== */
 .dcontent {
   padding: 26px 34px 60px;
-  max-width: 1400px; /* 콘텐츠의 최대 너비를 제한합니다. */
+  max-width: 900px; /* 콘텐츠의 최대 너비를 제한합니다. */
   width: 100%;
   margin: 0 auto; /* 화면이 넓을 때 콘텐츠를 중앙에 배치합니다. */
 }

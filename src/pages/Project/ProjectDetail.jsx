@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useEditor, EditorContent } from '@tiptap/react';
+import { useProjectDetailQuery } from "../../hooks/queries/useProjectQuery";
+import { useUpdateProjectMutation, useApproveProjectMutation, useDeleteProjectMutation } from "../../hooks/mutations/useProjectMutation";
 import StarterKit from '@tiptap/starter-kit';
 import Placeholder from '@tiptap/extension-placeholder';
 import EmpSearchModal from "../../components/EmpSearchModal/EmpSearchModal";
@@ -36,7 +38,10 @@ const TiptapToolbar = ({ editor }) => {
 export default function ProjectDetail() {
   const navigate = useNavigate();
   const { id } = useParams();
-
+  const { data: project, isLoading } = useProjectDetailQuery(id);
+  const { mutate: updateProject } = useUpdateProjectMutation(id);
+  const { mutate: approveProject } = useApproveProjectMutation(id);
+  const { mutate: deleteProject } = useDeleteProjectMutation();
   const [title, setTitle] = useState("");
   const [desc, setDesc] = useState("");
   const [teamMembers, setTeamMembers] = useState([]);
@@ -66,6 +71,24 @@ export default function ProjectDetail() {
       editor.setEditable(!isLocked);
     }
   }, [isLocked, editor]);
+
+  useEffect(() => {
+    if (project) {
+      setTitle(project.name);
+      setDesc(project.businessContent || "");
+      setStartDate(project.startDate || "");
+      setDueDate(project.deadline || "");
+      setIsLocked(project.stageCode === "02");
+      setTeamMembers(
+        project.members
+          .filter((m) => m.roleName === "협력")
+          .map((m) => ({ id: m.userId, name: m.name, dept: "" }))
+      );
+      if (editor && project.reportContent) {
+        editor.commands.setContent(project.reportContent);
+      }
+    }
+  }, [project, editor]);
 
   const handleAddMember = (employee) => {
     const isDuplicate = teamMembers.some((m) => m.id === employee.id);
@@ -102,15 +125,32 @@ export default function ProjectDetail() {
   };
 
   const handleSave = () => {
-    // TODO: useProjectMutation 연결
-    console.log({ id, title, desc, content: editor?.getHTML(), teamMembers });
-    alert("저장되었습니다.");
+    updateProject(
+      {
+        name: title,
+        businessContent: desc,
+        startDate: startDate,
+        deadline: dueDate,
+        overview: desc,
+        reportContent: editor?.getHTML(),
+        memberUserIds: teamMembers.map((m) => m.id),
+      },
+      {
+        onSuccess: () => {
+          alert("저장되었습니다.");
+          navigate("/projects");
+        },
+        onError: () => alert("저장에 실패했습니다."),
+      }
+    );
   };
 
   const handleComplete = () => {
     if (!window.confirm("승인 완료 처리하면 더 이상 수정할 수 없습니다. 계속하시겠습니까?")) return;
-    setIsLocked(true);
-    // TODO: useProjectMutation 연결
+    approveProject(undefined, {
+      onSuccess: () => setIsLocked(true),
+      onError: () => alert("승인 처리에 실패했습니다."),
+    });
   };
 
   useEffect(() => {
@@ -134,7 +174,7 @@ export default function ProjectDetail() {
         </div>
       </div>
       <div className="crumb">
-        홈 &gt; 사업/프로젝트 기획 &gt; <b>{title || "기획서 수정"}</b>
+        홈 &gt; 사업/프로젝트 기획 &gt; <b>기획서 수정</b>
 
       </div>
 
@@ -171,7 +211,7 @@ export default function ProjectDetail() {
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           disabled={isLocked}
-          placeholder="사업명을 입력하세요."
+          placeholder="사업명을 입력하세요. (예: 지역 행사 유치)"
         />
         <div className="section-title">사업 개요</div>
         <textarea
@@ -179,7 +219,7 @@ export default function ProjectDetail() {
           value={desc}
           onChange={(e) => setDesc(e.target.value)}
           disabled={isLocked}
-          placeholder="사업 목적, 배경, 주요 내용을 간략히 작성하세요."
+          placeholder="이 사업의 목적, 배경, 주요 내용을 작성해 주세요."
         />
         <div className="formrow2">
           <div>
@@ -330,9 +370,10 @@ export default function ProjectDetail() {
             <div className="del-modal-btns">
               <button className="btn btn-ghost" onClick={() => setIsDeleteModalOpen(false)}>취소</button>
               <button className="btn del-confirm-btn" onClick={() => {
-                // TODO: useProjectMutation 연결
-                console.log("delete", id);
-                navigate("/projects");
+                deleteProject(id, {
+                  onSuccess: () => navigate("/projects"),
+                  onError: () => alert("삭제에 실패했습니다."),
+                });
               }}>삭제</button>
             </div>
           </div>

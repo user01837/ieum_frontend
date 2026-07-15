@@ -1,9 +1,15 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useCreateProjectMutation } from "../../hooks/mutations/useProjectMutation";
 import EmpSearchModal from "../../components/EmpSearchModal/EmpSearchModal";
+import useAuthStore from "../../store/useAuthStore";
 import "./ProjectCreate.css";
 
 export default function ProjectCreate() {
+
+  const user = useAuthStore((state) => state.user);
+  const { mutate: createProject, isPending } = useCreateProjectMutation();
+
   const navigate = useNavigate();
 
   const [title, setTitle] = useState("");
@@ -26,10 +32,25 @@ export default function ProjectCreate() {
 
   const handleSubmit = () => {
     if (!title.trim()) { alert("사업명을 입력해 주세요."); return; }
-    if (!startDate || !dueDate) { alert("시작일과 기한을 입력해 주세요."); return; }
-    // TODO: useProjectMutation 연결
-    console.log({ title, desc, startDate, dueDate, teamMembers });
-    navigate("/projects");
+    if (!startDate || !dueDate) { alert("시작일과 목표일을 입력해 주세요."); return; }
+
+    createProject(
+      {
+        name: title,
+        businessContent: desc,
+        startDate: startDate,
+        deadline: dueDate,
+        memberUserIds: teamMembers.map((m) => m.userId),
+      },
+      {
+        onSuccess: () => {
+          navigate("/projects");
+        },
+        onError: () => {
+          alert("프로젝트 생성에 실패했습니다.");
+        },
+      }
+    );
   };
 
   return (
@@ -43,7 +64,7 @@ export default function ProjectCreate() {
         </div>
       </div>
       <div className="crumb">
-        사업/프로젝트 기획 <b>&nbsp;›&nbsp; 새 프로젝트 생성</b>
+        홈 &gt; 사업/프로젝트 기획 &gt; <b>새 프로젝트 생성</b>
       </div>
 
       <div className="formcard">
@@ -54,7 +75,7 @@ export default function ProjectCreate() {
             type="text"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            placeholder="예) 지역 행사 유치"
+            placeholder="사업명을 입력하세요. (예: 지역 행사 유치)"
           />
         </div>
 
@@ -64,7 +85,7 @@ export default function ProjectCreate() {
             className="input"
             value={desc}
             onChange={(e) => setDesc(e.target.value)}
-            placeholder="사업 목적과 주요 내용을 간략히 작성해 주세요."
+            placeholder="이 사업의 목적과 추진 배경을 간략히 작성해 주세요."
           />
         </div>
 
@@ -73,7 +94,7 @@ export default function ProjectCreate() {
           <input
             className="input"
             type="text"
-            value="문화도시과"
+            value={user?.deptName || ""}
             readOnly
           />
           {/* TODO: useAuth()로 로그인 유저 부서 표시 */}
@@ -90,7 +111,7 @@ export default function ProjectCreate() {
             />
           </div>
           <div className="field">
-            <label>기한</label>
+            <label>목표일</label>
             <input
               className="input"
               type="date"
@@ -129,8 +150,8 @@ export default function ProjectCreate() {
           <button className="btn btn-ghost" onClick={() => navigate("/projects")}>
             취소
           </button>
-          <button className="btn btn-navy" onClick={handleSubmit}>
-            프로젝트 생성
+          <button className="btn btn-navy" onClick={handleSubmit} disabled={isPending}>
+            {isPending ? "생성 중..." : "프로젝트 생성"}
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
               <path d="M5 12h14M13 6l6 6-6 6" />
             </svg>
