@@ -50,6 +50,12 @@ api.interceptors.response.use(
     // 401 에러이고, 재시도된 요청이 아닐 경우
     if (error.response?.status === 401 && !originalRequest._retry) {
       // 이미 토큰 재발급이 진행 중인 경우, 현재 요청을 큐에 추가하고 대기
+
+      if (originalRequest.url === '/auth/refresh') {
+        logout();
+        window.location.href = '/login';
+        return Promise.reject(error);
+      }
       if (isRefreshing) {
         return new Promise(function (resolve, reject) {
           failedQueue.push({ resolve, reject });
@@ -89,10 +95,24 @@ api.interceptors.response.use(
         originalRequest.headers['Authorization'] = `Bearer ${newAccessToken}`;
         return api(originalRequest); // 원래 요청 재시도
       } catch (refreshError) {
-        console.error('Failed to refresh token. Logging out.', refreshError);
-        processQueue(refreshError, null); // 대기열의 모든 요청 실패 처리
+
+        console.log("===== REFRESH CATCH 진입 =====");
+
+        console.error(
+          'Failed to refresh token. Logging out.',
+          refreshError
+        );
+
+        processQueue(refreshError, null);
+
+        console.log("logout 실행 전");
+
         logout();
+
+        console.log("logout 실행 후");
+
         window.location.href = '/login';
+
         return Promise.reject(refreshError);
       } finally {
         isRefreshing = false;
