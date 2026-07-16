@@ -29,11 +29,10 @@ export const useLoginMutation = () => {
       if (userData && accessToken && refreshToken) {
         // mustChangePassword 값과 함께 스토어에 로그인 정보 저장
         await authLogin(userData, accessToken, refreshToken, mustChangePassword);
-        
-        // 비밀번호를 변경할 필요가 없을 때만 메인 페이지로 이동
-        if (!mustChangePassword) {
-          navigate('/petitions');
-        }
+
+        // 로그인 성공 후 무조건 메인 페이지로 이동합니다.
+        // 비밀번호 변경이 필요하면 MainLayout에서 모달이 뜰 것입니다.
+        navigate('/petitions');
       } else {
         // 응답 데이터가 예상과 다를 경우 처리
         console.error('Login successful, but user data or token missing in response.', response.data);

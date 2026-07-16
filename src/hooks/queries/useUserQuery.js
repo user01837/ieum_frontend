@@ -2,7 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import api from "../../api/axios";
-import { getUsers } from "../../api/userManagement";
+import { getUsers, getAdminStats } from "../../api/userManagement";
 
 // 이 훅은 EmpSearchModal에서 사용됩니다.
 export const useUserSearch = ({ scope, departmentCode, keyword }) => {
@@ -44,5 +44,17 @@ export const useUsersQuery = (params) => {
     // 페이지 변경 시 이전 데이터가 잠시 보이는 현상을 방지하고,
     // 새 데이터가 로드될 때까지 이전 데이터를 유지하여 UX를 개선합니다.
     keepPreviousData: true,
+  });
+};
+
+/**
+ * 관리자 대시보드 통계를 조회하는 React Query 훅
+ */
+export const useAdminStatsQuery = () => {
+  return useQuery({
+    queryKey: ['adminStats'],
+    queryFn: getAdminStats,
+    staleTime: 1000 * 60 * 5, // 5분
+    refetchOnWindowFocus: false,
   });
 };

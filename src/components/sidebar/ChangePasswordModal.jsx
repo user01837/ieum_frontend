@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import ReactDOM from 'react-dom';
 import './ChangePasswordModal.css';
 import { useChangePasswordMutation } from '../../hooks/mutations/useAuthMutation';
 import useAuthStore from '../../store/useAuthStore';
@@ -24,8 +25,8 @@ function ChangePasswordModal({ onClose }) {
     if (!currentPassword) newErrors.currentPassword = '현재 비밀번호를 입력해주세요.';
     if (!newPassword) {
       newErrors.newPassword = '새 비밀번호를 입력해주세요.';
-    } else if (newPassword.length < 8) {
-      newErrors.newPassword = '비밀번호는 8자 이상이어야 합니다.';
+    } else if (!/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*(),.?":{}|<>]).{8,}$/.test(newPassword)) {
+      newErrors.newPassword = '비밀번호는 영문 대소문자, 숫자, 특수문자를 포함하여 8자 이상이어야 합니다.';
     } else if (newPassword === currentPassword) {
       newErrors.newPassword = '현재 비밀번호와 다른 비밀번호를 사용해주세요.';
     }
@@ -62,17 +63,21 @@ function ChangePasswordModal({ onClose }) {
     handleConfirm();
   };
 
-  return (
-    <div className="modal-overlay">
-      <form className="modal-container" role="dialog" aria-modal="true" style={{ width: '400px' }} onSubmit={handleSubmit}>
+  // 포탈(Portal)을 사용하여 모달을 document.body의 최상단에 렌더링합니다.
+  // 이렇게 하면 사이드바의 z-index 스태킹 컨텍스트(stacking context) 문제와 상관없이
+  // 모달이 항상 다른 모든 UI 요소 위에 표시됩니다.
+  return ReactDOM.createPortal(
+    <div className="modal-overlay force-change-pw-overlay" onClick={onClose}>
+      <form className="modal-container" role="dialog" aria-modal="true" style={{ width: '400px' }} onSubmit={handleSubmit} onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
           <div>
             <p className="modal-title">비밀번호 변경</p>
             <p className="modal-subtitle">
-              계정 정보를 입력하고 새 비밀번호를 설정하세요.
+              새 비밀번호는 영문 대소문자, 숫자, 특수문자를 포함하여 8자 이상이어야 합니다.
             </p>
           </div>
           <button type="button" aria-label="닫기" className="modal-close-btn" onClick={onClose} disabled={mustChangePassword}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3"><path d="M18 6 6 18M6 6l12 12" /></svg>
             <i className="ti ti-x ic" aria-hidden="true"></i>
           </button>
         </div>
@@ -135,7 +140,8 @@ function ChangePasswordModal({ onClose }) {
           </button>
         </div>
       </form>
-    </div>
+    </div>,
+    document.body
   );
 }
 

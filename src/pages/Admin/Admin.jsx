@@ -1,9 +1,10 @@
 import { useState, useEffect, useRef } from "react";
 import "./Admin.css";
+import { useQueryClient } from "@tanstack/react-query";
 import EmployeeSearchModal from "../../components/EmpSearchModal/EmpSearchModal";
 import Pagination from "../../components/Pagination/Pagination.jsx";
 import { useDepartmentsQuery } from "../../hooks/queries/useDeptQuery";
-import { useUsersQuery } from "../../hooks/queries/useUserQuery";
+import { useUsersQuery, useAdminStatsQuery } from "../../hooks/queries/useUserQuery";
 import {
   useCreateUserMutation,
   useUpdateUserMutation,
@@ -71,6 +72,9 @@ export default function Admin() {
   const { data: departmentsData } = useDepartmentsQuery();
   const deptOptions = [{ code: 'ALL', name: '전체 부서' }, ...(departmentsData || [])];
 
+  // 통계 데이터 조회
+  const { data: statsData } = useAdminStatsQuery();
+
   const { data: usersData, isLoading, isError } = useUsersQuery({
     departmentCode: deptFilter === 'ALL' ? null : deptFilter,
     status: statusFilter === 'ALL' ? null : statusFilter,
@@ -86,6 +90,7 @@ export default function Admin() {
   const createUserMutation = useCreateUserMutation();
   const updateUserMutation = useUpdateUserMutation();
   const resetPasswordMutation = useResetPasswordMutation();
+  const queryClient = useQueryClient();
 
   const deptRef = useRef(null);
   const statusRef = useRef(null);
@@ -119,13 +124,12 @@ export default function Admin() {
   };
 
   // 통계
-  // TODO: 통계 API 연동 필요
   const stats = {
-    total: totalUsers,
-    active: 0,
-    leave: 0,
-    retired: 0,
-    depts: departmentsData?.length || 0,
+    total: statsData?.totalUsers ?? 0,
+    active: statsData?.activeUsers ?? 0,
+    leave: statsData?.leaveUsers ?? 0,
+    retired: statsData?.resignedUsers ?? 0,
+    depts: statsData?.totalDepartments ?? 0,
   };
 
   // 신규 등록 모달 열기
@@ -180,6 +184,9 @@ export default function Admin() {
       onSuccess: (data) => {
         setIsUserFormOpen(false);
         showToast(data.message || (isEditMode ? '직원 정보가 수정되었습니다.' : '신규 직원이 등록되었습니다.'));
+        // 직원 목록과 통계 데이터를 함께 새로고침합니다.
+        queryClient.invalidateQueries({ queryKey: ['users'] });
+        queryClient.invalidateQueries({ queryKey: ['adminStats'] });
       },
       onError: (error) => {
         alert(`오류: ${error.response?.data?.detail || error.message}`);
