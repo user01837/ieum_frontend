@@ -33,10 +33,13 @@ function Sidebar() {
   const user = useAuthStore((state) => state.user);
   const mustChangePassword = useAuthStore((state) => state.mustChangePassword);
 
+  const alertShownRef = useRef(false);
   useEffect(() => {
-    // mustChangePassword 상태가 true로 변경될 때, 사용자에게 알림을 표시합니다.
-    if (mustChangePassword) {
+    // 비밀번호를 강제로 변경해야 할 때, 사용자에게 한 번만 알림을 표시합니다.
+    if (mustChangePassword && !alertShownRef.current) {
       alert('보안을 위해 비밀번호를 먼저 변경해주세요.');
+      // 알림이 다시 표시되지 않도록 ref 값을 업데이트합니다.
+      alertShownRef.current = true;
     }
   }, [mustChangePassword]);
 
@@ -45,7 +48,6 @@ function Sidebar() {
     // 컴포넌트의 상태가 아닌, 스토어의 최신 상태를 직접 읽어와서 확인합니다.
     // 비밀번호 변경 성공 직후 이 함수가 호출될 때, 컴포넌트의 mustChangePassword는 아직 true일 수 있기 때문입니다. (stale state)
     if (useAuthStore.getState().mustChangePassword) {
-      alert('보안을 위해 비밀번호를 먼저 변경해주세요.');
       return;
     }
     setIsChangePasswordModalOpen(false);
