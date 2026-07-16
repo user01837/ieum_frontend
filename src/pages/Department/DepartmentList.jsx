@@ -4,7 +4,9 @@ import './DeptMgmt.css';
 import EmployeeSearchModal from '../../components/EmpSearchModal/EmpSearchModal';
 import { COMPLAINTS } from '../Petition/data';
 import { useDepartmentTasksQuery } from '../../hooks/queries/useTaskQuery';
-import { useCreateTaskMutation, useDeleteTaskMutation, useAddAssigneeMutation } from '../../hooks/mutations/useTaskMutation';
+import { useCreateTaskMutation, useDeleteTaskMutation, useAddAssigneeMutation, useRemoveAssigneeMutation } from '../../hooks/mutations/useTaskMutation';
+import useAuthStore from '../../store/useAuthStore';
+import { useDepartmentMembersQuery } from '../../hooks/queries/useDeptQuery';
 
 // --- Mock Data ---
 const MOCK_DATA = {
@@ -272,7 +274,7 @@ function TaskCard({ task, members, onRename, onDelete, onRemoveAssignee, onOpenS
 
       <div className="assignee-row">
         {task.assignees.map((mid) => {
-          const m = members.find((mb) => mb.id === mid);
+          const m = members.find((mb) => String(mb.id) === String(mid));
           if (!m) return null;
           return (
             <span key={mid} className="assignee-chip">
@@ -425,6 +427,9 @@ function DeptMgmt() {
   const { mutate: createTaskMutate } = useCreateTaskMutation();
   const { mutate: deleteTaskMutate } = useDeleteTaskMutation();
   const { mutate: addAssigneeMutate } = useAddAssigneeMutation();
+  const { mutate: removeAssigneeMutate } = useRemoveAssigneeMutation();
+  const user = useAuthStore((state) => state.user);
+  const { data: membersData } = useDepartmentMembersQuery(user?.department_code);
   const [isUrgentPanelOpen, setIsUrgentPanelOpen] = useState(false);
   const [urgentComplaintsData, setUrgentComplaintsData] = useState([]);
 
@@ -433,29 +438,18 @@ function DeptMgmt() {
 
   const currentDeptName = userRole === 'manager' ? myDept : selectedDept;
 
-  // API 호출 시뮬레이션
+  // API 호출 시뮬레이션 => 부서원 API 연동으로 교체
   useEffect(() => {
-    // 실제 애플리케이션에서는 이 부분에 API 호출 코드를 작성합니다.
-    // 예: fetch('/api/department/members').then(...)
-    const fetchDeptData = () => {
-      // 과장은 자기 부서만, 관리자는 선택한 부서의 데이터를 불러옴
-      const deptKey = userRole === 'manager' ? myDept : selectedDept;
-      const data = MOCK_DATA[deptKey] || { members: [], tasks: [] };
-
-      // 과장일 경우, isSelf 플래그를 동적으로 설정
-      const processedMembers =
-        userRole === 'manager'
-          ? data.members.map((m) => ({
-            ...m,
-            isSelf: m.position === '과장',
-          }))
-          : data.members;
-
-      setMembers(processedMembers);
-    };
-
-    fetchDeptData();
-  }, [userRole, selectedDept, myDept]);
+    if (membersData) {
+      const converted = membersData.map((m) => ({
+        id: m.userId,
+        position: m.positionName,
+        name: m.name,
+        isSelf: m.userId === String(user?.userId),
+      }));
+      setMembers(converted);
+    }
+  }, [membersData, user]);
 
   // 추가-Task만
   useEffect(() => {
@@ -509,13 +503,11 @@ function DeptMgmt() {
   };
 
   const handleAddAssignee = (taskId, memberId) => {
-    console.log('handleAddAssignee 호출:', taskId, memberId);
-    console.log('addAssigneeMutate:', addAssigneeMutate);
     addAssigneeMutate({ taskId, userId: memberId });
-    console.log('addAssigneeMutate 호출 완료');
   };
+
   const handleRemoveAssignee = (taskId, memberId) => {
-    dispatch({ type: 'REMOVE_ASSIGNEE', payload: { taskId, memberId } });
+    removeAssigneeMutate({ taskId, userId: memberId });
   };
 
   return (
