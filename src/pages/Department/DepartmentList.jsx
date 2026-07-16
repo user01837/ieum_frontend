@@ -3,6 +3,7 @@ import { v4 as uuidv4 } from 'uuid';
 import './DeptMgmt.css';
 import EmployeeSearchModal from '../../components/EmpSearchModal/EmpSearchModal';
 import { COMPLAINTS } from '../Petition/data';
+import { useDepartmentTasksQuery } from '../../hooks/queries/useTaskQuery';
 
 // --- Mock Data ---
 const MOCK_DATA = {
@@ -151,7 +152,7 @@ function UrgentComplaintsPanel({ complaints, onClose }) {
         <div className="side-panel-header-top">
           <span className="side-panel-badge">처리기한 임박</span>
           <div className="side-panel-close" onClick={onClose}>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M18 6 6 18M6 6l12 12" /></svg>
           </div>
         </div>
         <h3 className="side-panel-title">기한이 3일 이하로 남은 민원 목록입니다.</h3>
@@ -419,6 +420,7 @@ function DeptMgmt() {
   const [selectedDept, setSelectedDept] = useState(DEPT_LIST[0]);
   const [members, setMembers] = useState([]);
   const [tasks, dispatch] = useReducer(tasksReducer, []);
+  const { data: tasksData } = useDepartmentTasksQuery();
   const [isUrgentPanelOpen, setIsUrgentPanelOpen] = useState(false);
   const [urgentComplaintsData, setUrgentComplaintsData] = useState([]);
 
@@ -440,17 +442,28 @@ function DeptMgmt() {
       const processedMembers =
         userRole === 'manager'
           ? data.members.map((m) => ({
-              ...m,
-              isSelf: m.position === '과장',
-            }))
+            ...m,
+            isSelf: m.position === '과장',
+          }))
           : data.members;
-
+          
       setMembers(processedMembers);
-      dispatch({ type: 'SET_TASKS', payload: data.tasks });
     };
 
     fetchDeptData();
   }, [userRole, selectedDept, myDept]);
+
+  // 추가-Task만
+  useEffect(() => {
+    if (tasksData) {
+      const converted = tasksData.map((t) => ({
+        id: t.taskId,
+        name: t.name,
+        assignees: t.assignees.map((a) => a.userId),
+      }));
+      dispatch({ type: 'SET_TASKS', payload: converted });
+    }
+  }, [tasksData]);
 
   // ESC 키로 사이드 패널 닫기
   useEffect(() => {
@@ -530,7 +543,7 @@ function DeptMgmt() {
           />
           <TaskPanel
             currentDept={currentDeptName}
-            tasks={tasks.sort((a,b) => a.name.localeCompare(b.name))}
+            tasks={tasks.sort((a, b) => a.name.localeCompare(b.name))}
             members={members}
             onRename={handleRename}
             onDelete={handleDelete}
