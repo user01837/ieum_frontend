@@ -21,6 +21,9 @@ function MainLayout() {
     if (path.startsWith("/projects")) {
       return "사업/프로젝트 기획";
     }
+    if (path.startsWith("/knowl")) {
+      return "지식베이스";
+    }
     if (path.startsWith("/departments")) {
       return "부서 관리";
     }
