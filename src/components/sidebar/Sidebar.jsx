@@ -64,7 +64,7 @@ function Sidebar() {
           <div className="brand-title">
             공무원 업무지원
             <br />
-            플랫폼
+            공공이음
           </div>
         </div>
       </div>
@@ -78,6 +78,11 @@ function Sidebar() {
         <NavLink to="/projects" className={({ isActive }) => "nav-link" + (isActive ? " active" : "")}>
           <svg className="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>
           사업/프로젝트 기획
+        </NavLink>
+
+        <NavLink to="/knowl" className={({ isActive }) => "nav-link" + (isActive ? " active" : "")}>
+          <svg className="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 19a9 9 0 0 1 9 0a9 9 0 0 1 9 0M3 6a9 9 0 0 1 9 0a9 9 0 0 1 9 0M3 6v13M12 6v13M21 6v13"/></svg>
+          지식 베이스
         </NavLink>
 
         <NavLink to="/departments" className={({ isActive }) => "nav-link" + (isActive ? " active" : "")}>

@@ -1,0 +1,62 @@
+/* 화면 우측 가장자리 중앙 부근에 딱 붙이는 컨테이너 */
+.sticky-sidebar-container {
+  position: fixed;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%); /* 화면 세로 중앙 정렬 */
+  z-index: 9999;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+/* 우측 벽에 붙은 세로형 버튼 스타일 */
+.sticky-sidebar-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 48px; /* 좁고 슬림한 가로폭 */
+  padding: 20px 0; /* 세로로 길쭉하게 패딩 부여 */
+  background-color: var(--navy);
+  color: #ffffff;
+  border: none;
+  /* 왼쪽 모서리만 둥글게 깎아서 벽에 붙은 느낌 강조 */
+  border-radius: 12px 0 0 12px; 
+  cursor: pointer;
+  box-shadow: -4px 0 16px rgba(37, 99, 235, 0.15), 
+              -2px 0 6px rgba(0, 0, 0, 0.08);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* 텍스트 세로 쓰기 효과 */
+.sidebar-text {
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.4;
+  letter-spacing: -0.5px;
+  width: 14px; /* 글자가 한 글자씩 아래로 떨어지도록 너비 제한 */
+  word-break: break-all;
+  text-align: center;
+}
+
+/* 아이콘 스타일 */
+.sidebar-icon {
+  transition: transform 0.25s ease;
+}
+
+/* 마우스 호버(Hover) 시: 왼쪽으로 살짝 튀어나오는 효과 */
+.sticky-sidebar-btn:hover {
+  background-color: var(--navy);
+  width: 54px; /* 살짝 넓어지면서 시각적 피드백 제공 */
+  box-shadow: -6px 0 20px rgba(37, 99, 235, 0.25), 
+              -3px 0 10px rgba(0, 0, 0, 0.1);
+}
+
+.sticky-sidebar-btn:hover .sidebar-icon {
+  transform: scale(1.1) rotate(-5deg); /* 아이콘 미세 효과 */
+}
+
+/* 클릭(Active) 시 효과 */
+.sticky-sidebar-btn:active {
+  width: 50px;
+}

@@ -1,0 +1,182 @@
+/* KnowledgeMemoPanel.css */
+
+.memo-container {
+  font-family: var(--font-sans, sans-serif);
+  background: var(--surface-0, #f8f9fa);
+  padding: 20px 24px;
+  box-sizing: border-box;
+}
+
+.memo-section {
+  background: var(--surface-2, #ffffff);
+  border: 0.5px solid var(--border, #e0e0e0);
+  border-radius: 12px;
+  padding: 16px 18px;
+  margin-bottom: 14px;
+  box-sizing: border-box;
+}
+
+.memo-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-primary, #111111);
+  margin-bottom: 8px;
+}
+
+.memo-desc {
+  font-size: 12px;
+  color: var(--text-muted, #666666);
+  margin-bottom: 12px;
+}
+
+.tag-area {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.tag-item {
+  font-size: 12px;
+  padding: 4px 10px;
+  border-radius: 20px;
+  border: 0.5px solid var(--border, #e0e0e0);
+  background: var(--surface-1, #f1f3f5);
+  color: var(--text-secondary, #444444);
+  cursor: pointer;
+  user-select: none;
+  transition: all 0.2s ease;
+}
+
+.tag-item.active {
+  background: #e6f1fb;
+  color: #185fa5;
+  border-color: #b5d4f4;
+  font-weight: 500;
+}
+
+.tag-input-wrap {
+  display: flex;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.tag-input-field {
+  font-size: 12px;
+  padding: 4px 10px;
+  border-radius: 20px;
+  border: 0.5px solid var(--border, #e0e0e0);
+  background: var(--surface-1, #f1f3f5);
+  color: var(--text-primary, #111111);
+  outline: none;
+  width: 140px;
+}
+
+.tag-input-field:focus {
+  border-color: #185fa5;
+}
+
+.tag-add-button {
+  font-size: 12px;
+  padding: 4px 12px;
+  border-radius: 20px;
+  border: 0.5px solid #185fa5;
+  background: var(--surface-2, #ffffff);
+  color: #185fa5;
+  cursor: pointer;
+}
+
+.memo-textarea-field {
+  width: 100%;
+  min-height: 100px;
+  border: 0.5px solid var(--border, #e0e0e0);
+  border-radius: var(--radius, 8px);
+  background: var(--surface-1, #f1f3f5);
+  font-size: 13px;
+  color: var(--text-primary, #111111);
+  line-height: 1.7;
+  resize: none;
+  outline: none;
+  padding: 10px 12px;
+  font-family: var(--font-sans, sans-serif);
+  margin-top: 12px;
+  box-sizing: border-box;
+}
+
+.memo-textarea-field:focus {
+  border-color: #185fa5;
+}
+
+.memo-save-btn {
+  width: 100%;
+  font-size: 13px;
+  padding: 8px;
+  border-radius: var(--radius, 8px);
+  border: none;
+  background: #1e2a3a;
+  color: #fff;
+  cursor: pointer;
+  font-weight: 500;
+  margin-top: 10px;
+}
+
+.filter-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 14px;
+  align-items: center;
+}
+
+.filter-title {
+  font-size: 12px;
+  color: var(--text-muted, #666666);
+  margin-right: 2px;
+}
+
+.filter-tag-item {
+  font-size: 12px;
+  padding: 3px 10px;
+  border-radius: 20px;
+  border: 0.5px solid var(--border, #e0e0e0);
+  background: var(--surface-2, #ffffff);
+  color: var(--text-secondary, #444444);
+  cursor: pointer;
+}
+
+.filter-tag-item.active {
+  background: #1e2a3a;
+  color: #fff;
+  border-color: #1e2a3a;
+}
+
+.log-item {
+  border-left: 2px solid #378add;
+  padding: 10px 12px;
+  background: var(--surface-2, #ffffff);
+  border-radius: 0 8px 8px 0;
+  margin-bottom: 8px;
+}
+
+.log-meta-info {
+  font-size: 11px;
+  color: var(--text-muted, #666666);
+  margin-bottom: 4px;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.log-badge {
+  font-size: 10px;
+  padding: 1px 7px;
+  border-radius: 20px;
+  background: #e6f1fb;
+  color: #185fa5;
+}
+
+.log-content {
+  font-size: 13px;
+  color: var(--text-secondary, #444444);
+  line-height: 1.65;
+}

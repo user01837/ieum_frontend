@@ -7,6 +7,7 @@ import { useDropzone } from 'react-dropzone';
 import EmployeeSearchModal from '../../components/EmpSearchModal/EmpSearchModal';
 import { usePetitionDetailQuery } from '../../hooks/queries/usePetitionQuery';
 import { useDepartmentsQuery } from '../../hooks/queries/useDeptQuery';
+import StickySideBarButton from '../../components/StickySideBar/StickySideBarButton';
 import { useCompletePetitionMutation, useTempSavePetitionMutation, useDeleteAttachmentMutation, useFindSimilarPetitionsMutation, useCreateDraftAnswerMutation } from '../../hooks/mutations/usePetitionMutations';
 
 import './Detail_petition.css';
@@ -128,6 +129,12 @@ function DetailPetition({ isAdmin: propIsAdmin = false }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [imageModalUrl, setImageModalUrl] = useState(null);
   const [hasNoMoreCases, setHasNoMoreCases] = useState(false);
+
+  // 노하우 작성 버튼 핸들러
+  const handleOpenWriteForm = () => {
+    // TODO: 실제 노하우 작성 패널/모달을 여는 로직으로 교체해야 합니다.
+    alert('노하우 작성 팝업 또는 페이지를 엽니다!');
+  };
 
   const { petitionerAttachments, staffAttachments } = useMemo(() => {
     if (!complaint?.attachments) {
@@ -457,6 +464,9 @@ function DetailPetition({ isAdmin: propIsAdmin = false }) {
 
   return (
     <div className={`split-layout ${isCaseDetailOpen ? 'split-active' : ''}`}>
+      {/* 스티키 사이드 버튼: fixed 속성이므로 레이아웃에 영향을 주지 않습니다. */}
+      <StickySideBarButton onClick={handleOpenWriteForm} />
+
       <div className="dcontent">
         <div className="backrow">
           <div className="backbtn" onClick={() => navigate(-1)}>
