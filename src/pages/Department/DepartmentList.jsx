@@ -8,6 +8,7 @@ import { useCreateTaskMutation, useDeleteTaskMutation, useAddAssigneeMutation, u
 import useAuthStore from '../../store/useAuthStore';
 import { useDepartmentMembersQuery } from '../../hooks/queries/useDeptQuery';
 import { useComplaintsSummaryQuery, useDueSoonComplaintsQuery, useTasksSummaryQuery } from '../../hooks/queries/useDashboardQuery';
+import { useNavigate } from 'react-router-dom';
 
 // --- Mock Data ---
 const MOCK_DATA = {
@@ -110,6 +111,9 @@ function NewDashboard({ tasks, members, onOpenUrgentPanel, complaintsSummary, du
       {/* 처리기한 임박 */}
       <div className="dash-card urgent-card clickable" onClick={() => onOpenUrgentPanel(urgentComplaints)}>
         <div className="dash-card-title">처리기한 임박</div>
+        <div style={{ fontSize: '11px', color: 'var(--ink-tertiary)', marginBottom: '6px' }}>
+          클릭하여 처리기한이 임박한 민원을 확인하세요.
+        </div>
         <div className="dash-card-value">{urgentComplaints.length}<span className="unit">건</span></div>
       </div>
 
@@ -122,7 +126,7 @@ function NewDashboard({ tasks, members, onOpenUrgentPanel, complaintsSummary, du
           <span>미배정 <strong>{unassignedTasks}</strong></span>
         </div>
         <div className="dash-card-sub">
-          담당자 없는 직원: <strong>{membersWithoutTask}</strong>명
+          담당자 없는 직원:&nbsp;&nbsp;<strong>{membersWithoutTask}</strong>명
         </div>
       </div>
     </div>
@@ -133,6 +137,7 @@ function NewDashboard({ tasks, members, onOpenUrgentPanel, complaintsSummary, du
    서브 컴포넌트: 처리기한 임박 사이드 패널
    ========================================================= */
 function UrgentComplaintsPanel({ complaints, onClose }) {
+  const navigate = useNavigate();
   return (
     <div className="side-panel open">
       <div className="side-panel-header">
@@ -156,7 +161,7 @@ function UrgentComplaintsPanel({ complaints, onClose }) {
                   <span>담당: {c.assigneeName ?? '-'}</span>
                 </div>
               </div>
-              <div className="urgent-item-dday">D-{c.dDay}</div>
+              <div className="urgent-item-dday">{c.dDay === 0 ? 'D-DAY' : `D-${c.dDay}`}</div>
             </div>
           ))
         ) : (
@@ -164,7 +169,10 @@ function UrgentComplaintsPanel({ complaints, onClose }) {
         )}
       </div>
       <div className="side-panel-footer">
-        <div className="side-panel-action-btn" onClick={() => alert('민원 목록 페이지로 이동합니다.')}>
+        <div className="side-panel-action-btn" onClick={() => {
+          alert('민원 목록 페이지로 이동합니다.');
+          navigate('/petitions');
+        }}>
           전체 민원 목록 보기
         </div>
       </div>
@@ -418,10 +426,7 @@ function DeptMgmt() {
   const [isUrgentPanelOpen, setIsUrgentPanelOpen] = useState(false);
   const [urgentComplaintsData, setUrgentComplaintsData] = useState([]);
 
-  // 현재 로그인한 사용자의 부서 (과장 역할일 때)
-  const myDept = DEPT_LIST[0];
-
-  const currentDeptName = userRole === 'manager' ? myDept : selectedDept;
+  const currentDeptName = user?.deptName ?? '';
 
   // API 호출 시뮬레이션 => 부서원 API 연동으로 교체
   useEffect(() => {
