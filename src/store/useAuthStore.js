@@ -86,6 +86,7 @@ const useAuthStore = create((set, get) => ({
       } catch (error) {
         console.error('[checkAuth] 사용자 정보 요청 실패. 토큰이 유효하지 않거나 API에 문제가 있을 수 있습니다.', error);
         get().logout(); // 토큰이 유효하지 않으면 로그아웃 처리
+        throw error;
       }
     } else {
       console.log('[checkAuth] 토큰이 없어 인증 절차를 건너뜁니다.');
