@@ -7,6 +7,7 @@ import { useDepartmentTasksQuery } from '../../hooks/queries/useTaskQuery';
 import { useCreateTaskMutation, useDeleteTaskMutation, useAddAssigneeMutation, useRemoveAssigneeMutation } from '../../hooks/mutations/useTaskMutation';
 import useAuthStore from '../../store/useAuthStore';
 import { useDepartmentMembersQuery } from '../../hooks/queries/useDeptQuery';
+import { useComplaintsSummaryQuery, useDueSoonComplaintsQuery, useTasksSummaryQuery } from '../../hooks/queries/useDashboardQuery';
 
 // --- Mock Data ---
 const MOCK_DATA = {
@@ -77,36 +78,21 @@ function PosBadge({ position, size = 'md' }) {
 /* =========================================================
    서브 컴포넌트: 새로운 대시보드
    ========================================================= */
-function NewDashboard({ tasks, members, onOpenUrgentPanel }) {
+function NewDashboard({ tasks, members, onOpenUrgentPanel, complaintsSummary, dueSoonComplaints, tasksSummary }) {
 
-  // 1. 이번 달 민원
-  const currentMonth = new Date().getMonth() + 1;
-  const monthlyComplaints = COMPLAINTS.filter(c => {
-    const receivedMonth = parseInt(c.received.split('.')[1], 10);
-    return receivedMonth === currentMonth;
-  });
-  const monthlyTotal = monthlyComplaints.length;
-  const monthlyWait = monthlyComplaints.filter(c => c.status === 'wait').length;
-  const monthlyProgress = monthlyComplaints.filter(c => c.status === 'progress').length;
-  const monthlyDone = monthlyComplaints.filter(c => c.status === 'done').length;
+  // 1. 이번 달 민원 - API 데이터 사용
+  const monthlyTotal = complaintsSummary?.total ?? 0;
+  const monthlyWait = complaintsSummary?.waiting ?? 0;
+  const monthlyProgress = complaintsSummary?.inProgress ?? 0;
+  const monthlyDone = complaintsSummary?.completed ?? 0;
 
-  // 2. 처리기한 임박
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const urgentComplaints = COMPLAINTS.filter(c => {
-    if (c.status === 'done') return false;
-    const deadlineDate = new Date(c.deadline.replace(/\./g, '-'));
-    const diffTime = deadlineDate - today;
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    c.dDay = diffDays; // D-day 정보 추가
-    return diffDays >= 0 && diffDays <= 3;
-  }).sort((a, b) => a.dDay - b.dDay);
+  // 2. 처리기한 임박 - API 데이터 사용
+  const urgentComplaints = dueSoonComplaints ?? [];
 
-  // 3. Task 현황
-  const totalTasks = tasks.length;
-  const unassignedTasks = tasks.filter((t) => t.assignees.length === 0).length;
-  const allAssignees = new Set(tasks.flatMap(t => t.assignees));
-  const unassignedMembers = members.filter(m => !allAssignees.has(m.id)).length;
+  // 3. Task 현황 - API 데이터 사용
+  const totalTasks = tasksSummary?.totalTasks ?? 0;
+  const unassignedTasks = tasksSummary?.unassignedTasks ?? 0;
+  const membersWithoutTask = tasksSummary?.membersWithoutTask ?? 0;
 
   return (
     <div className="new-dashboard">
@@ -123,9 +109,7 @@ function NewDashboard({ tasks, members, onOpenUrgentPanel }) {
 
       {/* 처리기한 임박 */}
       <div className="dash-card urgent-card clickable" onClick={() => onOpenUrgentPanel(urgentComplaints)}>
-        <div className="dash-card-title">
-          처리기한 임박
-        </div>
+        <div className="dash-card-title">처리기한 임박</div>
         <div className="dash-card-value">{urgentComplaints.length}<span className="unit">건</span></div>
       </div>
 
@@ -138,7 +122,7 @@ function NewDashboard({ tasks, members, onOpenUrgentPanel }) {
           <span>미배정 <strong>{unassignedTasks}</strong></span>
         </div>
         <div className="dash-card-sub">
-          담당자 없는 직원: <strong>{unassignedMembers}</strong>명
+          담당자 없는 직원: <strong>{membersWithoutTask}</strong>명
         </div>
       </div>
     </div>
@@ -163,18 +147,16 @@ function UrgentComplaintsPanel({ complaints, onClose }) {
       <div className="side-panel-body">
         {complaints.length > 0 ? (
           complaints.map(c => (
-            <div key={c.id} className="urgent-item-in-panel">
+            <div key={c.complaintId} className="urgent-item-in-panel">
               <div className="urgent-item-info">
                 <div className="urgent-item-title">{c.title}</div>
                 <div className="urgent-item-meta">
-                  <span>접수: {c.received}</span>
+                  <span>접수: {c.receivedAt ? c.receivedAt.slice(0, 10) : '-'}</span>
                   <span className="dotsep">·</span>
-                  <span>담당: {c.assignee}</span>
+                  <span>담당: {c.assigneeName ?? '-'}</span>
                 </div>
               </div>
-              <div className="urgent-item-dday">
-                D-{c.dDay}
-              </div>
+              <div className="urgent-item-dday">D-{c.dDay}</div>
             </div>
           ))
         ) : (
@@ -430,6 +412,9 @@ function DeptMgmt() {
   const { mutate: removeAssigneeMutate } = useRemoveAssigneeMutation();
   const user = useAuthStore((state) => state.user);
   const { data: membersData } = useDepartmentMembersQuery(user?.department_code);
+  const { data: complaintsSummary } = useComplaintsSummaryQuery();
+  const { data: dueSoonComplaints } = useDueSoonComplaintsQuery();
+  const { data: tasksSummary } = useTasksSummaryQuery();
   const [isUrgentPanelOpen, setIsUrgentPanelOpen] = useState(false);
   const [urgentComplaintsData, setUrgentComplaintsData] = useState([]);
 
@@ -532,7 +517,15 @@ function DeptMgmt() {
           )}
         </div>
 
-        <NewDashboard tasks={tasks} members={members} onOpenUrgentPanel={handleOpenUrgentPanel} />
+        <NewDashboard
+          tasks={tasks}
+          members={members}
+          onOpenUrgentPanel={handleOpenUrgentPanel}
+          complaintsSummary={complaintsSummary}
+          dueSoonComplaints={dueSoonComplaints}
+          tasksSummary={tasksSummary}
+        />
+
         <div className="mgmt-row">
           <MemberPanel
             members={members}
