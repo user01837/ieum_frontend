@@ -73,5 +73,6 @@ export default function useKnowledgeMemo() {
     toggleTag,
     addTag,
     handleSave,
+    logs, // 이전 로그 데이터도 반환하여 UI에서 활용
   };
 }

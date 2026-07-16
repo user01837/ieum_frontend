@@ -5,6 +5,7 @@ import StarterKit from '@tiptap/starter-kit';
 import Placeholder from '@tiptap/extension-placeholder';
 import { useDropzone } from 'react-dropzone';
 import EmployeeSearchModal from '../../components/EmpSearchModal/EmpSearchModal';
+import KnowhowPanel from '../../components/knowhow/KnowhowPanel';
 import { usePetitionDetailQuery } from '../../hooks/queries/usePetitionQuery';
 import { useDepartmentsQuery } from '../../hooks/queries/useDeptQuery';
 import StickySideBarButton from '../../components/StickySideBar/StickySideBarButton';
@@ -130,10 +131,17 @@ function DetailPetition({ isAdmin: propIsAdmin = false }) {
   const [imageModalUrl, setImageModalUrl] = useState(null);
   const [hasNoMoreCases, setHasNoMoreCases] = useState(false);
 
+  // 노하우 작성 패널 상태
+  const [isKnowhowPanelOpen, setIsKnowhowPanelOpen] = useState(false);
+
   // 노하우 작성 버튼 핸들러
   const handleOpenWriteForm = () => {
-    // TODO: 실제 노하우 작성 패널/모달을 여는 로직으로 교체해야 합니다.
-    alert('노하우 작성 팝업 또는 페이지를 엽니다!');
+    setIsCaseDetailOpen(false); // 다른 패널이 열려있으면 닫습니다.
+    setIsKnowhowPanelOpen(true);
+  };
+
+  const handleCloseKnowhowPanel = () => {
+    setIsKnowhowPanelOpen(false);
   };
 
   const { petitionerAttachments, staffAttachments } = useMemo(() => {
@@ -334,6 +342,7 @@ function DetailPetition({ isAdmin: propIsAdmin = false }) {
 
   // ▼ 유사사례 클릭 → 우측 분할 패널 오픈
   const handleOpenCaseDetail = (simCase) => {
+    setIsKnowhowPanelOpen(false); // 다른 패널이 열려있으면 닫습니다.
     setSelectedCase(simCase);
     setIsCaseDetailOpen(true);
   };
@@ -346,21 +355,23 @@ function DetailPetition({ isAdmin: propIsAdmin = false }) {
 
   // ESC 키로 유사사례 패널 닫기
   useEffect(() => {
-    if (!isCaseDetailOpen) return;
+    if (!isCaseDetailOpen && !isKnowhowPanelOpen) return;
 
     const handleKeyDown = (event) => {
       if (event.key === 'Escape') {
-        handleCloseCaseDetail();
+        if (isCaseDetailOpen) handleCloseCaseDetail();
+        if (isKnowhowPanelOpen) handleCloseKnowhowPanel();
       }
     };
 
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [isCaseDetailOpen]);
+  }, [isCaseDetailOpen, isKnowhowPanelOpen]);
 
   // isCaseDetailOpen 상태가 바뀔 때마다 body 클래스 토글
   useEffect(() => {
-    if (isCaseDetailOpen) {
+    const isAnyPanelOpen = isCaseDetailOpen || isKnowhowPanelOpen;
+    if (isAnyPanelOpen) {
       // 현재 스크롤 위치 저장 후 body를 fixed로 고정
       const scrollY = window.scrollY;
       document.body.style.position = 'fixed';
@@ -382,7 +393,7 @@ function DetailPetition({ isAdmin: propIsAdmin = false }) {
       document.body.style.width = '';
       window.scrollTo(0, parseInt(scrollY || '0') * -1);
     };
-  }, [isCaseDetailOpen]);
+  }, [isCaseDetailOpen, isKnowhowPanelOpen]);
 
 
   const handleSave = () => {
@@ -463,9 +474,9 @@ function DetailPetition({ isAdmin: propIsAdmin = false }) {
   const isCompleted = complaint.statusCode === '03';
 
   return (
-    <div className={`split-layout ${isCaseDetailOpen ? 'split-active' : ''}`}>
-      {/* 스티키 사이드 버튼: fixed 속성이므로 레이아웃에 영향을 주지 않습니다. */}
-      <StickySideBarButton onClick={handleOpenWriteForm} />
+    <div className={`split-layout ${isCaseDetailOpen || isKnowhowPanelOpen ? 'split-active' : ''}`}>
+      {/* 패널이 열려있을 때는 스티키 버튼을 숨깁니다. */}
+      {!(isCaseDetailOpen || isKnowhowPanelOpen) && <StickySideBarButton onClick={handleOpenWriteForm} />}
 
       <div className="dcontent">
         <div className="backrow">
@@ -801,6 +812,12 @@ function DetailPetition({ isAdmin: propIsAdmin = false }) {
             </div>
           </>
         )}
+      </div>
+
+      {/* ▼ 노하우 작성 패널 */}
+      <div className={`case-detail-panel ${isKnowhowPanelOpen ? 'open' : ''}`}>
+        {/* 패널이 열려있을 때만 내부 컴포넌트를 렌더링하여 상태를 초기화합니다. */}
+        {isKnowhowPanelOpen && <KnowhowPanel onClose={handleCloseKnowhowPanel} />}
       </div>
     </div>
   );
