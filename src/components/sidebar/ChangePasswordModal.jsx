@@ -25,8 +25,8 @@ function ChangePasswordModal({ onClose }) {
     if (!currentPassword) newErrors.currentPassword = '현재 비밀번호를 입력해주세요.';
     if (!newPassword) {
       newErrors.newPassword = '새 비밀번호를 입력해주세요.';
-    } else if (newPassword.length < 8) {
-      newErrors.newPassword = '비밀번호는 8자 이상이어야 합니다.';
+    } else if (!/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*(),.?":{}|<>]).{8,}$/.test(newPassword)) {
+      newErrors.newPassword = '비밀번호는 영문 대소문자, 숫자, 특수문자를 포함하여 8자 이상이어야 합니다.';
     } else if (newPassword === currentPassword) {
       newErrors.newPassword = '현재 비밀번호와 다른 비밀번호를 사용해주세요.';
     }
@@ -73,7 +73,7 @@ function ChangePasswordModal({ onClose }) {
           <div>
             <p className="modal-title">비밀번호 변경</p>
             <p className="modal-subtitle">
-              계정 정보를 입력하고 새 비밀번호를 설정하세요.
+              새 비밀번호는 영문 대소문자, 숫자, 특수문자를 포함하여 8자 이상이어야 합니다.
             </p>
           </div>
           <button type="button" aria-label="닫기" className="modal-close-btn" onClick={onClose} disabled={mustChangePassword}>

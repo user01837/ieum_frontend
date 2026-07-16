@@ -21,20 +21,20 @@ import Admin from "../pages/Admin/Admin";
  * 보호된 라우트를 위한 loader 함수.
  * 컴포넌트가 렌더링되기 전에 실행되어 인증 상태를 확인.
  */
-const protectedLoader = () => {
+function protectedLoader() {
   const { token } = useAuthStore.getState();
   if (!token) {
     // 토큰이 없으면 로그인 페이지로 리디렉션합니다.
     return redirect("/login");
   }
   return null; // 인증된 경우 null을 반환하여 자식 라우트 렌더링을 허용.
-};
+}
 
 /**
  * 관리자 전용 라우트를 위한 loader 함수.
  * 사용자가 시스템 관리자(02) 역할인지 확인합니다.
  */
-const adminLoader = async () => {
+async function adminLoader() {
   // protectedLoader가 먼저 실행되므로 토큰 존재는 보장됩니다.
   let { user } = useAuthStore.getState();
 
@@ -58,7 +58,7 @@ const adminLoader = async () => {
   }
 
   return null; // 접근 허용
-};
+}
 
 const router = createBrowserRouter([
   {
