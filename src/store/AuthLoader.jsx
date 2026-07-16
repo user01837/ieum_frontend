@@ -17,15 +17,23 @@ function AuthLoader({ children }) {
   useEffect(() => {
     const initialize = async () => {
       // 토큰이 있을 경우에만 인증 상태를 확인합니다.
+
+       console.log("1");
       if (token) {
+
+        console.log("2");
+
         try {
           await checkAuth();
+          console.log("3");
         } catch (e) {
           // checkAuth 내부에서 이미 로그아웃 처리를 하므로 여기서는 에러만 기록합니다.
           console.error("Auth initialization failed:", e);
+          console.log("4");
         }
       }
       // 인증 시도가 끝났으므로, 초기화 완료 상태로 변경합니다.
+       console.log("5");
       setIsInitialized(true);
     };
 
