@@ -38,3 +38,14 @@ export const addAssignee = async ({ taskId, userId }) => {
   const { data } = await api.post(`/tasks/${taskId}/assignees`, { userId });
   return data;
 };
+
+/**
+ * 담당자 해제 API
+ * @param {object} params
+ * @param {number} params.taskId - Task ID
+ * @param {number} params.userId - 담당자 사번
+ */
+export const removeAssignee = async ({ taskId, userId }) => {
+  const { data } = await api.delete(`/tasks/${taskId}/assignees/${userId}`);
+  return data;
+};

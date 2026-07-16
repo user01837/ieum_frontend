@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { createTask, deleteTask, addAssignee } from '../../api/task';
+import { createTask, deleteTask, addAssignee, removeAssignee } from '../../api/task';
 
 export const useCreateTaskMutation = () => {
     const queryClient = useQueryClient();
@@ -32,4 +32,15 @@ export const useAddAssigneeMutation = () => {
             queryClient.invalidateQueries({ queryKey: ['departmentTasks'] });
         },
     });
+};
+
+export const useRemoveAssigneeMutation = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: removeAssignee,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['departmentTasks'] });
+    },
+  });
 };
