@@ -42,6 +42,10 @@ function PetitionList() {
     const [isSortOn, setIsSortOn] = useState(true);
     const [currentPage, setCurrentPage] = useState(1);
     const ITEMS_PER_PAGE = 10;
+
+    // 검색 기능 상태 추가
+    const [searchInputValue, setSearchInputValue] = useState(''); // 입력창의 값
+    const [appliedSearchKeyword, setAppliedSearchKeyword] = useState(''); // 실제 필터링에 적용될 값
     
     // API 요청을 위한 파라미터 변환
     const apiScope = useMemo(() => {
@@ -63,6 +67,7 @@ function PetitionList() {
       size: ITEMS_PER_PAGE,
       sort: isSortOn ? 'due_date_impending' : null,
       departmentCode: apiDepartmentCode,
+      keyword: appliedSearchKeyword, // 검색어 파라미터 추가
     });
 
     const complaints = petitionData?.content || [];
@@ -118,25 +123,40 @@ function PetitionList() {
 
     const currentScopeLabel = scopeOptions.find(o => o.key === currentScope)?.label;
 
+    const handleScopeSelect = useCallback((scope) => {
+        setCurrentScope(scope);
+        setIsScopeDropdownOpen(false);
+        setCurrentPage(1); // 필터 변경 시 1페이지로
+    }, []);
+
+    const handleStatusSelect = useCallback((status) => {
+        setCurrentStatus(status);
+        setIsStatusDropdownOpen(false);
+        setCurrentPage(1); // 필터 변경 시 1페이지로
+    }, []);
+
+    const handlePageChange = useCallback((page) => {
+        setCurrentPage(page);
+    }, []);
+
+    // 검색 실행 핸들러
+    const handleSearch = useCallback(() => {
+        setAppliedSearchKeyword(searchInputValue);
+        setCurrentPage(1); // 검색 시 첫 페이지로 이동
+    }, [searchInputValue]);
+
+    // 필터 초기화 핸들러
+    const handleReset = useCallback(() => {
+        setSearchInputValue('');
+        setAppliedSearchKeyword('');
+        setCurrentPage(1); // 필터 초기화 시 첫 페이지로 이동
+    }, []);
+
     // 클라이언트에서 마운트되기 전이거나, 사용자 정보가 없다면 로딩 상태를 표시합니다.
     // 이렇게 하면 localStorage에서 상태를 불러오는 동안 발생할 수 있는 UI 깜빡임이나 오류를 방지합니다.
     if (!isClient || !user) {
         return <div>사용자 정보를 불러오는 중입니다...</div>;
     }
-
-    const handleScopeSelect = (scope) => {
-        setCurrentScope(scope);
-        setIsScopeDropdownOpen(false);
-    };
-
-    const handleStatusSelect = (status) => {
-        setCurrentStatus(status);
-        setIsStatusDropdownOpen(false);
-    };
-
-    const handlePageChange = (page) => {
-        setCurrentPage(page);
-    };
 
     return (
         <>
@@ -182,6 +202,30 @@ function PetitionList() {
                                 <svg viewBox="0 0 24 24" fill="none" strokeLinecap="round" style={{ opacity: isSortOn ? 1 : 0 }}><path d="M20 6 9 17l-5-5"/></svg>
                             </div>
                             처리기한 임박 민원 우선 표시
+                        </div>
+
+                        {/* 검색창과 버튼을 포함하는 래퍼 */}
+                        <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <div className="search-wrap" style={{ position: 'relative' }}>
+                                <svg className="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', width: 16, height: 16, color: 'var(--ink-tertiary)' }}>
+                                    <circle cx="11" cy="11" r="7" /><path d="m21 21-4.3-4.3" />
+                                </svg>
+                                <input 
+                                    placeholder="제목으로 검색" 
+                                    style={{ width: 240, padding: '9px 12px 9px 36px', border: '1px solid var(--line-strong)', borderRadius: '8px' }}
+                                    value={searchInputValue}
+                                    onChange={(e) => setSearchInputValue(e.target.value)}
+                                    onKeyPress={(e) => {
+                                        if (e.key === 'Enter') {
+                                            handleSearch();
+                                        }
+                                    }}
+                                />
+                            </div>
+                            <button onClick={handleSearch} className="action-btn">
+                                검색
+                            </button>
+                            <button onClick={handleReset} className="action-btn">초기화</button>
                         </div>
                     </div>
 
