@@ -4,6 +4,7 @@ import './DeptMgmt.css';
 import EmployeeSearchModal from '../../components/EmpSearchModal/EmpSearchModal';
 import { COMPLAINTS } from '../Petition/data';
 import { useDepartmentTasksQuery } from '../../hooks/queries/useTaskQuery';
+import { useCreateTaskMutation, useDeleteTaskMutation, useAddAssigneeMutation } from '../../hooks/mutations/useTaskMutation';
 
 // --- Mock Data ---
 const MOCK_DATA = {
@@ -324,7 +325,7 @@ function TaskPanel({ tasks, members, onRename, onDelete, onAddTask, onAddAssigne
 
   const handleSelectEmployee = (employee) => {
     if (!modalTaskId || !employee) return;
-    onAddAssignee(modalTaskId, employee.id);
+    onAddAssignee(modalTaskId, employee.userId);
     setModalTaskId(null); // 모달 닫기
   };
 
@@ -421,6 +422,9 @@ function DeptMgmt() {
   const [members, setMembers] = useState([]);
   const [tasks, dispatch] = useReducer(tasksReducer, []);
   const { data: tasksData } = useDepartmentTasksQuery();
+  const { mutate: createTaskMutate } = useCreateTaskMutation();
+  const { mutate: deleteTaskMutate } = useDeleteTaskMutation();
+  const { mutate: addAssigneeMutate } = useAddAssigneeMutation();
   const [isUrgentPanelOpen, setIsUrgentPanelOpen] = useState(false);
   const [urgentComplaintsData, setUrgentComplaintsData] = useState([]);
 
@@ -446,7 +450,7 @@ function DeptMgmt() {
             isSelf: m.position === '과장',
           }))
           : data.members;
-          
+
       setMembers(processedMembers);
     };
 
@@ -496,18 +500,20 @@ function DeptMgmt() {
   const handleDelete = (taskId) => {
     const taskToDelete = tasks.find((t) => t.id === taskId);
     if (window.confirm(`'${taskToDelete?.name || '해당'}' Task를 정말 삭제하시겠습니까? \n이 작업은 복구할 수 없습니다.`)) {
-      dispatch({ type: 'DELETE_TASK', payload: taskId });
+      deleteTaskMutate(taskId);
     }
   };
 
   const handleAddTask = (name) => {
-    dispatch({ type: 'ADD_TASK', payload: name });
+    createTaskMutate({ name });
   };
 
   const handleAddAssignee = (taskId, memberId) => {
-    dispatch({ type: 'ADD_ASSIGNEE', payload: { taskId, memberId } });
+    console.log('handleAddAssignee 호출:', taskId, memberId);
+    console.log('addAssigneeMutate:', addAssigneeMutate);
+    addAssigneeMutate({ taskId, userId: memberId });
+    console.log('addAssigneeMutate 호출 완료');
   };
-
   const handleRemoveAssignee = (taskId, memberId) => {
     dispatch({ type: 'REMOVE_ASSIGNEE', payload: { taskId, memberId } });
   };
