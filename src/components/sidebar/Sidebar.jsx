@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { NavLink } from 'react-router-dom';
 import "./Sidebar.css";
 import useAuthStore from '../../store/useAuthStore';
+import logo from '../../assets/logo_1.png';
 
 import ChangePasswordModal from './ChangePasswordModal';
 
@@ -55,7 +56,9 @@ function Sidebar() {
   return (
     <aside className="sidebar">
       <div className="brand">
-        <div className="brand-mark">공</div>
+        <div className="brand-mark">
+          <img src={logo} alt="이음 로고" />
+        </div>
 
         <div>
           <div className="brand-title">
