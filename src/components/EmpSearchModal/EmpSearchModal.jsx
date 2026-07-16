@@ -1,32 +1,40 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import './EmpSearchModal.css';
 import { useUserSearch } from '../../hooks/queries/useUserQuery';
 import { useDepartmentsQuery } from '../../hooks/queries/useDeptQuery';
 
 function getInitials(name) {
-  return name.slice(-2);
+  return name ? name.slice(-2) : '';
 }
 
-function EmployeeSearchModal({ currentDept = '문화도시과', onSelect, onClose, forceDeptScope }) {
+function EmployeeSearchModal({ currentDept, onSelect, onClose, forceDeptScope = false }) {
+  const { data: deptList = [] } = useDepartmentsQuery();
+
+  // 전달받은 부서 이름(currentDept)으로 부서 코드를 찾습니다.
+  const initialDeptCode = useMemo(() =>
+    deptList.find(d => d.name === currentDept)?.code
+  , [deptList, currentDept]);
+
   const [scope, setScope] = useState(forceDeptScope ? 'dept' : 'dept');
   const [query, setQuery] = useState('');
+  // 부서 필터 상태. 초기값은 'all'
   const [deptFilter, setDeptFilter] = useState('all');
 
-  const actualScope = forceDeptScope ? 'dept' : scope;
+  // API에 전달할 최종 부서 코드를 결정합니다.
+  const apiDeptCode = useMemo(() => {
+    if (scope === 'dept') {
+      return initialDeptCode;
+    }
+    return deptFilter === 'all' ? undefined : deptFilter;
+  }, [scope, initialDeptCode, deptFilter]);
 
   const { data: employees = [], isLoading, isError } = useUserSearch({
-    scope: actualScope,
-    departmentCode: deptFilter !== 'all' ? deptFilter : undefined,
+    scope: 'all', // API 스코프는 'all'로 고정하고 departmentCode로 필터링
+    departmentCode: apiDeptCode,
     keyword: query || undefined,
   });
 
-  const { data: deptList = [] } = useDepartmentsQuery();
-
   const error = isError ? '직원 목록을 불러오지 못했습니다.' : null;
-
-  const handleSelect = (employee) => {
-    if (onSelect) onSelect(employee);
-  };
 
   return (
     <div className="modal-overlay">
@@ -35,8 +43,8 @@ function EmployeeSearchModal({ currentDept = '문화도시과', onSelect, onClos
           <div>
             <p className="modal-title">직원 검색</p>
             <p className="modal-subtitle">
-              {forceDeptScope || scope === 'dept'
-                ? `${currentDept} 소속 직원만 검색됩니다.`
+              {scope === 'dept'
+                ? `${currentDept || '현재'} 소속 직원만 검색됩니다.`
                 : '전체 부서에서 검색할 수 있습니다.'}
             </p>
           </div>
@@ -57,7 +65,7 @@ function EmployeeSearchModal({ currentDept = '문화도시과', onSelect, onClos
               onChange={(e) => setQuery(e.target.value)}
             />
           </div>
-          {(!forceDeptScope && scope === 'all') && (
+          {!forceDeptScope && scope === 'all' && (
             <select
               className="modal-select-filter"
               value={deptFilter}
@@ -71,7 +79,7 @@ function EmployeeSearchModal({ currentDept = '문화도시과', onSelect, onClos
           )}
         </div>
 
-        {(forceDeptScope || scope === 'dept') && (
+        {forceDeptScope && (
           <div className="modal-scope-badge-wrap">
             <span className="modal-scope-badge">
               <i className="ti ti-lock ic" aria-hidden="true"></i>
@@ -93,7 +101,7 @@ function EmployeeSearchModal({ currentDept = '문화도시과', onSelect, onClos
                 <div
                   key={emp.userId}
                   className="modal-result-row"
-                  onClick={() => handleSelect(emp)}
+                  onClick={() => onSelect(emp)}
                 >
                   <div className="modal-avatar">{getInitials(emp.name)}</div>
                   <div className="modal-result-info">
@@ -103,7 +111,8 @@ function EmployeeSearchModal({ currentDept = '문화도시과', onSelect, onClos
                     </p>
                     <p className="modal-employee-id">{emp.userId}</p>
                   </div>
-                  {(!forceDeptScope && scope === 'all') && (
+                  {/* 부서 필터가 '전체'일 때만 각 항목에 부서 표시 */}
+                  {scope === 'all' && deptFilter === 'all' && (
                     <span className="modal-employee-dept">{emp.departmentName}</span>
                   )}
                 </div>

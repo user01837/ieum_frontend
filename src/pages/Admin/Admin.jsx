@@ -10,8 +10,6 @@ import {
   useResetPasswordMutation,
 } from "../../hooks/mutations/useUserMutations";
 
-const TEMP_PASSWORD = '1234'
-
 const statusOptions = [
   { key: 'ALL', label: '전체 상태' },
   { key: '01', label: '재직' },
@@ -63,6 +61,7 @@ export default function Admin() {
   // 비밀번호 초기화 모달
   const [isResetPwOpen, setIsResetPwOpen] = useState(false);
   const [resetTarget, setResetTarget] = useState(null);
+  const [newTempPassword, setNewTempPassword] = useState('');
 
   // 토스트
   const [toast, setToast] = useState('');
@@ -158,8 +157,24 @@ export default function Admin() {
     if (!formData.name || !formData.employeeNo || !formData.dept || !formData.position) {
       alert('필수 항목을 모두 입력해 주세요.'); return;
     }
+
     const mutation = isEditMode ? updateUserMutation : createUserMutation;
-    const variables = isEditMode ? { userId: editTargetId, userData: formData } : formData;
+    const variables = isEditMode ? {
+      userId: editTargetId,
+      userData: { // 수정 시 API 스펙에 맞게 데이터 가공
+        name: formData.name,
+        departmentCode: formData.dept,
+        positionCode: formData.position,
+        statusCode: formData.status,
+        predecessorUserId: formData.predecessor ? formData.predecessor.userId : null,
+      }
+    } : { // 신규 생성 시 API 스펙에 맞게 데이터 가공
+      userId: formData.employeeNo,
+      name: formData.name,
+      departmentCode: formData.dept,
+      positionCode: formData.position,
+      predecessorUserId: formData.predecessor ? formData.predecessor.userId : null,
+    };
 
     mutation.mutate(variables, {
       onSuccess: (data) => {
@@ -175,16 +190,23 @@ export default function Admin() {
   // 비밀번호 초기화
   const openResetPw = (user) => {
     setResetTarget(user);
+    setNewTempPassword('');
     setIsResetPwOpen(true);
+  };
+
+  const closeResetPwModal = () => {
+    setIsResetPwOpen(false);
+    setResetTarget(null);
+    setNewTempPassword('');
   };
 
   const handleResetPw = () => {
     if (!resetTarget) return;
     resetPasswordMutation.mutate(resetTarget.userId, {
       onSuccess: (data) => {
-        setIsResetPwOpen(false);
+        // 비밀번호 표시를 위해 모달을 닫지 않고, 상태를 업데이트합니다.
         showToast(data.message || `${resetTarget.name}님의 비밀번호가 초기화되었습니다.`);
-        setResetTarget(null);
+        setNewTempPassword(data.temporaryPassword);
       },
       onError: (error) => {
         alert(`오류: ${error.response?.data?.detail || error.message}`);
@@ -466,7 +488,13 @@ export default function Admin() {
                 <div className="admin-field">
                   <label>전임자 <span style={{ fontWeight: 500, color: 'var(--ink-tertiary)' }}>(선택)</span></label>
                   {!formData.predecessor ? (
-                    <button className="admin-action-btn" style={{ width: '100%', justifyContent: 'center' }} onClick={() => setIsPredecessorModalOpen(true)}>
+                    <button className="admin-action-btn" style={{ width: '100%', justifyContent: 'center' }} onClick={() => {
+                      if (!formData.dept) {
+                        alert('먼저 부서를 선택해주세요.');
+                        return;
+                      }
+                      setIsPredecessorModalOpen(true);
+                    }}>
                       직원 검색
                     </button>
                   ) : (
@@ -479,19 +507,21 @@ export default function Admin() {
                   )}
                 </div>
 
-                <div className="admin-field">
-                  <label>재직 상태 *</label>
-                  <div className="admin-radio-row">
-                    {statusOptions.filter(s => s.key !== 'ALL').map(s => (
-                      <div key={s.key} className="admin-radio" onClick={() => setFormData(p => ({ ...p, status: s.key }))}>
-                        <input type="radio" name="ufStatus" value={s.key} checked={formData.status === s.key}
-                          onChange={() => setFormData(p => ({ ...p, status: s.key }))} readOnly />
-                        <span className="dot" />
-                        <span>{s.label}</span>
-                      </div>
-                    ))}
+                {isEditMode && (
+                  <div className="admin-field">
+                    <label>재직 상태 *</label>
+                    <div className="admin-radio-row">
+                      {statusOptions.filter(s => s.key !== 'ALL').map(s => (
+                        <div key={s.key} className="admin-radio" onClick={() => setFormData(p => ({ ...p, status: s.key }))}>
+                          <input type="radio" name="ufStatus" value={s.key} checked={formData.status === s.key}
+                            onChange={() => setFormData(p => ({ ...p, status: s.key }))} readOnly />
+                          <span className="dot" />
+                          <span>{s.label}</span>
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
 
               {/* 안내 패널 */}
@@ -530,25 +560,40 @@ export default function Admin() {
         <EmployeeSearchModal
           onSelect={handleSelectPredecessor}
           onClose={() => setIsPredecessorModalOpen(false)}
+          // forceDeptScope를 제거하여 모달 내에서 '전체 부서'를 선택할 수 있도록 하고,
+          // currentDept를 전달하여 이전에 선택한 부서를 초기값으로 설정합니다.
+          currentDept={departmentsData?.find(d => d.code === formData.dept)?.name}
         />
       )}
 
       {/* 비밀번호 초기화 확인 모달 */}
       {isResetPwOpen && resetTarget && (
-        <div className="modal-overlay" onClick={() => setIsResetPwOpen(false)}>
+        <div className="modal-overlay" onClick={closeResetPwModal}>
           <div className="modal-card" style={{ width: 380 }} onClick={(e) => e.stopPropagation()}>
             <div style={{ width: 44, height: 44, borderRadius: '50%', background: 'var(--good-soft)', color: 'var(--good)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 14 }}>
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="10" width="18" height="11" rx="2" /><path d="M7 10V7a5 5 0 0 1 10 0v3" /></svg>
             </div>
-            <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 8 }}>비밀번호 초기화</div>
+            <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 8 }}>
+              {newTempPassword ? '초기화 완료' : '비밀번호 초기화'}
+            </div>
             <div style={{ fontSize: 12.5, color: 'var(--ink-soft)', lineHeight: 1.7, marginBottom: 20 }}>
-              <b>{resetTarget.name}</b>님의 비밀번호를 초기화합니다.<br />
-              임시 비밀번호는 {TEMP_PASSWORD}입니다.<br />
-              초기화된 임시 비밀번호를 해당 직원에게 전달해 주세요.
+              {newTempPassword ? (
+                <>
+                  <b>{resetTarget.name}</b>님의 비밀번호가 초기화되었습니다.<br />
+                  새로운 임시 비밀번호는 <b>{newTempPassword}</b>입니다.<br />
+                  이 비밀번호는 해당 직원에게 안전하게 전달해 주세요.
+                </>
+              ) : (
+                <>
+                  <b>{resetTarget.name}</b>님의 비밀번호를 초기화하시겠습니까?<br />
+                  초기화 시 임시 비밀번호가 생성되며, 해당 직원은 다음 로그인 시 비밀번호를 변경해야 합니다.
+                </>
+              )}
             </div>
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
-              <button className="modal-footer-btn" onClick={() => setIsResetPwOpen(false)}>취소</button>
-              <button className="btn btn-navy" style={{ padding: '9px 16px' }} onClick={handleResetPw} disabled={resetPasswordMutation.isLoading}>초기화</button>
+              {newTempPassword
+                ? <button className="btn btn-navy" style={{ padding: '9px 16px' }} onClick={closeResetPwModal}>확인</button>
+                : <><button className="modal-footer-btn" onClick={closeResetPwModal}>취소</button><button className="btn btn-navy" style={{ padding: '9px 16px' }} onClick={handleResetPw} disabled={resetPasswordMutation.isLoading}>초기화</button></>}
             </div>
           </div>
         </div>
