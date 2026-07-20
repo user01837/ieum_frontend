@@ -86,11 +86,11 @@ export default function ProjectDetail() {
       const myRole = project.members.find((m) => String(m.userId) === String(user?.userId));
       const isOwner = myRole?.roleName === "주관";
       setIsApproved(approved);
-      setIsLocked(approved || !isOwner);
+      const isAdmin = user?.system_role_code === "02";
+      setIsLocked(approved || !isOwner || isAdmin);
       setTeamMembers(
         project.members
-          .filter((m) => m.roleName === "협력")
-          .map((m) => ({ userId: m.userId, name: m.name, departmentName: m.departmentName || "" }))
+          .map((m) => ({ userId: m.userId, name: m.name, departmentName: m.departmentName || "", roleName: m.roleName }))
       );
       if (editor && project.reportContent) {
         editor.commands.setContent(project.reportContent);
@@ -99,7 +99,7 @@ export default function ProjectDetail() {
   }, [project, editor]);
 
   const handleAddMember = (employee) => {
-    const isDuplicate = teamMembers.some((m) => m.userId === employee.userId);
+    const isDuplicate = teamMembers.some((m) => String(m.userId) === String(employee.userId));
     if (isDuplicate) return;
     setTeamMembers((prev) => [...prev, employee]);
     setIsEmpModalOpen(false);
@@ -132,6 +132,9 @@ export default function ProjectDetail() {
   };
 
   const handleSave = () => {
+    if (!title.trim()) { alert("사업명을 입력해 주세요."); return; }
+    if (!desc.trim()) { alert("사업 설명을 입력해 주세요."); return; }
+    if (!editor?.getText().trim()) { alert("기획서 본문을 입력해 주세요."); return; }
     if (startDate && dueDate && new Date(dueDate) < new Date(startDate)) {
       alert("목표일은 시작일 이후여야 합니다.");
       return;
@@ -144,7 +147,9 @@ export default function ProjectDetail() {
         deadline: dueDate,
         overview: desc,
         reportContent: editor?.getHTML(),
-        memberUserIds: teamMembers.map((m) => m.userId),
+        memberUserIds: teamMembers
+          .filter((m) => m.roleName !== "주관")
+          .map((m) => m.userId),
       },
       {
         onSuccess: () => {
@@ -212,7 +217,9 @@ export default function ProjectDetail() {
           </svg>
           {isApproved
             ? "승인 완료된 기획서입니다. 더 이상 수정할 수 없습니다."
-            : "열람 전용입니다. 기획서 수정은 주관자만 가능합니다."}
+            : user?.system_role_code === "02"
+              ? "관리자 계정은 열람만 가능합니다."
+              : "열람 전용입니다. 기획서 수정은 주관자만 가능합니다."}
         </div>
       )}
 
@@ -291,15 +298,21 @@ export default function ProjectDetail() {
         <div className="participant-summary">총 {teamMembers.length}명</div>
         <div className="member-chips">
           {teamMembers.map((m) => (
-            <div key={m.userId} className="member-chip">
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', alignItems: 'center' }}>
-                <span className="mdept">{m.userId}</span>
+            <div
+              key={m.userId}
+              className={`member-chip${m.roleName === "주관" ? " member-chip--owner" : ""}`}
+            >
+              {m.roleName === "주관" && (
+                <span className="member-chip__badge">작성자</span>
+              )}
+              <div style={{ textAlign: 'center' }}>
+                <span className="mdept" style={{ fontSize: '11px' }}>{m.userId}</span>
                 <div>
-                  <span className="mname">{m.name}</span>
-                  <span className="mdept" style={{ marginLeft: '4px' }}>{m.departmentName}</span>
+                  <span className="mname" style={{ fontSize: '15px' }}>{m.name}</span>
+                  <span className="mdept" style={{ marginLeft: '5px', fontSize: '12px' }}>{m.departmentName}</span>
                 </div>
               </div>
-              {!isLocked && (
+              {!isLocked && m.roleName !== "주관" && (
                 <button className="rm" onClick={() => handleRemoveMember(m.userId)}>
                   <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                     <path d="M18 6 6 18M6 6l12 12" />

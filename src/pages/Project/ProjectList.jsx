@@ -3,6 +3,8 @@ import { useNavigate } from "react-router-dom";
 import "./ProjectList.css";
 import { useProjectsQuery } from "../../hooks/queries/useProjectQuery";
 import Pagination from "../../components/Pagination/Pagination";
+import useAuthStore from "../../store/useAuthStore";
+import { useDepartmentsQuery } from "../../hooks/queries/useDeptQuery";
 
 
 export default function ProjectList() {
@@ -10,6 +12,8 @@ export default function ProjectList() {
 
   const [isStatusOpen, setIsStatusOpen] = useState(false);
   const [isScopeOpen, setIsScopeOpen] = useState(false);
+  const [searchInput, setSearchInput] = useState("");
+  const [searchKeyword, setSearchKeyword] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const ITEMS_PER_PAGE = 10;
   const [statusFilter, setStatusFilter] = useState("01");
@@ -17,9 +21,15 @@ export default function ProjectList() {
   const STATUS_OPTIONS = ["01", "02"];
   const STATUS_LABEL = { "01": "저장", "02": "승인완료" };
   const SCOPE_OPTIONS = ["MY", "JOINED", "PREDECESSOR"];
-  const SCOPE_LABEL = { "MY": "주관", "JOINED": "참여", "PREDECESSOR": "전임자" };
+  const SCOPE_LABEL = { "MY": "주관", "JOINED": "참여", "PREDECESSOR": "전임자", "ADMIN": "전체" };
   const scopeRef = useRef(null);
   const statusRef = useRef(null);
+  const user = useAuthStore((state) => state.user);
+  const isAdmin = user?.system_role_code === "02";
+  const { data: departments = [] } = useDepartmentsQuery();
+  const [deptFilter, setDeptFilter] = useState(null);
+  const [isDeptOpen, setIsDeptOpen] = useState(false);
+  const deptRef = useRef(null);
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -28,6 +38,9 @@ export default function ProjectList() {
       }
       if (statusRef.current && !statusRef.current.contains(e.target)) {
         setIsStatusOpen(false);
+      }
+      if (deptRef.current && !deptRef.current.contains(e.target)) {
+        setIsDeptOpen(false);
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
@@ -39,6 +52,8 @@ export default function ProjectList() {
     stage: statusFilter,
     page: currentPage - 1,
     size: ITEMS_PER_PAGE,
+    keyword: searchKeyword,
+    departmentCode: deptFilter,
   });
 
   const projectList = data?.content ?? [];
@@ -56,54 +71,127 @@ export default function ProjectList() {
         </div>
       </div>
 
-      <div className="toolbar">
-        {/* scope 드롭다운 */}
-        <div className={`dropdown-wrap ${isScopeOpen ? "open" : ""}`} ref={scopeRef}>
-          <div className="dropdown" onClick={() => setIsScopeOpen((p) => !p)}>
-            <span>{SCOPE_LABEL[scopeFilter]}</span>
-            <svg className="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-              <path d="m6 9 6 6 6-6" />
+      <div className="project-toolbar">
+        {/* 윗줄: 새 프로젝트 생성 버튼 */}
+        <div className="project-toolbar-top">
+          <div className="project-newbtn" onClick={() => navigate("/projects/new")}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3">
+              <path d="M12 5v14M5 12h14" />
             </svg>
-          </div>
-          <div className="dropdown-menu">
-            {SCOPE_OPTIONS.map((s) => (
-              <div
-                key={s}
-                className={`dropdown-item ${scopeFilter === s ? "active" : ""}`}
-                onClick={() => { setScopeFilter(s); setIsScopeOpen(false); setCurrentPage(1); if (s === "PREDECESSOR") setStatusFilter("02"); }}
-              >
-                {SCOPE_LABEL[s]}
-              </div>
-            ))}
-          </div>
-        </div>
-        {/* stage 드롭다운 */}
-        <div className={`dropdown-wrap ${isStatusOpen ? "open" : ""}`} ref={statusRef}>
-          <div className="dropdown" onClick={() => setIsStatusOpen((p) => !p)}>
-            <span>{STATUS_LABEL[statusFilter]}</span>
-            <svg className="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-              <path d="m6 9 6 6 6-6" />
-            </svg>
-          </div>
-          <div className="dropdown-menu">
-            {STATUS_OPTIONS.map((s) => (
-              <div
-                key={s}
-                className={`dropdown-item ${statusFilter === s ? "active" : ""}`}
-                onClick={() => { setStatusFilter(s); setIsStatusOpen(false); setCurrentPage(1); }}
-              >
-                {STATUS_LABEL[s]}
-              </div>
-            ))}
-
+            새 프로젝트 생성
           </div>
         </div>
 
-        <div className="project-newbtn" onClick={() => navigate("/projects/new")}>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3">
-            <path d="M12 5v14M5 12h14" />
-          </svg>
-          새 프로젝트 생성
+        {/* 아랫줄: 드롭다운 + 검색 */}
+        <div className="project-toolbar-bottom">
+          {/* scope 드롭다운 */}
+          {isAdmin ? null : (
+            <div className={`dropdown-wrap ${isScopeOpen ? "open" : ""}`} ref={scopeRef}>
+              <div className="dropdown" onClick={() => setIsScopeOpen((p) => !p)}>
+                <span>{SCOPE_LABEL[scopeFilter]}</span>
+                <svg className="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <path d="m6 9 6 6 6-6" />
+                </svg>
+              </div>
+              <div className="dropdown-menu">
+                {SCOPE_OPTIONS.map((s) => (
+                  <div
+                    key={s}
+                    className={`dropdown-item ${scopeFilter === s ? "active" : ""}`}
+                    onClick={() => {
+                      setScopeFilter(s);
+                      setIsScopeOpen(false);
+                      setCurrentPage(1);
+                      if (s === "PREDECESSOR") setStatusFilter("02");
+                    }}
+                  >
+                    {SCOPE_LABEL[s]}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* 부서 드롭다운 - 관리자만 */}
+          {isAdmin && (
+            <div className={`dropdown-wrap ${isDeptOpen ? "open" : ""}`} ref={deptRef}>
+              <div className="dropdown" onClick={() => setIsDeptOpen((p) => !p)}>
+                <span>{deptFilter ? departments.find(d => d.code === deptFilter)?.name : "전체 부서"}</span>
+                <svg className="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <path d="m6 9 6 6 6-6" />
+                </svg>
+              </div>
+              <div className="dropdown-menu">
+                <div
+                  className={`dropdown-item ${deptFilter === null ? "active" : ""}`}
+                  onClick={() => { setDeptFilter(null); setIsDeptOpen(false); setCurrentPage(1); }}
+                >
+                  전체 부서
+                </div>
+                {departments
+                  .filter(d => d.code !== "09")
+                  .map((d) => (
+                    <div
+                      key={d.code}
+                      className={`dropdown-item ${deptFilter === d.code ? "active" : ""}`}
+                      onClick={() => { setDeptFilter(d.code); setIsDeptOpen(false); setCurrentPage(1); }}
+                    >
+                      {d.name}
+                    </div>
+                  ))}
+              </div>
+            </div>
+          )}
+
+          {/* stage 드롭다운 */}
+          <div className={`dropdown-wrap ${isStatusOpen ? "open" : ""}`} ref={statusRef}>
+            <div className="dropdown" onClick={() => setIsStatusOpen((p) => !p)}>
+              <span>{STATUS_LABEL[statusFilter]}</span>
+              <svg className="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <path d="m6 9 6 6 6-6" />
+              </svg>
+            </div>
+            <div className="dropdown-menu">
+              {STATUS_OPTIONS.map((s) => (
+                <div
+                  key={s}
+                  className={`dropdown-item ${statusFilter === s ? "active" : ""}`}
+                  onClick={() => { setStatusFilter(s); setIsStatusOpen(false); setCurrentPage(1); }}
+                >
+                  {STATUS_LABEL[s]}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* 검색 영역 */}
+          <div className="project-search-area">
+            <input
+              className="project-search-input"
+              type="text"
+              placeholder="기획서 제목으로 검색"
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  setSearchKeyword(searchInput);
+                  setCurrentPage(1);
+                }
+              }}
+            />
+            <button
+              className="project-search-btn"
+              onClick={() => { setSearchKeyword(searchInput); setCurrentPage(1); }}
+            >
+              검색
+            </button>
+            <button
+              className="project-search-reset"
+              onClick={() => { setSearchInput(""); setSearchKeyword(""); setCurrentPage(1); }}
+            >
+              초기화
+            </button>
+          </div>
         </div>
       </div>
       <div className="tablewrap">
