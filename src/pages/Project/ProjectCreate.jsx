@@ -20,8 +20,9 @@ export default function ProjectCreate() {
   const [isEmpModalOpen, setIsEmpModalOpen] = useState(false);
 
   const handleAddMember = (employee) => {
-    const isDuplicate = teamMembers.some((m) => m.userId === employee.userId);
+    const isDuplicate = teamMembers.some((m) => String(m.userId) === String(employee.userId));
     if (isDuplicate) return;
+    if (String(employee.userId) === String(user?.userId)) return;  // 작성자 본인 차단
     setTeamMembers((prev) => [...prev, employee]);
     setIsEmpModalOpen(false);
   };
@@ -32,6 +33,7 @@ export default function ProjectCreate() {
 
   const handleSubmit = () => {
     if (!title.trim()) { alert("사업명을 입력해 주세요."); return; }
+    if (!desc.trim()) { alert("사업 설명을 입력해 주세요."); return; }
     if (!startDate || !dueDate) { alert("시작일과 목표일을 입력해 주세요."); return; }
     if (new Date(dueDate) < new Date(startDate)) { alert("목표일은 시작일 이후여야 합니다."); return; }
 
