@@ -4,6 +4,13 @@ import './KnowhowPanel.css';
 
 function KnowhowPanel({ onClose }) {
   const {
+    cardMode,
+    setCardMode,
+    existingCards,
+    selectedCardId,
+    setSelectedCardId,
+    newCardTitle,
+    setNewCardTitle,
     tags,
     newTagInput,
     setNewTagInput,
@@ -27,6 +34,45 @@ function KnowhowPanel({ onClose }) {
         </button>
       </div>
       <div className="kh-body">
+        <div className="kh-section">
+          <div className="kh-label">어떤 지식 베이스에 추가할까요?</div>
+          <div className="kh-card-mode-btns">
+            <button
+              type="button"
+              className={`kh-mode-btn ${cardMode === 'existing' ? 'active' : ''}`}
+              onClick={() => setCardMode('existing')}
+            >
+              기존 지식베이스에 추가
+            </button>
+            <button
+              type="button"
+              className={`kh-mode-btn ${cardMode === 'new' ? 'active' : ''}`}
+              onClick={() => setCardMode('new')}
+            >
+              새 지식 베이스 만들기
+            </button>
+          </div>
+          {cardMode === 'existing' ? (
+            <select
+              className="kh-select"
+              value={selectedCardId}
+              onChange={(e) => setSelectedCardId(e.target.value)}
+            >
+              <option value="">지식베이스 선택...</option>
+              {existingCards.map(card => (
+                <option key={card.id} value={card.id}>{card.title}</option>
+              ))}
+            </select>
+          ) : (
+            <input
+              type="text"
+              className="kh-input"
+              placeholder="새 지식베이스 제목 입력"
+              value={newCardTitle}
+              onChange={(e) => setNewCardTitle(e.target.value)}
+            />
+          )}
+        </div>
         <div className="kh-section">
           <div className="kh-label">태그 선택</div>
           <div className="kh-tags">
@@ -83,12 +129,6 @@ function KnowhowPanel({ onClose }) {
               </div>
             )) : <div style={{textAlign: 'center', padding: '20px 0', fontSize: '12px', color: 'var(--ink-tertiary)'}}>로그가 없습니다.</div>}
           </div>
-        </div>
-
-        <div>
-          <p>
-            공개범위설정 - 부서 공개 / 전체 공개 / Task 공개??
-          </p>
         </div>
       </div>
       <div className="kh-footer">

@@ -17,6 +17,8 @@ import ProjectDetail from "../pages/Project/ProjectDetail";
 import DepartmentList from "../pages/Department/DepartmentList";
 import Admin from "../pages/Admin/Admin";
 import Knowl from "../pages/knowledge/knowl";
+import DetailKnowl from "../pages/knowledge/KnowlDetail";
+import KnowlCreate from "../pages/knowledge/KnowlCreate";
 
 /**
  * 보호된 라우트를 위한 loader 함수.
@@ -108,8 +110,16 @@ const router = createBrowserRouter([
         element: <ProjectDetail />,
       },
       {
-        path: "knowl",
+        path: "knowledge",
         element: <Knowl />,
+      },
+      {
+        path: "knowledge/new",
+        element: <KnowlCreate />,
+      },
+      {
+        path: "knowledge/:id",
+        element: <DetailKnowl />,
       },
       {
         path: "departments",

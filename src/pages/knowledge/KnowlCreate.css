@@ -1,0 +1,146 @@
+.container{
+    width:980px;
+    max-width: 100%;
+    margin:40px auto;
+    font-family:Pretendard,sans-serif;
+}
+
+.back{
+    font-size:14px;
+    color:#666;
+    margin-bottom:12px;
+    cursor:pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.breadcrumb{
+    font-size:12px;
+    color:#999;
+    margin-bottom:20px;
+}
+
+.header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:20px;
+}
+
+.header h2{
+    font-size:26px;
+}
+
+.save-btn{
+    padding:10px 24px;
+    border:none;
+    background:#2f6fed;
+    color:white;
+    border-radius:8px;
+    cursor:pointer;
+    font-size:14px;
+}
+
+.card{
+    background:white;
+    border:1px solid #e5e7eb;
+    border-radius:14px;
+    padding:24px;
+    margin-bottom:20px;
+}
+
+.card-title{
+    font-size:18px;
+    font-weight:600;
+    margin-bottom:20px;
+}
+
+.form-group{
+    margin-bottom:22px;
+}
+
+.form-group > label{
+    display:block;
+    margin-bottom:8px;
+    font-size:14px;
+    font-weight:600;
+}
+
+.required{
+    color:red;
+    margin-left: 2px;
+}
+
+.category{
+    display:flex;
+    gap:12px;
+}
+
+.category label{
+    margin:0;
+    font-weight:500;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+input[type=text]{
+    width:100%;
+    padding:12px;
+    border:1px solid #d1d5db;
+    border-radius:8px;
+    font-size:14px;
+    font-family: inherit;
+}
+
+textarea{
+    width:100%;
+    border:1px solid #d1d5db;
+    border-radius:8px;
+    padding:14px;
+    resize:vertical;
+    font-size:14px;
+    font-family: inherit;
+}
+
+.summary{
+    height:180px;
+}
+
+.notice{
+    height:120px;
+}
+
+.hint {
+    font-size: 12px;
+    color: var(--ink-soft);
+    margin-top: 10px;
+}
+
+.footer{
+    display:flex;
+    justify-content:flex-end;
+    gap:12px;
+}
+
+.cancel{
+    padding:10px 24px;
+    border:1px solid #d1d5db;
+    background:white;
+    border-radius:8px;
+    cursor:pointer;
+}
+
+.submit{
+    padding:10px 24px;
+    border:none;
+    background:var(--navy);
+    color:white;
+    border-radius:8px;
+    cursor:pointer;
+}
+
+.card .tiptap-editor {
+    min-height: 180px;
+}

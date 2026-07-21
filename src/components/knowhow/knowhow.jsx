@@ -2,6 +2,21 @@
 import { useState } from 'react';
 
 export default function useKnowledgeMemo() {
+  // 카드 선택 모드 상태 ('existing' | 'new')
+  const [cardMode, setCardMode] = useState('existing');
+
+  // 기존 카드 목록 (임시 데이터)
+  const [existingCards] = useState([
+    { id: 'card-1', title: '불법 주정차 단속 민원 처리' },
+    { id: 'card-2', title: '카라멜마끼아또 제조 사업' },
+    { id: 'card-3', title: 'CCTV 정보공개청구 대응' },
+  ]);
+
+  // 선택된 기존 카드 ID
+  const [selectedCardId, setSelectedCardId] = useState('');
+  // 새 카드 제목
+  const [newCardTitle, setNewCardTitle] = useState('');
+
   // 1. 태그 목록 상태
   const [tags, setTags] = useState([
     { name: '위생', active: true },
@@ -50,10 +65,37 @@ export default function useKnowledgeMemo() {
 
   // 메모 저장 핸들러
   const handleSave = () => {
+    let cardInfo;
+    if (cardMode === 'new') {
+      if (!newCardTitle.trim()) {
+        alert('새 지식베이스의 제목을 입력해주세요.');
+        return;
+      }
+      cardInfo = { type: 'new', title: newCardTitle.trim() };
+    } else {
+      if (!selectedCardId) {
+        alert('기존 지식베이스를 선택해주세요.');
+        return;
+      }
+      const selectedCard = existingCards.find(c => c.id === selectedCardId);
+      cardInfo = { type: 'existing', id: selectedCardId, title: selectedCard?.title };
+    }
+
     const activeTags = tags.filter((t) => t.active).map((t) => t.name);
+    if (activeTags.length === 0) {
+        alert('태그를 하나 이상 선택해주세요.');
+        return;
+    }
+    if (!memoText.trim()) {
+        alert('노하우 내용을 입력해주세요.');
+        return;
+    }
+
+    console.log('저장 대상 카드:', cardInfo);
     console.log('저장 대상 태그:', activeTags);
     console.log('메모 본문:', memoText);
     // 필요 시 여기에 실제 API 호출이나 상위 저장 로직을 연결하세요.
+    alert('저장되었습니다. (콘솔 확인)');
   };
 
   // 현재 필터 조건에 맞게 가공된 로그 데이터
@@ -62,6 +104,13 @@ export default function useKnowledgeMemo() {
     : logs.filter((log) => log.tag === currentFilter);
 
   return {
+    cardMode,
+    setCardMode,
+    existingCards,
+    selectedCardId,
+    setSelectedCardId,
+    newCardTitle,
+    setNewCardTitle,
     tags,
     newTagInput,
     setNewTagInput,

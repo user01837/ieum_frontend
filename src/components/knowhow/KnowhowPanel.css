@@ -56,6 +56,53 @@
 
 .kh-section { margin-bottom: 24px; }
 .kh-label { font-size: 12px; font-weight: 700; color: var(--blue); margin-bottom: 10px; }
+
+.kh-card-mode-btns {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.kh-mode-btn {
+  flex: 1;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 8px;
+  border-radius: 8px;
+  border: 1px solid var(--line-strong);
+  background: var(--surface);
+  color: var(--ink-soft);
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.2s;
+}
+
+.kh-mode-btn.active {
+  background: var(--blue-soft);
+  color: var(--blue);
+  border-color: var(--blue);
+}
+
+.kh-select, .kh-input {
+  width: 100%;
+  padding: 9px 12px;
+  font-size: 13px;
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
+  color: var(--ink);
+  background: var(--surface);
+  font-family: inherit;
+  outline: none;
+}
+
+.kh-select:focus, .kh-input:focus {
+  border-color: var(--blue);
+}
+
+.kh-select {
+  cursor: pointer;
+}
+
 .kh-tags { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
 
 .kh-tag {
