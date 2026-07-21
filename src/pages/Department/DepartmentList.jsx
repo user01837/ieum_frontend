@@ -2,44 +2,15 @@ import React, { useState, useEffect, useRef, useReducer } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import './DeptMgmt.css';
 import EmployeeSearchModal from '../../components/EmpSearchModal/EmpSearchModal';
-import { COMPLAINTS } from '../Petition/data';
 import { useDepartmentTasksQuery } from '../../hooks/queries/useTaskQuery';
 import { useCreateTaskMutation, useDeleteTaskMutation, useAddAssigneeMutation, useRemoveAssigneeMutation } from '../../hooks/mutations/useTaskMutation';
 import useAuthStore from '../../store/useAuthStore';
-import { useDepartmentMembersQuery } from '../../hooks/queries/useDeptQuery';
+import { useDepartmentsQuery, useDepartmentMembersQuery } from '../../hooks/queries/useDeptQuery';
 import { useComplaintsSummaryQuery, useDueSoonComplaintsQuery, useTasksSummaryQuery } from '../../hooks/queries/useDashboardQuery';
 import { useNavigate } from 'react-router-dom';
 
-// --- Mock Data ---
-const MOCK_DATA = {
-  '행정복지과': {
-    members: [
-      { id: 'm1', position: '과장', name: '김철수', isSelf: true },
-      { id: 'm2', position: '팀장', name: '이영희', isSelf: false },
-      { id: 'm3', position: '주무관', name: '박민수', isSelf: false },
-      { id: 'm4', position: '주무관', name: '김하늘', isSelf: false },
-    ],
-    tasks: [
-      { id: 't1', name: '예산 정산 보고서 작성', assignees: ['m2'] },
-      { id: 't2', name: '신규 민원 업무 배정', assignees: [] },
-    ],
-  },
-  '도로교통과': {
-    members: [
-      { id: 'd1', position: '과장', name: '서지훈', isSelf: false },
-      { id: 'd2', position: '팀장', name: '한서준', isSelf: false },
-    ],
-    tasks: [{ id: 'd-t1', name: '교통 신호 체계 개선안 검토', assignees: ['d2'] }],
-  },
-  '문화도시과': { members: [], tasks: [] },
-};
-const DEPT_LIST = Object.keys(MOCK_DATA);
 const POSITION_RANK = { 과장: 0, 팀장: 1, 주무관: 2 };
 const POSITION_CLASSES = ['과장', '팀장', '주무관'];
-
-function getInitials(name) {
-  return name.slice(-2);
-}
 
 /* =========================================================
    서브 컴포넌트: 팝오버 (외부 클릭으로 닫힘)
@@ -183,7 +154,7 @@ function UrgentComplaintsPanel({ complaints, onClose }) {
 /* =========================================================
    서브 컴포넌트: 부서원 목록
    ========================================================= */
-function MemberPanel({ members, tasks, onHandover }) {
+function MemberPanel({ members, tasks, onHandover, isAdmin }) {
   const [openPopover, setOpenPopover] = useState(null); // memberId | null
   const sorted = [...members].sort(
     (a, b) => (POSITION_RANK[a.position] ?? 99) - (POSITION_RANK[b.position] ?? 99)
@@ -191,7 +162,7 @@ function MemberPanel({ members, tasks, onHandover }) {
 
   return (
     <div className="card member-panel">
-      <div className="panel-title">우리 부서원</div>
+      <div className="panel-title">{isAdmin ? '부서원 목록' : '우리 부서원'}</div>
       {sorted.map((m) => (
         <div key={m.id} className="member-item">
           <PosBadge position={m.position} />
@@ -243,7 +214,6 @@ function MemberPanel({ members, tasks, onHandover }) {
    서브 컴포넌트: Task 카드
    ========================================================= */
 function TaskCard({ task, members, onRename, onDelete, onRemoveAssignee, onOpenSearchModal }) {
-  // onAddAssignee, onOpenSearchModal prop 추가
 
   return (
     <div className="task-card">
@@ -409,26 +379,44 @@ const tasksReducer = (state, action) => {
    루트 컴포넌트
    ========================================================= */
 function DeptMgmt() {
-  const [userRole, setUserRole] = useState('manager'); // 'manager' | 'admin'
-  const [selectedDept, setSelectedDept] = useState(DEPT_LIST[0]);
+  const user = useAuthStore((state) => state.user);
+  const isAdmin = user?.system_role_code === '02';
+  const [isDeptOpen, setIsDeptOpen] = useState(false);
+  const deptRef = useRef(null);
+
+  // 관리자: 선택한 부서 코드, 일반: null (본인 부서는 백엔드에서 처리)
+  const [selectedDeptCode, setSelectedDeptCode] = useState(null);
+
   const [members, setMembers] = useState([]);
   const [tasks, dispatch] = useReducer(tasksReducer, []);
-  const { data: tasksData } = useDepartmentTasksQuery();
+
+  // 관리자일 때만 부서 목록 조회
+  const { data: departmentList } = useDepartmentsQuery();
+
+  // 관리자: selectedDeptCode 기준 / 일반: null (백엔드가 본인 부서 반환)
+  const { data: tasksData } = useDepartmentTasksQuery(isAdmin ? selectedDeptCode : undefined);
+
+  const targetDeptCode = isAdmin ? selectedDeptCode : user?.department_code;
+  const { data: membersData } = useDepartmentMembersQuery(targetDeptCode);
+
   const { mutate: createTaskMutate } = useCreateTaskMutation();
   const { mutate: deleteTaskMutate } = useDeleteTaskMutation();
   const { mutate: addAssigneeMutate } = useAddAssigneeMutation();
   const { mutate: removeAssigneeMutate } = useRemoveAssigneeMutation();
-  const user = useAuthStore((state) => state.user);
-  const { data: membersData } = useDepartmentMembersQuery(user?.department_code);
+
   const { data: complaintsSummary } = useComplaintsSummaryQuery();
   const { data: dueSoonComplaints } = useDueSoonComplaintsQuery();
   const { data: tasksSummary } = useTasksSummaryQuery();
+
   const [isUrgentPanelOpen, setIsUrgentPanelOpen] = useState(false);
   const [urgentComplaintsData, setUrgentComplaintsData] = useState([]);
 
-  const currentDeptName = user?.deptName ?? '';
+  // 표시할 부서명
+  const currentDeptName = isAdmin
+    ? (departmentList?.find(d => d.code === selectedDeptCode)?.name ?? '부서를 선택하세요')
+    : (user?.deptName ?? '');
 
-  // API 호출 시뮬레이션 => 부서원 API 연동으로 교체
+  // 부서원 데이터 변환
   useEffect(() => {
     if (membersData) {
       const converted = membersData.map((m) => ({
@@ -441,7 +429,7 @@ function DeptMgmt() {
     }
   }, [membersData, user]);
 
-  // 추가-Task만
+  // Task 데이터 변환
   useEffect(() => {
     if (tasksData) {
       const converted = tasksData.map((t) => ({
@@ -456,30 +444,28 @@ function DeptMgmt() {
   // ESC 키로 사이드 패널 닫기
   useEffect(() => {
     if (!isUrgentPanelOpen) return;
-
-    const handleKeyDown = (event) => {
-      if (event.key === 'Escape') {
-        setIsUrgentPanelOpen(false);
-      }
-    };
-
+    const handleKeyDown = (e) => { if (e.key === 'Escape') setIsUrgentPanelOpen(false); };
     document.addEventListener('keydown', handleKeyDown);
-
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [isUrgentPanelOpen]);
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (deptRef.current && !deptRef.current.contains(e.target)) {
+        setIsDeptOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const handleOpenUrgentPanel = (complaints) => {
     setUrgentComplaintsData(complaints);
     setIsUrgentPanelOpen(true);
   };
 
-  const handleHandover = (taskId, memberId) => {
-    dispatch({ type: 'HANDOVER_TASK', payload: { taskId, memberId } });
-  };
-
-  const handleRename = (taskId, name) => {
-    dispatch({ type: 'RENAME_TASK', payload: { id: taskId, name } });
-  };
+  const handleHandover = (taskId, memberId) => dispatch({ type: 'HANDOVER_TASK', payload: { taskId, memberId } });
+  const handleRename = (taskId, name) => dispatch({ type: 'RENAME_TASK', payload: { id: taskId, name } });
 
   const handleDelete = (taskId) => {
     const taskToDelete = tasks.find((t) => t.id === taskId);
@@ -489,36 +475,39 @@ function DeptMgmt() {
   };
 
   const handleAddTask = (name) => {
-    createTaskMutate({ name });
+    createTaskMutate({ name, departmentCode: isAdmin ? selectedDeptCode : undefined });
   };
 
-  const handleAddAssignee = (taskId, memberId) => {
-    addAssigneeMutate({ taskId, userId: memberId });
-  };
-
-  const handleRemoveAssignee = (taskId, memberId) => {
-    removeAssigneeMutate({ taskId, userId: memberId });
-  };
+  const handleAddAssignee = (taskId, memberId) => addAssigneeMutate({ taskId, userId: memberId });
+  const handleRemoveAssignee = (taskId, memberId) => removeAssigneeMutate({ taskId, userId: memberId });
 
   return (
     <div className={`split-layout ${isUrgentPanelOpen ? 'split-active' : ''}`}>
-      <div className="dept-wrap" data-role={userRole}>
+      <div className="dept-wrap">
         <div className="dept-heading-row">
-          <span className="dept-tag">
-            {currentDeptName}
-          </span>
-          {userRole === 'admin' && (
-            <select
-              className="dept-select"
-              value={selectedDept}
-              onChange={(e) => setSelectedDept(e.target.value)}
-            >
-              {DEPT_LIST.map((dept) => (
-                <option key={dept} value={dept}>
-                  {dept}
-                </option>
-              ))}
-            </select>
+          {!isAdmin && <span className="dept-tag">{currentDeptName}</span>}
+          {isAdmin && departmentList && (
+            <div className={`dept-dropdown-wrap ${isDeptOpen ? 'open' : ''}`} ref={deptRef}>
+              <div className="dept-dropdown" onClick={() => setIsDeptOpen(p => !p)}>
+                <span>{selectedDeptCode ? departmentList.find(d => d.code === selectedDeptCode)?.name : '부서를 선택하세요'}</span>
+                <svg className="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <path d="m6 9 6 6 6-6" />
+                </svg>
+              </div>
+              <div className="dept-dropdown-menu">
+                {departmentList
+                  .filter(d => d.code !== '09')
+                  .map((d) => (
+                    <div
+                      key={d.code}
+                      className={`dept-dropdown-item ${selectedDeptCode === d.code ? 'active' : ''}`}
+                      onClick={() => { setSelectedDeptCode(d.code); setIsDeptOpen(false); }}
+                    >
+                      {d.name}
+                    </div>
+                  ))}
+              </div>
+            </div>
           )}
         </div>
 
@@ -532,11 +521,7 @@ function DeptMgmt() {
         />
 
         <div className="mgmt-row">
-          <MemberPanel
-            members={members}
-            tasks={tasks}
-            onHandover={handleHandover}
-          />
+          <MemberPanel members={members} tasks={tasks} onHandover={handleHandover} isAdmin={isAdmin} />
           <TaskPanel
             currentDept={currentDeptName}
             tasks={tasks.sort((a, b) => a.name.localeCompare(b.name))}
@@ -558,5 +543,4 @@ function DeptMgmt() {
     </div>
   );
 }
-
 export default DeptMgmt;

@@ -1,21 +1,25 @@
 import api from './axios';
 
 /**
- * 내 부서 Task 목록 조회 API
- * JWT에서 부서 자동 추출
+ * Task 목록 조회 API
+ * 일반 사용자: JWT에서 부서 자동 추출
+ * 관리자: departmentCode 파라미터로 선택 부서 조회
  */
-export const getDepartmentTasks = async () => {
-  const { data } = await api.get('/tasks');
+export const getDepartmentTasks = async (departmentCode) => {
+  const params = departmentCode ? { department_code: departmentCode } : {};
+  const { data } = await api.get('/tasks', { params });
   return data;
 };
 
 /**
  * Task 생성 API
- * @param {object} body
- * @param {string} body.name - Task명
+ * @param {object} params
+ * @param {string} params.name - Task명
+ * @param {string} [params.departmentCode] - 관리자 전용: 생성할 부서 코드 (없으면 본인 부서)
  */
-export const createTask = async (body) => {
-  const { data } = await api.post('/tasks', body);
+export const createTask = async ({ name, departmentCode }) => {
+  const params = departmentCode ? { department_code: departmentCode } : {};
+  const { data } = await api.post('/tasks', { name }, { params });
   return data;
 };
 

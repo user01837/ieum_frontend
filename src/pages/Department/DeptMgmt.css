@@ -622,3 +622,14 @@
   font-size: 13px;
   padding: 40px 0;
 }
+
+/* ===== 부서 선택 드롭다운 (관리자 전용) ===== */
+.dept-dropdown-wrap { position: relative; }
+.dept-dropdown { display: flex; align-items: center; gap: 6px; background: var(--surface); border: 1px solid var(--line-strong); border-radius: 8px; padding: 9px 12px; font-size: 12.5px; font-weight: 600; color: var(--ink); cursor: pointer; user-select: none; }
+.dept-dropdown .ic { width: 13px; height: 13px; color: var(--ink-tertiary); transition: transform .15s; }
+.dept-dropdown-wrap.open .dept-dropdown .ic { transform: rotate(180deg); }
+.dept-dropdown-menu { position: absolute; top: calc(100% + 6px); left: 0; background: var(--surface); border: 1px solid var(--line-strong); border-radius: 9px; box-shadow: 0 10px 26px rgba(0,0,0,.1); min-width: 180px; padding: 6px; display: none; z-index: 30; }
+.dept-dropdown-wrap.open .dept-dropdown-menu { display: block; }
+.dept-dropdown-item { padding: 9px 11px; font-size: 12.5px; font-weight: 500; color: var(--ink); border-radius: 6px; cursor: pointer; }
+.dept-dropdown-item:hover { background: var(--bg); }
+.dept-dropdown-item.active { background: var(--blue-soft); color: var(--blue); font-weight: 700; }
