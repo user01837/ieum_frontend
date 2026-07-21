@@ -84,6 +84,12 @@ function KnowhowPanel({ onClose }) {
             )) : <div style={{textAlign: 'center', padding: '20px 0', fontSize: '12px', color: 'var(--ink-tertiary)'}}>로그가 없습니다.</div>}
           </div>
         </div>
+
+        <div>
+          <p>
+            공개범위설정 - 부서 공개 / 전체 공개 / Task 공개??
+          </p>
+        </div>
       </div>
       <div className="kh-footer">
         <button className="btn-save" onClick={handleSave}>저장</button>

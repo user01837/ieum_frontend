@@ -6,7 +6,7 @@ function Knowl() {
             <div className="petition-content">
                 <div className="pagehead">
                     <div>
-                        <h2>지식베이스</h2>
+                        <h2>지식베이스 목록</h2>
                         <div className="sub">업무 노하우와 처리 사례를 검색하고 학습합니다.</div>
                     </div>
                 </div>
