@@ -10,8 +10,8 @@ const CATEGORY_OPTIONS = [
 ];
 
 const SORT_OPTIONS = [
-    { key: 'latest', label: '최신순' },
-    { key: 'knowhow', label: '노하우 많은순' },
+    { key: 'latest', label: '전체 부서' },
+    { key: 'knowhow', label: '내 부서' },
 ];
 
 function Knowl() {
@@ -32,6 +32,14 @@ function Knowl() {
         document.addEventListener("mousedown", handleClickOutside);
         return () => document.removeEventListener("mousedown", handleClickOutside);
     }, []);
+
+    const dummyData = [
+        { id: 1, category: '사업추진', categoryClass: 'badge-warn', title: '대중교통 사업', subtitle: '— 중앙부처 사업 수행 시 유의사항', author: '김OO', knowhowCount: 5, lastModified: '2026-06-12' },
+        { id: 2, category: '민원처리', categoryClass: 'badge-new', title: '주차장 출입 차단기 오류 민원', subtitle: '— 반복 민원 처리 절차', author: '이OO', knowhowCount: 3, lastModified: '2026-05-03' },
+        { id: 3, category: '사업추진', categoryClass: 'badge-warn', title: '연간 예산 편성 절차', subtitle: '— 요구서 작성 및 제출 타임라인', author: '박OO', knowhowCount: 2, lastModified: '2026-04-17' },
+        { id: 4, category: '사업추진', categoryClass: 'badge-warn', title: '도로교통 통제', subtitle: '— 2025년 신규 사업 초기 세팅', author: '최OO', knowhowCount: 1, lastModified: '2026-03-22' },
+        { id: 5, category: '민원처리', categoryClass: 'badge-new', title: '캠퍼스 가로등 고장 신고 처리', subtitle: '— 유관부서 협조 요청 절차', author: '정OO', knowhowCount: 2, lastModified: '2026-02-09' },
+    ];
 
     return(
         
@@ -99,46 +107,16 @@ function Knowl() {
                         <span></span>
                     </div>
                     <div id="listBody">
-                        <div className="trow knowl-trow" onClick={() => navigate('/knowledge/1')}>
-                            <div><span className="badge badge-warn">사업추진</span></div>
-                            <div className="title">카라멜마끼아또 제조 사업 <span className="subtitle">— 중앙부처 사업 수행 시 유의사항</span></div>
-                            <div className="date">김OO</div>
-                            <div className="date">5건</div>
-                            <div className="date">2026-06-12</div>
-                            <svg className="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3"><path d="m9 18 6-6-6-6"></path></svg>
-                        </div>
-                        <div className="trow knowl-trow" onClick={() => navigate('/knowledge/2')}>
-                            <div><span className="badge badge-new">민원처리</span></div>
-                            <div className="title">주차장 출입 차단기 오류 민원 <span className="subtitle">— 반복 민원 처리 절차</span></div>
-                            <div className="date">이OO</div>
-                            <div className="date">3건</div>
-                            <div className="date">2026-05-03</div>
-                            <svg className="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3"><path d="m9 18 6-6-6-6"></path></svg>
-                        </div>
-                        <div className="trow knowl-trow" onClick={() => navigate('/knowledge/3')}>
-                            <div><span className="badge badge-warn">사업추진</span></div>
-                            <div className="title">연간 예산 편성 절차 <span className="subtitle">— 요구서 작성 및 제출 타임라인</span></div>
-                            <div className="date">박OO</div>
-                            <div className="date">2건</div>
-                            <div className="date">2026-04-17</div>
-                            <svg className="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3"><path d="m9 18 6-6-6-6"></path></svg>
-                        </div>
-                        <div className="trow knowl-trow" onClick={() => navigate('/knowledge/4')}>
-                            <div><span className="badge badge-warn">사업추진</span></div>
-                            <div className="title">말차 제조 사업 인수인계 <span className="subtitle">— 2025년 신규 사업 초기 세팅</span></div>
-                            <div className="date">최OO</div>
-                            <div className="date">1건</div>
-                            <div className="date">2026-03-22</div>
-                            <svg className="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3"><path d="m9 18 6-6-6-6"></path></svg>
-                        </div>
-                        <div className="trow knowl-trow" onClick={() => navigate('/knowledge/5')}>
-                            <div><span className="badge badge-new">민원처리</span></div>
-                            <div className="title">캠퍼스 가로등 고장 신고 처리 <span className="subtitle">— 유관부서 협조 요청 절차</span></div>
-                            <div className="date">정OO</div>
-                            <div className="date">2건</div>
-                            <div className="date">2026-02-09</div>
-                            <svg className="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3"><path d="m9 18 6-6-6-6"></path></svg>
-                        </div>
+                        {dummyData.map(item => (
+                            <div className="trow knowl-trow" key={item.id} onClick={() => navigate(`/knowledge/${item.id}`)}>
+                                <div><span className={`badge ${item.categoryClass}`}>{item.category}</span></div>
+                                <div className="title">{item.title} <span className="subtitle">{item.subtitle}</span></div>
+                                <div className="date">{item.author}</div>
+                                <div className="date">{item.knowhowCount}건</div>
+                                <div className="date">{item.lastModified}</div>
+                                <svg className="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3"><path d="m9 18 6-6-6-6"></path></svg>
+                            </div>
+                        ))}
                     </div>
                 </div>
                 <div className="footnote">※ 부서 이동 이전 소속 부서의 지식 카드는 표시되지 않습니다.</div>

@@ -4,7 +4,7 @@ import './StickySideBarButton.css';
 // TypeScript interface 부분을 지우고 일반 JavaScript 매개변수 구조로 변경했습니다.
 export default function StickySideBarButton({ 
   onClick, 
-  label = "노하우 작성하기" 
+  label = "노하우 작성 & 확인" 
 }) {
   return (
     <div className="sticky-sidebar-container">

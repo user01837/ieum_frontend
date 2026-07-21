@@ -2,20 +2,16 @@
 import { useState } from 'react';
 
 export default function useKnowledgeMemo() {
-  // 카드 선택 모드 상태 ('existing' | 'new')
-  const [cardMode, setCardMode] = useState('existing');
-
-  // 기존 카드 목록 (임시 데이터)
+  // --- 지식베이스 선택 관련 상태 ---
   const [existingCards] = useState([
     { id: 'card-1', title: '불법 주정차 단속 민원 처리' },
     { id: 'card-2', title: '카라멜마끼아또 제조 사업' },
     { id: 'card-3', title: 'CCTV 정보공개청구 대응' },
   ]);
-
-  // 선택된 기존 카드 ID
-  const [selectedCardId, setSelectedCardId] = useState('');
-  // 새 카드 제목
+  // 'new' 또는 카드 ID를 가질 수 있습니다.
+  const [selectedCardId, setSelectedCardId] = useState(''); 
   const [newCardTitle, setNewCardTitle] = useState('');
+  // --------------------------------
 
   // 1. 태그 목록 상태
   const [tags, setTags] = useState([
@@ -66,19 +62,18 @@ export default function useKnowledgeMemo() {
   // 메모 저장 핸들러
   const handleSave = () => {
     let cardInfo;
-    if (cardMode === 'new') {
+    if (selectedCardId === 'new') {
       if (!newCardTitle.trim()) {
         alert('새 지식베이스의 제목을 입력해주세요.');
         return;
       }
       cardInfo = { type: 'new', title: newCardTitle.trim() };
-    } else {
-      if (!selectedCardId) {
-        alert('기존 지식베이스를 선택해주세요.');
-        return;
-      }
+    } else if (selectedCardId) {
       const selectedCard = existingCards.find(c => c.id === selectedCardId);
       cardInfo = { type: 'existing', id: selectedCardId, title: selectedCard?.title };
+    } else {
+      alert('지식베이스를 선택해주세요.');
+      return;
     }
 
     const activeTags = tags.filter((t) => t.active).map((t) => t.name);
@@ -104,8 +99,6 @@ export default function useKnowledgeMemo() {
     : logs.filter((log) => log.tag === currentFilter);
 
   return {
-    cardMode,
-    setCardMode,
     existingCards,
     selectedCardId,
     setSelectedCardId,
