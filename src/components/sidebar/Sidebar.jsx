@@ -80,8 +80,8 @@ function Sidebar() {
           사업/프로젝트 기획
         </NavLink>
 
-        <NavLink to="/knowl" className={({ isActive }) => "nav-link" + (isActive ? " active" : "")}>
-          <svg className="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 19a9 9 0 0 1 9 0a9 9 0 0 1 9 0M3 6a9 9 0 0 1 9 0a9 9 0 0 1 9 0M3 6v13M12 6v13M21 6v13" /></svg>
+        <NavLink to="/knowledge" className={({ isActive }) => "nav-link" + (isActive ? " active" : "")}>
+          <svg className="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 19a9 9 0 0 1 9 0a9 9 0 0 1 9 0M3 6a9 9 0 0 1 9 0a9 9 0 0 1 9 0M3 6v13M12 6v13M21 6v13"/></svg>
           지식 베이스
         </NavLink>
 

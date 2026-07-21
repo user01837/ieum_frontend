@@ -9,7 +9,7 @@ import StarterKit from '@tiptap/starter-kit';
 import Placeholder from '@tiptap/extension-placeholder';
 import EmpSearchModal from "../../components/EmpSearchModal/EmpSearchModal";
 import "./ProjectDetail.css";
-import "./Tiptap.css";
+import '../../styles/global.css';
 
 const TiptapToolbar = ({ editor }) => {
   if (!editor) return null;

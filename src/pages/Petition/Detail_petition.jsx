@@ -12,7 +12,7 @@ import StickySideBarButton from '../../components/StickySideBar/StickySideBarBut
 import { useCompletePetitionMutation, useTempSavePetitionMutation, useDeleteAttachmentMutation, useFindSimilarPetitionsMutation, useCreateDraftAnswerMutation } from '../../hooks/mutations/usePetitionMutations';
 
 import './Detail_petition.css';
-import './Tiptap.css';
+import '../../styles/global.css';
 
 const STATUS_CLASS_MAP = {
   '대기중': 'wait',
@@ -664,8 +664,10 @@ function DetailPetition({ isAdmin: propIsAdmin = false }) {
         ) : (<div className="tiptap-wrapper">
           <h3 className="dtitle" style={{ fontSize: '15px', margin: '16px 20px' }}>민원 답변 작성</h3>
           <div className="tiptap-editor-wrapper">
-            {!isAdmin && <TiptapToolbar editor={editor} />}
-            <EditorContent editor={editor} className="tiptap-editor" />
+            <div className="tiptap-bordered">
+              {!isAdmin && <TiptapToolbar editor={editor} />}
+              <EditorContent editor={editor} className="tiptap-editor" />
+            </div>
             {!isAdmin && <div className="reply-attach-row" style={{ padding: '14px 0px' }}>
               <div
                 {...getRootProps({ className: `attach-addbtn ${isDragActive ? 'dropzone-active' : ''}` })}

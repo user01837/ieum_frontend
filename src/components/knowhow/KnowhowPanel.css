@@ -56,6 +56,32 @@
 
 .kh-section { margin-bottom: 24px; }
 .kh-label { font-size: 12px; font-weight: 700; color: var(--blue); margin-bottom: 10px; }
+
+.kh-input {
+  width: 100%;
+  padding: 9px 12px;
+  font-size: 13px;
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
+  color: var(--ink);
+  background: var(--surface);
+  font-family: inherit;
+  outline: none;
+}
+
+.kh-input:focus {
+  border-color: var(--navy);
+}
+
+.kh-section .dropdown-wrap {
+  width: 100%;
+}
+
+.kh-section .dropdown {
+  width: 100%;
+  justify-content: space-between;
+}
+
 .kh-tags { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
 
 .kh-tag {
@@ -68,7 +94,7 @@
   color: var(--ink-soft);
   cursor: pointer;
 }
-.kh-tag.active { background: var(--blue); color: #fff; border-color: var(--blue); }
+.kh-tag.active { background: var(--navy); color: #fff; border-color: var(--navy); }
 
 .kh-new-tag { display: flex; gap: 6px; }
 .kh-new-tag input { flex: 1; border: 1px solid var(--line-strong); border-radius: 8px; padding: 6px 10px; font-size: 12px; }
@@ -86,3 +112,14 @@
 .kh-log-meta { display: flex; gap: 10px; font-size: 11px; color: var(--ink-tertiary); margin-bottom: 6px; }
 .kh-log-meta .kh-log-tag { font-weight: 600; color: var(--ink-soft); }
 .kh-log-body { font-size: 12.5px; line-height: 1.6; color: var(--ink); }
+
+.kh-info-box {
+  text-align: center;
+  padding: 30px 20px;
+  background: var(--bg);
+  border-radius: 8px;
+  font-size: 12px;
+  color: var(--ink-tertiary);
+  line-height: 1.6;
+  margin-top: 24px;
+}

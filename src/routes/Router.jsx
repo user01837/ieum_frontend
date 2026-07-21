@@ -17,6 +17,8 @@ import ProjectDetail from "../pages/Project/ProjectDetail";
 import DepartmentList from "../pages/Department/DepartmentList";
 import Admin from "../pages/Admin/Admin";
 import Knowl from "../pages/knowledge/knowl";
+import DetailKnowl from "../pages/knowledge/KnowlDetail";
+import KnowlCreate from "../pages/knowledge/KnowlCreate";
 
 function protectedLoader() {
   const { token } = useAuthStore.getState();
@@ -96,15 +98,56 @@ const router = createBrowserRouter([
     ),
     loader: protectedLoader,
     children: [
-      { path: "petitions", element: <PetitionList /> },
-      { path: "petitions/:id", element: <DetailPetition /> },
-      { path: "orgchart", element: <OrgChart /> },
-      { path: "projects", element: <ProjectList /> },
-      { path: "projects/new", element: <ProjectCreate />, loader: nonAdminLoader },
-      { path: "projects/:id", element: <ProjectDetail /> },
-      { path: "knowl", element: <Knowl /> },
-      { path: "departments", element: <DepartmentList />, loader: deptManagerLoader },
-      { path: "admin", element: <Admin />, loader: adminLoader },
+
+      {
+        path: "petitions",
+        element: <PetitionList //isAdmin={true}
+        />,
+      },
+      {
+        path: "petitions/:id",
+        element: <DetailPetition //isAdmin={true} 
+        />,
+      },
+      {
+        path: "orgchart",
+        element: <OrgChart />,
+      },
+      {
+        path: "projects",
+        element: <ProjectList />,
+      },
+      {
+        path: "projects/new",
+        element: <ProjectCreate />,
+        loader: nonAdminLoader 
+      },
+      {
+        path: "projects/:id",
+        element: <ProjectDetail />,
+      },
+      {
+        path: "knowledge",
+        element: <Knowl />,
+      },
+      {
+        path: "knowledge/new",
+        element: <KnowlCreate />,
+      },
+      {
+        path: "knowledge/:id",
+        element: <DetailKnowl />,
+      },
+      {
+        path: "departments",
+        element: <DepartmentList />,
+        loader: deptManagerLoader
+      },
+      {
+        path: "admin",
+        element: <Admin />,
+        loader: adminLoader // 관리자 전용 loader 적용
+      },
     ],
   },
   {
