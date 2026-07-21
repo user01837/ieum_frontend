@@ -9,6 +9,7 @@ export const useDepartmentTasksQuery = (departmentCode) => {
   return useQuery({
     queryKey: ['departmentTasks', departmentCode],
     queryFn: () => getDepartmentTasks(departmentCode),
+    enabled: departmentCode !== null,
     staleTime: 1000 * 60 * 5,
     refetchOnWindowFocus: false,
   });

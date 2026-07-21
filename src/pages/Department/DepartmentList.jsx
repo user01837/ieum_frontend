@@ -404,9 +404,9 @@ function DeptMgmt() {
   const { mutate: addAssigneeMutate } = useAddAssigneeMutation();
   const { mutate: removeAssigneeMutate } = useRemoveAssigneeMutation();
 
-  const { data: complaintsSummary } = useComplaintsSummaryQuery();
-  const { data: dueSoonComplaints } = useDueSoonComplaintsQuery();
-  const { data: tasksSummary } = useTasksSummaryQuery();
+  const { data: complaintsSummary } = useComplaintsSummaryQuery(isAdmin ? selectedDeptCode : user?.department_code);
+  const { data: dueSoonComplaints } = useDueSoonComplaintsQuery(isAdmin ? selectedDeptCode : user?.department_code);
+  const { data: tasksSummary } = useTasksSummaryQuery(isAdmin ? selectedDeptCode : user?.department_code);
 
   const [isUrgentPanelOpen, setIsUrgentPanelOpen] = useState(false);
   const [urgentComplaintsData, setUrgentComplaintsData] = useState([]);

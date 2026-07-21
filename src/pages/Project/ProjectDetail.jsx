@@ -215,7 +215,7 @@ export default function ProjectDetail() {
             <rect x="4" y="10" width="16" height="10" rx="2" />
             <path d="M8 10V7a4 4 0 0 1 8 0v3" />
           </svg>
-          {isApproved
+          {isApproved && user?.system_role_code !== "02"
             ? "승인 완료된 기획서입니다. 더 이상 수정할 수 없습니다."
             : user?.system_role_code === "02"
               ? "관리자 계정은 열람만 가능합니다."
@@ -308,7 +308,7 @@ export default function ProjectDetail() {
               <div style={{ textAlign: 'center' }}>
                 <span className="mdept" style={{ fontSize: '11px' }}>{m.userId}</span>
                 <div>
-                  <span className="mname" style={{ fontSize: '15px' }}>{m.name}</span>
+                  <span className="mname" style={{ fontSize: '12px' }}>{m.name}</span>
                   <span className="mdept" style={{ marginLeft: '5px', fontSize: '12px' }}>{m.departmentName}</span>
                 </div>
               </div>
@@ -324,100 +324,113 @@ export default function ProjectDetail() {
         </div>
       </div>
 
-      <div className="panel">
-        <div className="panel-head">
-          <svg width="15" height="15" style={{ marginTop: '5px' }} viewBox="0 0 24 24" fill="none" stroke="var(--blue)" strokeWidth="2">
-            <path d="m12 3 1.9 4.9L19 9.5l-4.9 1.9L12 16l-1.9-4.9L5 9.5l4.9-1.9L12 3Z" />
-          </svg>
-          <span className="panel-title">AI 기획서 초안 생성</span>
-        </div>
-        <div className="panel-body" style={{ marginTop: '8px' }}>
-          <p style={{ fontSize: '12.5px', color: 'var(--ink-soft)', lineHeight: '1.7', marginBottom: '15px' }}>
-            AI가 사업명과 개요를 바탕으로 기획서 초안을 생성합니다. 초안은 참고용이며, 검토 후 작성란에 반영할 수 있습니다.
-          </p>
-          {isAiLoading ? (
-            <div className="spinner"></div>
-          ) : aiDraft ? (
-            <>
-              <div className="draftbox">{aiDraft}</div>
-              <div style={{ display: 'flex', gap: '8px', marginTop: '4px' }}>
-                <div className="applybtn"
-                  onClick={!isLocked ? handleApplyDraft : undefined}
-                  style={{ opacity: isLocked ? 0.4 : 1, cursor: isLocked ? 'not-allowed' : 'pointer' }}
-                >
-                  답변 초안 사용
-                </div>
-                <div className="applybtn"
-                  onClick={!isLocked ? handleGenDraft : undefined}
-                  style={{ opacity: isLocked ? 0.4 : 1, cursor: isLocked ? 'not-allowed' : 'pointer' }}
-                >
-                  다시 생성
-                </div>
-              </div>
-            </>
-          ) : (
-            <div className="applybtn"
-              onClick={!isLocked ? handleGenDraft : undefined}
-              style={{ opacity: isLocked ? 0.4 : 1, cursor: isLocked ? 'not-allowed' : 'pointer' }}
-            >
-              AI 답변 초안 생성
-            </div>
-          )}
-        </div>
-      </div>
-
-      <div className="tiptap-wrapper">
-        <h3 className="dtitle" style={{ fontSize: '15px', margin: '16px 20px' }}>기획서 작성</h3>
-        <div className="tiptap-editor-wrapper">
-          <TiptapToolbar editor={editor} />
-          <EditorContent editor={editor} className="tiptap-editor" />
-        </div>
-        <div className="bottomrow" style={{ padding: '0 20px 16px' }}>
-          <div className={`export-wrap${isExportOpen ? " open" : ""}`} ref={exportRef}>
-            <button className="btn btn-ghost" onClick={() => setIsExportOpen((p) => !p)}>
-              내보내기
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3">
-                <path d="m6 9 6 6 6-6" />
-              </svg>
-            </button>
-            {isExportOpen && (
-              <div className="export-menu">
-                {[
-                  { label: "Word (.docx)", color: "#2B579A", format: "docx" },
-                  { label: "한글 (.hwpx)", color: "#4CAF50", format: "hwpx" },
-                  { label: "PDF (.pdf)", color: "#EC1C24", format: "pdf" },
-                ].map((item) => (
-                  <div
-                    key={item.label}
-                    className="export-item"
-                    onClick={() => { handleExport(item.format); setIsExportOpen(false); }}
+      {user?.system_role_code !== "02" && (
+        <div className="panel">
+          <div className="panel-head">
+            <svg width="15" height="15" style={{ marginTop: '5px' }} viewBox="0 0 24 24" fill="none" stroke="var(--blue)" strokeWidth="2">
+              <path d="m12 3 1.9 4.9L19 9.5l-4.9 1.9L12 16l-1.9-4.9L5 9.5l4.9-1.9L12 3Z" />
+            </svg>
+            <span className="panel-title">AI 기획서 초안 생성</span>
+          </div>
+          <div className="panel-body" style={{ marginTop: '8px' }}>
+            <p style={{ fontSize: '12.5px', color: 'var(--ink-soft)', lineHeight: '1.7', marginBottom: '15px' }}>
+              AI가 사업명과 개요를 바탕으로 기획서 초안을 생성합니다. 초안은 참고용이며, 검토 후 작성란에 반영할 수 있습니다.
+            </p>
+            {isAiLoading ? (
+              <div className="spinner"></div>
+            ) : aiDraft ? (
+              <>
+                <div className="draftbox">{aiDraft}</div>
+                <div style={{ display: 'flex', gap: '8px', marginTop: '4px' }}>
+                  <div className="applybtn"
+                    onClick={!isLocked ? handleApplyDraft : undefined}
+                    style={{ opacity: isLocked ? 0.4 : 1, cursor: isLocked ? 'not-allowed' : 'pointer' }}
                   >
-                    <span className="dot" style={{ background: item.color, width: 8, height: 8, borderRadius: "50%", display: "inline-block" }} />
-                    {item.label}로 내보내기
+                    답변 초안 사용
                   </div>
-                ))}
+                  <div className="applybtn"
+                    onClick={!isLocked ? handleGenDraft : undefined}
+                    style={{ opacity: isLocked ? 0.4 : 1, cursor: isLocked ? 'not-allowed' : 'pointer' }}
+                  >
+                    다시 생성
+                  </div>
+                </div>
+              </>
+            ) : (
+              <div className="applybtn"
+                onClick={!isLocked ? handleGenDraft : undefined}
+                style={{ opacity: isLocked ? 0.4 : 1, cursor: isLocked ? 'not-allowed' : 'pointer' }}
+              >
+                AI 답변 초안 생성
               </div>
             )}
           </div>
-          {!isLocked && (
-            <div style={{ display: "flex", gap: "8px" }}>
-              <button className="btn btn-ghost" onClick={handleSave}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2Z" />
-                  <path d="M17 21v-8H7v8M7 3v5h8" />
-                </svg>
-                저장
-              </button>
-              <button className="btn btn-navy" onClick={handleComplete}>
-                승인 완료
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                  <path d="M20 6 9 17l-5-5" />
-                </svg>
-              </button>
-            </div>
-          )}
         </div>
-      </div>
+      )}
+
+      {user?.system_role_code !== "02" ? (
+        <div className="tiptap-wrapper">
+          <h3 className="dtitle" style={{ fontSize: '15px', margin: '16px 20px' }}>기획서 작성</h3>
+          <div className="tiptap-editor-wrapper">
+            <TiptapToolbar editor={editor} />
+            <EditorContent editor={editor} className="tiptap-editor" />
+          </div>
+          <div className="bottomrow" style={{ padding: '0 20px 16px' }}>
+            <div className={`export-wrap${isExportOpen ? " open" : ""}`} ref={exportRef}>
+              <button className="btn btn-ghost" onClick={() => setIsExportOpen((p) => !p)}>
+                내보내기
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3">
+                  <path d="m6 9 6 6 6-6" />
+                </svg>
+              </button>
+              {isExportOpen && (
+                <div className="export-menu">
+                  {[
+                    { label: "Word (.docx)", color: "#2B579A", format: "docx" },
+                    { label: "한글 (.hwpx)", color: "#4CAF50", format: "hwpx" },
+                    { label: "PDF (.pdf)", color: "#EC1C24", format: "pdf" },
+                  ].map((item) => (
+                    <div
+                      key={item.label}
+                      className="export-item"
+                      onClick={() => { handleExport(item.format); setIsExportOpen(false); }}
+                    >
+                      <span className="dot" style={{ background: item.color, width: 8, height: 8, borderRadius: "50%", display: "inline-block" }} />
+                      {item.label}로 내보내기
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+            {!isLocked && (
+              <div style={{ display: "flex", gap: "8px" }}>
+                <button className="btn btn-ghost" onClick={handleSave}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2Z" />
+                    <path d="M17 21v-8H7v8M7 3v5h8" />
+                  </svg>
+                  저장
+                </button>
+                <button className="btn btn-navy" onClick={handleComplete}>
+                  승인 완료
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                    <path d="M20 6 9 17l-5-5" />
+                  </svg>
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      ) : (
+        <div className="dcard">
+          <div className="section-title">기획서 본문</div>
+          <div
+            className="tiptap-editor"
+            style={{ padding: '12px', lineHeight: '1.8', fontSize: '14px', color: 'var(--ink)' }}
+            dangerouslySetInnerHTML={{ __html: project?.reportContent || '<p style="color:var(--ink-tertiary)">작성된 기획서가 없습니다.</p>' }}
+          />
+        </div>
+      )}
 
       {isDeleteModalOpen && (
         <div className="del-modal-overlay" onClick={() => setIsDeleteModalOpen(false)}>

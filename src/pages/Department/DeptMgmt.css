@@ -65,7 +65,7 @@
 .dash-card-title {
   font-size: 13px;
   font-weight: 700;
-  color: var(--ink-soft);
+  color: var(--ink);
   margin-bottom: 8px;
 }
 
@@ -623,13 +623,70 @@
   padding: 40px 0;
 }
 
-/* ===== 부서 선택 드롭다운 (관리자 전용) ===== */
-.dept-dropdown-wrap { position: relative; }
-.dept-dropdown { display: flex; align-items: center; gap: 6px; background: var(--surface); border: 1px solid var(--line-strong); border-radius: 8px; padding: 9px 12px; font-size: 12.5px; font-weight: 600; color: var(--ink); cursor: pointer; user-select: none; }
-.dept-dropdown .ic { width: 13px; height: 13px; color: var(--ink-tertiary); transition: transform .15s; }
-.dept-dropdown-wrap.open .dept-dropdown .ic { transform: rotate(180deg); }
-.dept-dropdown-menu { position: absolute; top: calc(100% + 6px); left: 0; background: var(--surface); border: 1px solid var(--line-strong); border-radius: 9px; box-shadow: 0 10px 26px rgba(0,0,0,.1); min-width: 180px; padding: 6px; display: none; z-index: 30; }
-.dept-dropdown-wrap.open .dept-dropdown-menu { display: block; }
-.dept-dropdown-item { padding: 9px 11px; font-size: 12.5px; font-weight: 500; color: var(--ink); border-radius: 6px; cursor: pointer; }
-.dept-dropdown-item:hover { background: var(--bg); }
-.dept-dropdown-item.active { background: var(--blue-soft); color: var(--blue); font-weight: 700; }
+/* ===== 부서 드롭다운 (관리자용) ===== */
+.dept-dropdown-wrap {
+  position: relative;
+}
+
+.dept-dropdown {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+  background: var(--surface);
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
+  padding: 7px 12px;
+  cursor: pointer;
+  min-width: fit-content;
+  justify-content: space-between;
+}
+
+.dept-dropdown:hover {
+  background: var(--bg);
+}
+
+.dept-dropdown .ic {
+  width: 14px;
+  height: 14px;
+  color: var(--ink-soft);
+  flex-shrink: 0;
+}
+
+.dept-dropdown-menu {
+  display: none;
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  background: var(--surface);
+  border: 1px solid var(--line-strong);
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  min-width: 180px;
+  padding: 6px;
+  z-index: 50;
+}
+
+.dept-dropdown-wrap.open .dept-dropdown-menu {
+  display: block;
+}
+
+.dept-dropdown-item {
+  font-size: 13px;
+  padding: 8px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  color: var(--ink);
+}
+
+.dept-dropdown-item:hover {
+  background: var(--bg);
+}
+
+.dept-dropdown-item.active {
+  color: var(--blue);
+  font-weight: 600;
+  background: var(--blue-soft);
+}

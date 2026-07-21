@@ -8,7 +8,12 @@ import api from './axios';
  * @param {number} params.size - 페이지 크기
  */
 export const getProjects = async (params) => {
-  const { data } = await api.get('/projects', { params });
+  const { departmentCode, ...rest } = params;
+  const queryParams = {
+    ...rest,
+    ...(departmentCode ? { department_code: departmentCode } : {}),
+  };
+  const { data } = await api.get('/projects', { params: queryParams });
   return data;
 };
 

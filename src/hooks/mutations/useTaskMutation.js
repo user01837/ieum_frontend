@@ -8,6 +8,7 @@ export const useCreateTaskMutation = () => {
         mutationFn: createTask,
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['departmentTasks'] });
+            queryClient.invalidateQueries({ queryKey: ['tasksSummary'] });
         },
     });
 };
@@ -19,6 +20,7 @@ export const useDeleteTaskMutation = () => {
         mutationFn: deleteTask,
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['departmentTasks'] });
+            queryClient.invalidateQueries({ queryKey: ['tasksSummary'] });
         },
     });
 };
@@ -30,6 +32,7 @@ export const useAddAssigneeMutation = () => {
         mutationFn: addAssignee,
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['departmentTasks'] });
+            queryClient.invalidateQueries({ queryKey: ['tasksSummary'] });
         },
     });
 };
@@ -41,6 +44,7 @@ export const useRemoveAssigneeMutation = () => {
     mutationFn: removeAssignee,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['departmentTasks'] });
+      queryClient.invalidateQueries({ queryKey: ['tasksSummary'] });
     },
   });
 };

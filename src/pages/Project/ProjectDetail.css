@@ -112,7 +112,7 @@
   padding: 10px 8px;
   font-size: 12.5px;
   box-sizing: border-box;
-  width: 155px;
+  width: 143px;
 }
 
 .member-chip .mname {
@@ -127,8 +127,8 @@
 /* 팀원 삭제 버튼 */
 .member-chip .rm {
   position: absolute;
-  top: 8px;
-  right: 8px;
+  top: 7px;
+  right: 7px;
   width: 16px;
   height: 16px;
   border-radius: 50%;
@@ -145,7 +145,7 @@
   position: relative;
   border: 1.5px solid var(--blue);
   background: #f0f5ff;
-  padding: 10px 8px !important;
+  padding: 10px 8px;
 }
 
 .member-chip__badge {
@@ -154,9 +154,9 @@
   right: 5px;
   background: var(--blue);
   color: #fff;
-  font-size: 10px;
-  font-weight: 500;
-  padding: 2px 7px;
+  font-size: 9px;
+  font-weight: 400;
+  padding: 1px 4px;
   border-radius: 4px;
   line-height: 1.6;
 }

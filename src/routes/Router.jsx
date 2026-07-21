@@ -61,6 +61,31 @@ async function adminLoader() {
   return null; // 접근 허용
 }
 
+/**
+ * 일반 사용자 전용 라우트를 위한 loader 함수.
+ * 관리자(02)의 접근을 차단합니다.
+ */
+async function nonAdminLoader() {
+  let { user } = useAuthStore.getState();
+
+  if (!user) {
+    try {
+      const response = await getMe();
+      user = response.data;
+    } catch (error) {
+      console.error("Non-admin check failed: Could not fetch user.", error);
+      return redirect("/login");
+    }
+  }
+
+  if (user?.system_role_code === '02') {
+    alert('관리자는 프로젝트를 생성할 수 없습니다.');
+    return redirect("/projects");
+  }
+
+  return null;
+}
+
 const router = createBrowserRouter([
   {
     path: "/",
@@ -102,6 +127,7 @@ const router = createBrowserRouter([
       {
         path: "projects/new",
         element: <ProjectCreate />,
+        loader: nonAdminLoader,
       },
       {
         path: "projects/:id",

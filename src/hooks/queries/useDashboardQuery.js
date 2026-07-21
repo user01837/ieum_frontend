@@ -2,28 +2,40 @@
 import { useQuery } from '@tanstack/react-query';
 import { getComplaintsSummary, getDueSoonComplaints, getTasksSummary } from '../../api/dashboard';
 
-export const useComplaintsSummaryQuery = () => {
+/**
+ * 이번달 민원 건수 쿼리
+ */
+export const useComplaintsSummaryQuery = (departmentCode) => {
     return useQuery({
-        queryKey: ['complaintsSummary'],
-        queryFn: getComplaintsSummary,
+        queryKey: ['complaintsSummary', departmentCode],
+        queryFn: () => getComplaintsSummary(departmentCode),
+        enabled: departmentCode !== null,
         staleTime: 1000 * 60 * 5,
         refetchOnWindowFocus: false,
     });
 };
 
-export const useDueSoonComplaintsQuery = () => {
+/**
+ * 처리기한 임박 민원 목록 쿼리
+ */
+export const useDueSoonComplaintsQuery = (departmentCode) => {
     return useQuery({
-        queryKey: ['dueSoonComplaints'],
-        queryFn: getDueSoonComplaints,
+        queryKey: ['dueSoonComplaints', departmentCode],
+        queryFn: () => getDueSoonComplaints(departmentCode),
+        enabled: departmentCode !== null,
         staleTime: 1000 * 60 * 5,
         refetchOnWindowFocus: false,
     });
 };
 
-export const useTasksSummaryQuery = () => {
+/**
+ * Task 현황 쿼리
+ */
+export const useTasksSummaryQuery = (departmentCode) => {
     return useQuery({
-        queryKey: ['tasksSummary'],
-        queryFn: getTasksSummary,
+        queryKey: ['tasksSummary', departmentCode],
+        queryFn: () => getTasksSummary(departmentCode),
+        enabled: departmentCode !== null,
         staleTime: 1000 * 60 * 5,
         refetchOnWindowFocus: false,
     });
