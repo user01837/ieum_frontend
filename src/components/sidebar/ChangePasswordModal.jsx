@@ -17,6 +17,10 @@ function ChangePasswordModal({ onClose }) {
   const [confirmNewPassword, setConfirmNewPassword] = useState('');
   const [errors, setErrors] = useState({});
 
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmNewPassword, setShowConfirmNewPassword] = useState(false);
+
   const { mutate: changePasswordMutate, isPending } = useChangePasswordMutation();
 
   const validate = () => {
@@ -98,37 +102,88 @@ function ChangePasswordModal({ onClose }) {
 
           <div className="pw-field">
             <label htmlFor="pw-current">현재 비밀번호</label>
-            <input
-              id="pw-current"
-              type="password"
-              value={currentPassword}
-              onChange={(e) => setCurrentPassword(e.target.value)}
-              className={errors.currentPassword ? 'error' : ''}
-            />
+            <div className="pw-input-wrap">
+              <input
+                id="pw-current"
+                type={showCurrentPassword ? 'text' : 'password'}
+                value={currentPassword}
+                onChange={(e) => setCurrentPassword(e.target.value)}
+                className={errors.currentPassword ? 'error' : ''}
+              />
+              <button type="button" className="pw-toggle-eye" onClick={() => setShowCurrentPassword(p => !p)}>
+                {showCurrentPassword ? (
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
+                    <circle cx="12" cy="12" r="3" />
+                  </svg>
+                ) : (
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M9.88 9.88a3 3 0 1 0 4.24 4.24" />
+                    <path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68" />
+                    <path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61" />
+                    <line x1="2" x2="22" y1="2" y2="22" />
+                  </svg>
+                )}
+              </button>
+            </div>
             {errors.currentPassword && <p className="error-message">{errors.currentPassword}</p>}
           </div>
 
           <div className="pw-field">
             <label htmlFor="pw-new">새 비밀번호</label>
-            <input
-              id="pw-new"
-              type="password"
-              value={newPassword}
-              onChange={(e) => setNewPassword(e.target.value)}
-              className={errors.newPassword ? 'error' : ''}
-            />
+            <div className="pw-input-wrap">
+              <input
+                id="pw-new"
+                type={showNewPassword ? 'text' : 'password'}
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                className={errors.newPassword ? 'error' : ''}
+              />
+              <button type="button" className="pw-toggle-eye" onClick={() => setShowNewPassword(p => !p)}>
+                {showNewPassword ? (
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
+                    <circle cx="12" cy="12" r="3" />
+                  </svg>
+                ) : (
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M9.88 9.88a3 3 0 1 0 4.24 4.24" />
+                    <path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68" />
+                    <path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61" />
+                    <line x1="2" x2="22" y1="2" y2="22" />
+                  </svg>
+                )}
+              </button>
+            </div>
             {errors.newPassword && <p className="error-message">{errors.newPassword}</p>}
           </div>
 
           <div className="pw-field">
             <label htmlFor="pw-confirm">새 비밀번호 확인</label>
-            <input
-              id="pw-confirm"
-              type="password"
-              value={confirmNewPassword}
-              onChange={(e) => setConfirmNewPassword(e.target.value)}
-              className={errors.confirmNewPassword ? 'error' : ''}
-            />
+            <div className="pw-input-wrap">
+              <input
+                id="pw-confirm"
+                type={showConfirmNewPassword ? 'text' : 'password'}
+                value={confirmNewPassword}
+                onChange={(e) => setConfirmNewPassword(e.target.value)}
+                className={errors.confirmNewPassword ? 'error' : ''}
+              />
+              <button type="button" className="pw-toggle-eye" onClick={() => setShowConfirmNewPassword(p => !p)}>
+                {showConfirmNewPassword ? (
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
+                    <circle cx="12" cy="12" r="3" />
+                  </svg>
+                ) : (
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M9.88 9.88a3 3 0 1 0 4.24 4.24" />
+                    <path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68" />
+                    <path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61" />
+                    <line x1="2" x2="22" y1="2" y2="22" />
+                  </svg>
+                )}
+              </button>
+            </div>
             {errors.confirmNewPassword && <p className="error-message">{errors.confirmNewPassword}</p>}
           </div>
         </div>

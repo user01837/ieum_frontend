@@ -684,7 +684,7 @@ function DetailPetition() {
         ) : (<div className="tiptap-wrapper">
           <h3 className="dtitle" style={{ fontSize: '15px', margin: '16px 20px' }}>민원 답변 작성</h3>
           <div className="tiptap-editor-wrapper">
-            <div className="tiptap-bordered">
+            <div className={!isAdmin ? "tiptap-bordered" : ""}>
               {!isAdmin && <TiptapToolbar editor={editor} />}
               <EditorContent editor={editor} className="tiptap-editor" />
             </div>

@@ -131,15 +131,17 @@ function Knowl() {
                     </div>
                 </div>
 
-                <div className="project-toolbar-top" style={{marginBottom: '10px'}}>
-                    <div className="project-newbtn" onClick={() => navigate("/knowledge/new")}
-                        >
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3">
-                        <path d="M12 5v14M5 12h14" />
-                        </svg>
-                        새 항목 생성
-                    </div>
-                    </div>
+                {!isAdmin && (
+                    <div className="project-toolbar-top" style={{marginBottom: '10px'}}>
+                        <div className="project-newbtn" onClick={() => navigate("/knowledge/new")}
+                            >
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3">
+                            <path d="M12 5v14M5 12h14" />
+                            </svg>
+                            새 항목 생성
+                        </div>
+                        </div>
+                )}
 
                 <div className="toolbar">
                     <div className={`dropdown-wrap ${isCategoryOpen ? "open" : ""}`} ref={categoryRef}>
