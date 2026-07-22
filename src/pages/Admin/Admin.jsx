@@ -475,7 +475,13 @@ export default function Admin() {
                 <div className="admin-formrow2">
                   <div className="admin-field">
                     <label>부서 *</label>
-                    <select className="admin-input" value={formData.dept} onChange={(e) => setFormData(p => ({ ...p, dept: e.target.value }))}>
+                    <select className="admin-input" value={formData.dept} onChange={(e) => {
+                      setFormData(p => ({
+                        ...p,
+                        dept: e.target.value,
+                        predecessor: null // 부서 변경 시 전임자 정보 초기화
+                      }));
+                    }}>
                       <option value="">부서를 선택하세요</option>
                       {departmentsData?.map(d => <option key={d.code} value={d.code}>{d.name}</option>)}
                     </select>
