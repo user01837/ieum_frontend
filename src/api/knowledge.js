@@ -109,3 +109,12 @@ export const deleteKnowledgeLog = async (logId) => {
   const response = await api.delete(`/api/knowledge/logs/${logId}`);
   return response.data;
 };
+
+/**
+ * 지식베이스 항목을 삭제하는 API (소프트 삭제)
+ * @param {number} knowledgeId - 삭제할 지식베이스 ID
+ */
+export const deleteKnowledge = async (knowledgeId) => {
+  const response = await api.delete(`/api/knowledge/${knowledgeId}`);
+  return response.data;
+};

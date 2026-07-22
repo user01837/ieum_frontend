@@ -4,6 +4,7 @@ import {
   updateKnowledge,
   createKnowledge,
   deleteKnowledgeAttachment,
+  deleteKnowledge,
   createKnowledgeTag,
   createKnowledgeLog,
   updateKnowledgeLog,
@@ -26,6 +27,27 @@ export const useUpdateKnowledgeMutation = () => {
     },
     onError: (error) => {
       alert(`수정 중 오류가 발생했습니다: ${error.response?.data?.detail || error.message}`);
+    },
+  });
+};
+
+/**
+ * 지식베이스 항목을 삭제하는 뮤테이션
+ */
+export const useDeleteKnowledgeMutation = () => {
+  const queryClient = useQueryClient();
+  const navigate = useNavigate();
+
+  return useMutation({
+    mutationFn: ({ knowledgeId }) => deleteKnowledge(knowledgeId),
+    onSuccess: () => {
+      // 목록 쿼리를 무효화하여 목록 페이지를 최신 상태로 만듭니다.
+      queryClient.invalidateQueries({ queryKey: ['knowledgeList'] });
+      alert('지식베이스가 삭제되었습니다.');
+      navigate('/knowledge'); // 목록 페이지로 이동
+    },
+    onError: (error) => {
+      alert(`삭제 중 오류가 발생했습니다: ${error.response?.data?.detail || error.message}`);
     },
   });
 };

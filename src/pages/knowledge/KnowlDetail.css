@@ -1,11 +1,20 @@
 .top-nav { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
 .breadcrumb { font-size: 14px; color: var(--ink-soft); cursor: pointer; }
 .breadcrumb span { margin: 0 8px; color: var(--line-strong); }
-.btn-edit-main { padding: 8px 20px; border: 1px solid var(--line-strong); background: var(--surface); border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 600; }
+.btn-edit-main { padding: 7px 18px; border: 1px solid var(--line-strong); background: var(--surface); border-radius: 8px; cursor: pointer; font-size: 12.5px; font-weight: 600; }
 .btn-edit-main.primary {
     background: var(--navy);
     border-color: var(--navy);
     color: #fff;
+}
+.btn-edit-main.danger {
+    background: var(--surface);
+    border-color: #FCA5A5;
+    color: #C1503D;
+}
+.btn-edit-main.danger:hover {
+    background: #FEF2F2;
+    border-color: #EF4444;
 }
 
 .section-card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 20px 24px; margin-bottom: 16px; }
@@ -308,3 +317,63 @@
     font-weight: 500;
 }
 .locked-banner svg { flex-shrink: 0; }
+
+/* 삭제 확인 모달 */
+.del-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1060;
+}
+
+.del-modal {
+  background: var(--surface);
+  border-radius: 14px;
+  padding: 28px 30px;
+  width: 320px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.18);
+}
+
+.del-modal-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--ink);
+  margin-bottom: 8px;
+}
+
+.del-modal-desc {
+  font-size: 13px;
+  color: var(--ink-soft);
+  margin-bottom: 24px;
+}
+
+.del-modal-btns {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.btn {
+  font-size: 13px;
+  padding: 9px 16px;
+  border-radius: 8px;
+  font-weight: 700;
+  cursor: pointer;
+  border: none;
+  font-family: inherit;
+}
+
+.btn-ghost {
+  background: var(--surface);
+  border: 1px solid var(--line-strong);
+  color: var(--ink-soft);
+}
+
+.del-confirm-btn {
+  background: #C1503D;
+  color: #fff;
+  border: none;
+}

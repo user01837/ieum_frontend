@@ -10,6 +10,7 @@ import {
   useCreateKnowledgeLogMutation,
   useUpdateKnowledgeLogMutation,
   useDeleteKnowledgeLogMutation,
+  useDeleteKnowledgeMutation,
 } from "../../hooks/mutations/useKnowledgeMutations";
 import useAuthStore from '../../store/useAuthStore';
 import '../Petition/Detail_petition.css'; // Shared styles
@@ -62,8 +63,10 @@ function DetailKnowl() {
     const createLogMutation = useCreateKnowledgeLogMutation();
     const updateLogMutation = useUpdateKnowledgeLogMutation();
     const deleteLogMutation = useDeleteKnowledgeLogMutation();
+    const deleteKnowledgeMutation = useDeleteKnowledgeMutation();
 
     const [isEditing, setIsEditing] = useState(false);
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [activeTag, setActiveTag] = useState('전체');
     const [modalInfo, setModalInfo] = useState({ isOpen: false, log: null }); // 모달 상태 통합
     const [searchTerm, setSearchTerm] = useState(''); // 사용자가 입력하는 검색어
@@ -254,6 +257,10 @@ function DetailKnowl() {
         }
     };
 
+    const handleDelete = () => {
+        deleteKnowledgeMutation.mutate({ knowledgeId });
+    };
+
     // --- Tiptap 에디터 설정 ---
     const summaryEditor = useEditor({
         extensions: [StarterKit, Placeholder.configure({ placeholder: '핵심 요약을 입력하세요...' })],
@@ -410,9 +417,14 @@ function DetailKnowl() {
                                 </button>
                             </div>
                         ) : (
-                            <button className="btn-edit-main" onClick={handleEdit}>
-                                수정
-                            </button>
+                            <div className="card-actions">
+                                <button className="btn-edit-main" onClick={handleEdit}>
+                                    수정
+                                </button>
+                                <button className="btn-edit-main danger" onClick={() => setIsDeleteModalOpen(true)}>
+                                    삭제
+                                </button>
+                            </div>
                         )
                     )}
                 </div>
@@ -641,6 +653,21 @@ function DetailKnowl() {
                                 </label>
                             </div>
                             <p className="hint">{editingScopeCode === '01' ? '같은 과 내의 직원들만 이 지식베이스를 조회할 수 있습니다.' : '모든 부서의 직원들이 이 지식베이스를 조회할 수 있습니다.'}</p>
+                        </div>
+                    </div>
+                )}
+
+                {isDeleteModalOpen && (
+                    <div className="del-modal-overlay" onClick={() => setIsDeleteModalOpen(false)}>
+                        <div className="del-modal" onClick={(e) => e.stopPropagation()}>
+                            <div className="del-modal-title">지식베이스를 삭제하시겠습니까?</div>
+                            <div className="del-modal-desc">삭제된 내용은 복구할 수 없습니다.</div>
+                            <div className="del-modal-btns">
+                                <button className="btn btn-ghost" onClick={() => setIsDeleteModalOpen(false)}>취소</button>
+                                <button className="btn del-confirm-btn" onClick={handleDelete}>
+                                    삭제
+                                </button>
+                            </div>
                         </div>
                     </div>
                 )}
