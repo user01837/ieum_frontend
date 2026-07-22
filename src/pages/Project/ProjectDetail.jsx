@@ -20,7 +20,7 @@ export default function ProjectDetail() {
   const [desc, setDesc] = useState("");
   const [teamMembers, setTeamMembers] = useState([]);
   const [isEmpModalOpen, setIsEmpModalOpen] = useState(false);
-  const [aiDraft, setAiDraft] = useState(null); // 9개 필드 객체
+  const [aiDraft, setAiDraft] = useState(null);
   const [isAiLoading, setIsAiLoading] = useState(false);
   const [aiChecked, setAiChecked] = useState({
     secOverview: true, secBackground: true, secGoals: true,
@@ -43,7 +43,12 @@ export default function ProjectDetail() {
   const [dueDate, setDueDate] = useState("");
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isApproved, setIsApproved] = useState(false);
+  const [isSaved, setIsSaved] = useState(true);
+  const [isOverwriteModalOpen, setIsOverwriteModalOpen] = useState(false);
+  const [isAiPanelOpen, setIsAiPanelOpen] = useState(false);
   const exportRef = useRef(null);
+  const pendingDraftRef = useRef(null);
+  const isInitialized = useRef(false);
   const user = useAuthStore((state) => state.user);
 
   const SECTION_LIST = [
@@ -58,8 +63,16 @@ export default function ProjectDetail() {
     { key: "secPostManagement", label: "Ⅸ. 사후 관리 계획" },
   ];
 
+  const AI_KEY_MAP = {
+    secOverview: "overview", secBackground: "background", secGoals: "goals",
+    secDetailedPlan: "detailed_plan", secSchedule: "schedule",
+    secExecutionSystem: "execution_system", secBudget: "budget",
+    secExpectedEffect: "expected_effect", secPostManagement: "post_management",
+  };
+
   useEffect(() => {
     if (project) {
+      isInitialized.current = false;
       setTitle(project.name);
       setDesc(project.businessContent || "");
       setStartDate(project.startDate || "");
@@ -84,8 +97,14 @@ export default function ProjectDetail() {
         secExpectedEffect: project.secExpectedEffect || "",
         secPostManagement: project.secPostManagement || "",
       });
+      setTimeout(() => { isInitialized.current = true; }, 0); // ← 추가
     }
   }, [project]);
+
+  useEffect(() => {
+    if (!isInitialized.current) return;
+    setIsSaved(false);
+  }, [title, desc, sections, startDate, dueDate, teamMembers]);
 
   const handleAddMember = (employee) => {
     const isDuplicate = teamMembers.some((m) => String(m.userId) === String(employee.userId));
@@ -98,6 +117,29 @@ export default function ProjectDetail() {
     setTeamMembers((prev) => prev.filter((m) => m.userId !== id));
   };
 
+  const applyDraft = (draft, checkedKeys, keyMap) => {
+    setSections((prev) => {
+      const next = { ...prev };
+      checkedKeys.forEach((k) => {
+        const aiKey = keyMap[k];
+        if (!draft[aiKey]) return;
+        if (k === "secOverview") {
+          // 사업 개요는 기본 틀 뒤에 AI 내용 추가
+          const baseContent = prev[k]; // 현재 에디터 내용 (기본 틀)
+          next[k] = baseContent + draft[aiKey];
+        } else {
+          next[k] = draft[aiKey];
+        }
+      });
+      return next;
+    });
+    setOpenSections((prev) => {
+      const next = { ...prev };
+      checkedKeys.forEach((k) => { next[k] = true; });
+      return next;
+    });
+  };
+
   const handleGenDraft = async () => {
     if (!title.trim()) { alert("사업명을 먼저 입력해 주세요."); return; }
     const checkedKeys = Object.keys(aiChecked).filter((k) => aiChecked[k]);
@@ -106,38 +148,29 @@ export default function ProjectDetail() {
     setAiDraft(null);
     try {
       const res = await getAiDraft(id);
-      const draft = res.data.draft;
       if (res.data.guardrail_triggered) {
-        alert("유사 사업 데이터가 부족하여 AI 초안을 생성할 수 없습니다. 직접 작성해 주세요.");
-        setIsAiLoading(false);
+        alert("참고할 기존 사업 자료가 없어 AI 초안을 작성할 수 없습니다. 직접 사업 내용을 작성해 주세요.");
         return;
       }
-      setAiDraft(draft);
-      // 체크된 섹션에만 적용
-      const AI_KEY_MAP = {
-        secOverview: "overview", secBackground: "background", secGoals: "goals",
-        secDetailedPlan: "detailed_plan", secSchedule: "schedule",
-        secExecutionSystem: "execution_system", secBudget: "budget",
-        secExpectedEffect: "expected_effect", secPostManagement: "post_management",
-      };
-      setSections((prev) => {
-        const next = { ...prev };
-        checkedKeys.forEach((k) => {
-          const aiKey = AI_KEY_MAP[k];
-          if (draft[aiKey]) next[k] = draft[aiKey];
-        });
-        return next;
-      });
-      // 적용된 섹션 자동으로 열기
-      setOpenSections((prev) => {
-        const next = { ...prev };
-        checkedKeys.forEach((k) => { next[k] = true; });
-        return next;
-      });
+      setAiDraft(res.data.draft);
     } catch {
       alert("AI 초안 생성에 실패했습니다.");
     } finally {
       setIsAiLoading(false);
+    }
+  };
+
+  const handleApplyDraft = () => {
+    const checkedKeys = Object.keys(aiChecked).filter((k) => aiChecked[k]);
+    const willOverwrite = checkedKeys.filter((k) => {
+      const current = sections[k];
+      return current && current.trim() !== '' && current !== '<p></p>';
+    });
+    if (willOverwrite.length > 0) {
+      pendingDraftRef.current = { draft: aiDraft, checkedKeys, AI_KEY_MAP };
+      setIsOverwriteModalOpen(true);
+    } else {
+      applyDraft(aiDraft, checkedKeys, AI_KEY_MAP);
     }
   };
 
@@ -169,10 +202,7 @@ export default function ProjectDetail() {
           .map((m) => m.userId),
       },
       {
-        onSuccess: () => {
-          alert("저장되었습니다.");
-          navigate("/projects");
-        },
+        onSuccess: () => { isInitialized.current = false; setIsSaved(true); alert("저장되었습니다."); },
         onError: () => alert("저장에 실패했습니다."),
       }
     );
@@ -181,12 +211,19 @@ export default function ProjectDetail() {
   const handleComplete = () => {
     if (!window.confirm("승인 완료 처리하면 더 이상 수정할 수 없습니다. 계속하시겠습니까?")) return;
     approveProject(undefined, {
-      onSuccess: () => setIsLocked(true),
+      onSuccess: () => {
+        setIsLocked(true);
+        setIsApproved(true); // ← 추가
+      },
       onError: () => alert("승인 처리에 실패했습니다."),
     });
   };
 
   const handleExport = async (format) => {
+    if (!isSaved) {
+      alert("저장 완료 후 내보내기를 이용할 수 있습니다.");
+      return;
+    }
     try {
       const response = await exportProject(id, format);
       const url = window.URL.createObjectURL(new Blob([response.data]));
@@ -211,6 +248,14 @@ export default function ProjectDetail() {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  if (isLoading) {
+    return (
+      <div className="detail-content" style={{ textAlign: 'center', padding: '50px' }}>
+        <h2>기획서 정보를 불러오는 중입니다...</h2>
+      </div>
+    );
+  }
 
   return (
     <div className="detail-content">
@@ -275,23 +320,13 @@ export default function ProjectDetail() {
         <div className="formrow2">
           <div>
             <div className="section-title">시작일</div>
-            <input
-              type="date"
-              className="dtitle-input"
-              value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
-              disabled={isLocked}
-            />
+            <input type="date" className="dtitle-input" value={startDate}
+              onChange={(e) => setStartDate(e.target.value)} disabled={isLocked} />
           </div>
           <div>
             <div className="section-title">목표일</div>
-            <input
-              type="date"
-              className="dtitle-input"
-              value={dueDate}
-              onChange={(e) => setDueDate(e.target.value)}
-              disabled={isLocked}
-            />
+            <input type="date" className="dtitle-input" value={dueDate}
+              onChange={(e) => setDueDate(e.target.value)} disabled={isLocked} />
           </div>
         </div>
       </div>
@@ -300,11 +335,8 @@ export default function ProjectDetail() {
         <div className="dept-head-row">
           <div className="section-title" style={{ margin: 0 }}>참여 부서</div>
           {!isLocked && (
-            <div
-              className="addteam-inline"
-              style={{ marginLeft: "auto", marginTop: 0 }}
-              onClick={() => setIsEmpModalOpen(true)}
-            >
+            <div className="addteam-inline" style={{ marginLeft: "auto", marginTop: 0 }}
+              onClick={() => setIsEmpModalOpen(true)}>
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3">
                 <path d="M12 5v14M5 12h14" />
               </svg>
@@ -315,13 +347,8 @@ export default function ProjectDetail() {
         <div className="participant-summary">총 {teamMembers.length}명</div>
         <div className="member-chips">
           {teamMembers.map((m) => (
-            <div
-              key={m.userId}
-              className={`member-chip${m.roleName === "주관" ? " member-chip--owner" : ""}`}
-            >
-              {m.roleName === "주관" && (
-                <span className="member-chip__badge">작성자</span>
-              )}
+            <div key={m.userId} className={`member-chip${m.roleName === "주관" ? " member-chip--owner" : ""}`}>
+              {m.roleName === "주관" && <span className="member-chip__badge">작성자</span>}
               <div style={{ textAlign: 'center' }}>
                 <span className="mdept" style={{ fontSize: '11px' }}>{m.userId}</span>
                 <div>
@@ -343,60 +370,125 @@ export default function ProjectDetail() {
 
       {user?.system_role_code !== "02" && (
         <div className="panel">
-          <div className="panel-head">
+          <div className="panel-head" onClick={() => setIsAiPanelOpen((p) => !p)}
+            style={{ cursor: 'pointer', userSelect: 'none' }}>
             <svg width="15" height="15" style={{ marginTop: '5px' }} viewBox="0 0 24 24" fill="none" stroke="var(--blue)" strokeWidth="2">
               <path d="m12 3 1.9 4.9L19 9.5l-4.9 1.9L12 16l-1.9-4.9L5 9.5l4.9-1.9L12 3Z" />
             </svg>
             <span className="panel-title">AI 기획서 초안 생성</span>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3"
+              style={{ marginLeft: 'auto', transition: 'transform 0.2s', transform: isAiPanelOpen ? 'rotate(180deg)' : 'rotate(0deg)', color: 'var(--ink-tertiary)' }}>
+              <path d="m6 9 6 6 6-6" />
+            </svg>
           </div>
           <div className="panel-body" style={{ marginTop: '8px' }}>
-            <p style={{ fontSize: '12.5px', color: 'var(--ink-soft)', lineHeight: '1.7', marginBottom: '8px' }}>
-              적용할 섹션을 선택하고 초안을 생성하세요. 체크한 섹션에만 AI 초안이 반영됩니다.
+            <p style={{ fontSize: '12.5px', color: 'var(--ink-soft)', lineHeight: '1.7', marginBottom: isAiPanelOpen ? '8px' : '0' }}>
+              적용할 섹션을 선택하고 초안을 생성하세요. 체크한 섹션만 미리보기에 표시됩니다.
             </p>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '12px' }}>
-              <label style={{ fontSize: '12px', color: 'var(--ink-soft)', display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer' }}>
-                <input
-                  type="checkbox"
-                  checked={Object.values(aiChecked).every(Boolean)}
-                  onChange={(e) => {
-                    const val = e.target.checked;
-                    setAiChecked(Object.fromEntries(Object.keys(aiChecked).map((k) => [k, val])));
-                  }}
-                />
-                전체 선택
-              </label>
-              {SECTION_LIST.map(({ key, label }) => (
-                <label key={key} style={{ fontSize: '12px', color: 'var(--ink-soft)', display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer' }}>
-                  <input
-                    type="checkbox"
-                    checked={aiChecked[key]}
-                    onChange={(e) => setAiChecked((prev) => ({ ...prev, [key]: e.target.checked }))}
-                  />
-                  {label}
-                </label>
-              ))}
-            </div>
-            {isAiLoading ? (
-              <div className="spinner"></div>
-            ) : (
-              <div style={{ display: 'flex', gap: '8px' }}>
-                <div
-                  className="applybtn"
-                  onClick={!isLocked ? handleGenDraft : undefined}
-                  style={{ opacity: isLocked ? 0.4 : 1, cursor: isLocked ? 'not-allowed' : 'pointer' }}
-                >
-                  AI 초안 생성
+            {isAiPanelOpen && (
+              <>
+                <div style={{ marginBottom: '12px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
+                    <label className="ai-check-label">
+                      <input
+                        type="checkbox"
+                        className="ai-checkbox"
+                        checked={Object.values(aiChecked).every(Boolean)}
+                        ref={(el) => {
+                          if (el) el.indeterminate =
+                            Object.values(aiChecked).some(Boolean) && !Object.values(aiChecked).every(Boolean);
+                        }}
+                        onChange={(e) => {
+                          const val = e.target.checked;
+                          setAiChecked(Object.fromEntries(Object.keys(aiChecked).map((k) => [k, val])));
+                        }}
+                      />
+                      전체 선택
+                    </label>
+                    <span style={{ width: '1px', height: '12px', background: 'var(--line-strong)', display: 'inline-block', verticalAlign: 'middle' }} />
+                    <span style={{ fontSize: '11.5px', color: 'var(--ink-tertiary)' }}>
+                      <b style={{ color: 'var(--ink)', fontWeight: 600 }}>
+                        {Object.values(aiChecked).filter(Boolean).length}
+                      </b>
+                      {' '}/ {SECTION_LIST.length} 선택
+                    </span>
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 155px)', gap: '4px 0' }}>
+                    {SECTION_LIST.map(({ key, label }) => (
+                      <label key={key} className="ai-check-label">
+                        <input
+                          type="checkbox"
+                          className="ai-checkbox"
+                          checked={aiChecked[key]}
+                          onChange={(e) => setAiChecked((prev) => ({ ...prev, [key]: e.target.checked }))}
+                        />
+                        {label}
+                      </label>
+                    ))}
+                  </div>
                 </div>
-                {aiDraft && (
-                  <div
-                    className="applybtn"
-                    onClick={!isLocked ? handleGenDraft : undefined}
-                    style={{ opacity: isLocked ? 0.4 : 1, cursor: isLocked ? 'not-allowed' : 'pointer' }}
-                  >
-                    다시 생성
+                {isAiLoading ? (
+                  <div className="spinner"></div>
+                ) : (
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <div
+                      className="applybtn"
+                      onClick={!isLocked ? handleGenDraft : undefined}
+                      style={{ opacity: isLocked ? 0.4 : 1, cursor: isLocked ? 'not-allowed' : 'pointer' }}
+                    >
+                      AI 초안 생성
+                    </div>
+                    {aiDraft && (
+                      <div
+                        className="applybtn"
+                        onClick={!isLocked ? handleGenDraft : undefined}
+                        style={{ opacity: isLocked ? 0.4 : 1, cursor: isLocked ? 'not-allowed' : 'pointer' }}
+                      >
+                        다시 생성
+                      </div>
+                    )}
                   </div>
                 )}
-              </div>
+                {aiDraft && (
+                  <div style={{ marginTop: '14px', borderTop: '1px solid #D7E3FC', paddingTop: '14px' }}>
+                    <div style={{ fontSize: '12.5px', fontWeight: '700', color: 'var(--ink)', marginBottom: '10px' }}>
+                      AI 초안 미리보기
+                    </div>
+                    {SECTION_LIST.map(({ key, label }) => {
+                      if (!aiChecked[key]) return null;
+                      const aiKey = AI_KEY_MAP[key];
+                      return (
+                        <div key={key} style={{
+                          background: 'var(--surface)', border: '1px solid #D7E3FC',
+                          borderRadius: '9px', padding: '12px 14px', marginBottom: '8px'
+                        }}>
+                          <div style={{ fontSize: '11.5px', fontWeight: '700', color: 'var(--blue)', marginBottom: '6px' }}>
+                            {label}
+                          </div>
+                          <div
+                            style={{ fontSize: '12px', color: 'var(--ink)', lineHeight: '1.8' }}
+                            dangerouslySetInnerHTML={{ __html: aiDraft[aiKey] || '<p style="color:var(--ink-tertiary)">내용 없음</p>' }}
+                          />
+                        </div>
+                      );
+                    })}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '10px' }}>
+                      <button className="btn btn-navy" style={{ fontSize: '12px', padding: '8px 16px' }}
+                        onClick={handleApplyDraft}>
+                        답변 적용
+                      </button>
+                      <span style={{ fontSize: '11.5px', color: 'var(--ink-soft)' }}>
+                        체크한 섹션({Object.keys(aiChecked).filter(k => aiChecked[k]).length}개)에만 적용됩니다.
+                      </span>
+                    </div>
+                    <div style={{
+                      marginTop: '8px', fontSize: '11.5px', color: 'var(--ink-tertiary)'
+                    }}>
+                      ※ AI 초안은 참고용입니다. 내용을 반드시 검토 후 활용하세요.
+                    </div>
+                  </div>
+                )}
+              </>
             )}
           </div>
         </div>
@@ -431,11 +523,8 @@ export default function ProjectDetail() {
                   { label: "한글 (.hwpx)", color: "#4CAF50", format: "hwpx" },
                   { label: "PDF (.pdf)", color: "#EC1C24", format: "pdf" },
                 ].map((item) => (
-                  <div
-                    key={item.label}
-                    className="export-item"
-                    onClick={() => { handleExport(item.format); setIsExportOpen(false); }}
-                  >
+                  <div key={item.label} className="export-item"
+                    onClick={() => { handleExport(item.format); setIsExportOpen(false); }}>
                     <span className="dot" style={{ background: item.color, width: 8, height: 8, borderRadius: "50%", display: "inline-block" }} />
                     {item.label}로 내보내기
                   </div>
@@ -476,6 +565,28 @@ export default function ProjectDetail() {
                   onError: () => alert("삭제에 실패했습니다."),
                 });
               }}>삭제</button>
+            </div>
+          </div>
+        </div>
+      )}
+      {isOverwriteModalOpen && (
+        <div className="del-modal-overlay" onClick={() => setIsOverwriteModalOpen(false)}>
+          <div className="del-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="del-modal-title">기존 내용을 덮어쓰시겠습니까?</div>
+            <div className="del-modal-desc">
+              이미 작성된 섹션이 있습니다. AI 초안을 적용하면 해당 내용이 교체됩니다.
+            </div>
+            <div className="del-modal-btns">
+              <button className="btn btn-ghost" onClick={() => {
+                setIsOverwriteModalOpen(false);
+                pendingDraftRef.current = null;
+              }}>취소</button>
+              <button className="btn btn-navy" onClick={() => {
+                const { draft, checkedKeys, AI_KEY_MAP: keyMap } = pendingDraftRef.current;
+                applyDraft(draft, checkedKeys, keyMap);
+                setIsOverwriteModalOpen(false);
+                pendingDraftRef.current = null;
+              }}>적용</button>
             </div>
           </div>
         </div>

@@ -168,19 +168,24 @@ export default function ProjectList() {
 
           {/* 검색 영역 */}
           <div className="project-search-area">
-            <input
-              className="project-search-input"
-              type="text"
-              placeholder="기획서 제목으로 검색"
-              value={searchInput}
-              onChange={(e) => setSearchInput(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  setSearchKeyword(searchInput);
-                  setCurrentPage(1);
-                }
-              }}
-            />
+            <div className="project-search-wrap" style={{ position: 'relative' }}>
+              <svg className="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
+                style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', width: 16, height: 16, color: 'var(--ink-tertiary)' }}>
+                <circle cx="11" cy="11" r="7" /><path d="m21 21-4.3-4.3" />
+              </svg>
+              <input
+                placeholder="제목으로 검색"
+                style={{ width: 240, padding: '9px 12px 9px 36px', border: '1px solid var(--line-strong)', borderRadius: '8px', fontSize: '13px', fontFamily: 'inherit', outline: 'none' }}
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    setSearchKeyword(searchInput);
+                    setCurrentPage(1);
+                  }
+                }}
+              />
+            </div>
             <button
               className="project-search-btn"
               onClick={() => { setSearchKeyword(searchInput); setCurrentPage(1); }}
@@ -217,7 +222,7 @@ export default function ProjectList() {
               onClick={() => navigate(`/projects/${project.projectId}`)}
             >
               <span className="project-datecell">{project.startDate}</span>
-              <span className="project-datecell">{project.deadline}</span>
+              <span className="project-datecell deadline">{project.deadline}</span>
               <div>
                 <div className="project-title">{project.name}</div>
                 <div className="project-subline">{project.departmentName}</div>
