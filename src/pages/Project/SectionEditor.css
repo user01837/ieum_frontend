@@ -1,0 +1,14 @@
+/* SectionEditor 전용 - h2/h3 스타일 (global.css에 없음) */
+.tiptap-editor .ProseMirror h2 {
+  font-size: 18px;
+  font-weight: 700;
+  margin: 0;
+  padding-bottom: 6px;
+  border-bottom: 1.5px solid var(--ink);
+}
+
+.tiptap-editor .ProseMirror h3 {
+  font-size: 15px;
+  font-weight: 700;
+  margin: 2px 0;
+}

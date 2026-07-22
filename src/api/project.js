@@ -73,8 +73,8 @@ export const deleteProject = async (projectId) => {
  * @param {number} projectId - 프로젝트 ID
  */
 export const getAiDraft = async (projectId) => {
-  const { data } = await api.get(`/projects/${projectId}/ai-draft`);
-  return data;
+  const response = await api.post(`/projects/${projectId}/ai-draft`);
+  return response;
 };
 
 /**

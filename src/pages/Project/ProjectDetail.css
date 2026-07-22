@@ -447,3 +447,39 @@
   justify-content: space-between;
   margin-bottom: 12px;
 }
+
+/* ================================
+   섹션 아코디언 (기획서 9개 섹션)
+================================ */
+.section-accordion {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  margin: 0 20px 12px;
+  overflow: hidden;
+}
+
+.section-accordion-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  cursor: pointer;
+  user-select: none;
+  border-bottom: none;
+}
+
+.section-accordion-header:hover {
+  background: var(--bg);
+}
+
+.section-accordion-label {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.section-accordion-body {
+  border-top: none;
+  padding: 0 16px 16px;
+}

@@ -1,41 +1,13 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { useEditor, EditorContent } from '@tiptap/react';
 import { useProjectDetailQuery } from "../../hooks/queries/useProjectQuery";
 import { useUpdateProjectMutation, useApproveProjectMutation, useDeleteProjectMutation } from "../../hooks/mutations/useProjectMutation";
-import { exportProject } from '../../api/project';
+import { exportProject, getAiDraft } from '../../api/project';
 import useAuthStore from "../../store/useAuthStore";
-import StarterKit from '@tiptap/starter-kit';
-import Placeholder from '@tiptap/extension-placeholder';
 import EmpSearchModal from "../../components/EmpSearchModal/EmpSearchModal";
+import SectionEditor from "./SectionEditor";
 import "./ProjectDetail.css";
 import '../../styles/global.css';
-
-const TiptapToolbar = ({ editor }) => {
-  if (!editor) return null;
-  return (
-    <div className="tiptap-toolbar">
-      <button type="button"
-        onClick={() => editor.chain().focus().toggleBold().run()}
-        disabled={!editor.can().chain().focus().toggleBold().run()}
-        className={`t-tool ${editor.isActive('bold') ? 'is-active' : ''}`}>
-        <b>B</b>
-      </button>
-      <button type="button"
-        onClick={() => editor.chain().focus().toggleItalic().run()}
-        disabled={!editor.can().chain().focus().toggleItalic().run()}
-        className={`t-tool ${editor.isActive('italic') ? 'is-active' : ''}`}>
-        <i>I</i>
-      </button>
-      <button type="button"
-        onClick={() => editor.chain().focus().toggleStrike().run()}
-        disabled={!editor.can().chain().focus().toggleStrike().run()}
-        className={`t-tool ${editor.isActive('strike') ? 'is-active' : ''}`}>
-        <s>S</s>
-      </button>
-    </div>
-  );
-};
 
 export default function ProjectDetail() {
   const navigate = useNavigate();
@@ -48,8 +20,23 @@ export default function ProjectDetail() {
   const [desc, setDesc] = useState("");
   const [teamMembers, setTeamMembers] = useState([]);
   const [isEmpModalOpen, setIsEmpModalOpen] = useState(false);
-  const [aiDraft, setAiDraft] = useState("");
+  const [aiDraft, setAiDraft] = useState(null); // 9개 필드 객체
   const [isAiLoading, setIsAiLoading] = useState(false);
+  const [aiChecked, setAiChecked] = useState({
+    secOverview: true, secBackground: true, secGoals: true,
+    secDetailedPlan: true, secSchedule: true, secExecutionSystem: true,
+    secBudget: true, secExpectedEffect: true, secPostManagement: true,
+  });
+  const [sections, setSections] = useState({
+    secOverview: "", secBackground: "", secGoals: "",
+    secDetailedPlan: "", secSchedule: "", secExecutionSystem: "",
+    secBudget: "", secExpectedEffect: "", secPostManagement: "",
+  });
+  const [openSections, setOpenSections] = useState({
+    secOverview: false, secBackground: false, secGoals: false,
+    secDetailedPlan: false, secSchedule: false, secExecutionSystem: false,
+    secBudget: false, secExpectedEffect: false, secPostManagement: false,
+  });
   const [isExportOpen, setIsExportOpen] = useState(false);
   const [isLocked, setIsLocked] = useState(false);
   const [startDate, setStartDate] = useState("");
@@ -59,22 +46,17 @@ export default function ProjectDetail() {
   const exportRef = useRef(null);
   const user = useAuthStore((state) => state.user);
 
-  const editor = useEditor({
-    extensions: [
-      StarterKit,
-      Placeholder.configure({
-        placeholder: isLocked ? '승인 완료된 기획서입니다.' : '기획서 본문을 작성하세요.',
-      }),
-    ],
-    content: '',
-    editable: !isLocked,
-  });
-
-  useEffect(() => {
-    if (editor) {
-      editor.setEditable(!isLocked);
-    }
-  }, [isLocked, editor]);
+  const SECTION_LIST = [
+    { key: "secOverview", label: "Ⅰ. 사업 개요" },
+    { key: "secBackground", label: "Ⅱ. 추진 배경 및 필요성" },
+    { key: "secGoals", label: "Ⅲ. 사업 목표" },
+    { key: "secDetailedPlan", label: "Ⅳ. 세부 추진 계획" },
+    { key: "secSchedule", label: "Ⅴ. 추진 일정" },
+    { key: "secExecutionSystem", label: "Ⅵ. 사업 추진 체계" },
+    { key: "secBudget", label: "Ⅶ. 예산 계획" },
+    { key: "secExpectedEffect", label: "Ⅷ. 기대 효과" },
+    { key: "secPostManagement", label: "Ⅸ. 사후 관리 계획" },
+  ];
 
   useEffect(() => {
     if (project) {
@@ -89,14 +71,21 @@ export default function ProjectDetail() {
       const isAdmin = user?.system_role_code === "02";
       setIsLocked(approved || !isOwner || isAdmin);
       setTeamMembers(
-        project.members
-          .map((m) => ({ userId: m.userId, name: m.name, departmentName: m.departmentName || "", roleName: m.roleName }))
+        project.members.map((m) => ({ userId: m.userId, name: m.name, departmentName: m.departmentName || "", roleName: m.roleName }))
       );
-      if (editor && project.reportContent) {
-        editor.commands.setContent(project.reportContent);
-      }
+      setSections({
+        secOverview: project.secOverview || "",
+        secBackground: project.secBackground || "",
+        secGoals: project.secGoals || "",
+        secDetailedPlan: project.secDetailedPlan || "",
+        secSchedule: project.secSchedule || "",
+        secExecutionSystem: project.secExecutionSystem || "",
+        secBudget: project.secBudget || "",
+        secExpectedEffect: project.secExpectedEffect || "",
+        secPostManagement: project.secPostManagement || "",
+      });
     }
-  }, [project, editor]);
+  }, [project]);
 
   const handleAddMember = (employee) => {
     const isDuplicate = teamMembers.some((m) => String(m.userId) === String(employee.userId));
@@ -109,32 +98,52 @@ export default function ProjectDetail() {
     setTeamMembers((prev) => prev.filter((m) => m.userId !== id));
   };
 
-  const handleGenDraft = () => {
+  const handleGenDraft = async () => {
     if (!title.trim()) { alert("사업명을 먼저 입력해 주세요."); return; }
+    const checkedKeys = Object.keys(aiChecked).filter((k) => aiChecked[k]);
+    if (checkedKeys.length === 0) { alert("적용할 섹션을 하나 이상 선택해 주세요."); return; }
     setIsAiLoading(true);
-    setAiDraft("");
-    setTimeout(() => {
-      setAiDraft(
-        `[${title}] 사업 기획서 초안입니다.\n\n` +
-        `본 사업은 관련 업무 효율화 및 서비스 개선을 목적으로 추진하며, ` +
-        `관계 부서와의 협의를 통해 단계적으로 진행할 예정입니다.\n\n` +
-        `추진 과정에서 발생하는 사항은 담당자를 통해 안내드리겠습니다.\n\n` +
-        `감사합니다.`
-      );
+    setAiDraft(null);
+    try {
+      const res = await getAiDraft(id);
+      const draft = res.data.draft;
+      if (res.data.guardrail_triggered) {
+        alert("유사 사업 데이터가 부족하여 AI 초안을 생성할 수 없습니다. 직접 작성해 주세요.");
+        setIsAiLoading(false);
+        return;
+      }
+      setAiDraft(draft);
+      // 체크된 섹션에만 적용
+      const AI_KEY_MAP = {
+        secOverview: "overview", secBackground: "background", secGoals: "goals",
+        secDetailedPlan: "detailed_plan", secSchedule: "schedule",
+        secExecutionSystem: "execution_system", secBudget: "budget",
+        secExpectedEffect: "expected_effect", secPostManagement: "post_management",
+      };
+      setSections((prev) => {
+        const next = { ...prev };
+        checkedKeys.forEach((k) => {
+          const aiKey = AI_KEY_MAP[k];
+          if (draft[aiKey]) next[k] = draft[aiKey];
+        });
+        return next;
+      });
+      // 적용된 섹션 자동으로 열기
+      setOpenSections((prev) => {
+        const next = { ...prev };
+        checkedKeys.forEach((k) => { next[k] = true; });
+        return next;
+      });
+    } catch {
+      alert("AI 초안 생성에 실패했습니다.");
+    } finally {
       setIsAiLoading(false);
-    }, 2000);
-  };
-
-  const handleApplyDraft = () => {
-    if (editor) {
-      editor.commands.setContent(aiDraft);
     }
   };
 
   const handleSave = () => {
     if (!title.trim()) { alert("사업명을 입력해 주세요."); return; }
     if (!desc.trim()) { alert("사업 설명을 입력해 주세요."); return; }
-    if (!editor?.getText().trim()) { alert("기획서 본문을 입력해 주세요."); return; }
     if (startDate && dueDate && new Date(dueDate) < new Date(startDate)) {
       alert("목표일은 시작일 이후여야 합니다.");
       return;
@@ -146,7 +155,15 @@ export default function ProjectDetail() {
         startDate: startDate,
         deadline: dueDate,
         overview: desc,
-        reportContent: editor?.getHTML(),
+        secOverview: sections.secOverview,
+        secBackground: sections.secBackground,
+        secGoals: sections.secGoals,
+        secDetailedPlan: sections.secDetailedPlan,
+        secSchedule: sections.secSchedule,
+        secExecutionSystem: sections.secExecutionSystem,
+        secBudget: sections.secBudget,
+        secExpectedEffect: sections.secExpectedEffect,
+        secPostManagement: sections.secPostManagement,
         memberUserIds: teamMembers
           .filter((m) => m.roleName !== "주관")
           .map((m) => m.userId),
@@ -333,104 +350,118 @@ export default function ProjectDetail() {
             <span className="panel-title">AI 기획서 초안 생성</span>
           </div>
           <div className="panel-body" style={{ marginTop: '8px' }}>
-            <p style={{ fontSize: '12.5px', color: 'var(--ink-soft)', lineHeight: '1.7', marginBottom: '15px' }}>
-              AI가 사업명과 개요를 바탕으로 기획서 초안을 생성합니다. 초안은 참고용이며, 검토 후 작성란에 반영할 수 있습니다.
+            <p style={{ fontSize: '12.5px', color: 'var(--ink-soft)', lineHeight: '1.7', marginBottom: '8px' }}>
+              적용할 섹션을 선택하고 초안을 생성하세요. 체크한 섹션에만 AI 초안이 반영됩니다.
             </p>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '12px' }}>
+              <label style={{ fontSize: '12px', color: 'var(--ink-soft)', display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer' }}>
+                <input
+                  type="checkbox"
+                  checked={Object.values(aiChecked).every(Boolean)}
+                  onChange={(e) => {
+                    const val = e.target.checked;
+                    setAiChecked(Object.fromEntries(Object.keys(aiChecked).map((k) => [k, val])));
+                  }}
+                />
+                전체 선택
+              </label>
+              {SECTION_LIST.map(({ key, label }) => (
+                <label key={key} style={{ fontSize: '12px', color: 'var(--ink-soft)', display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer' }}>
+                  <input
+                    type="checkbox"
+                    checked={aiChecked[key]}
+                    onChange={(e) => setAiChecked((prev) => ({ ...prev, [key]: e.target.checked }))}
+                  />
+                  {label}
+                </label>
+              ))}
+            </div>
             {isAiLoading ? (
               <div className="spinner"></div>
-            ) : aiDraft ? (
-              <>
-                <div className="draftbox">{aiDraft}</div>
-                <div style={{ display: 'flex', gap: '8px', marginTop: '4px' }}>
-                  <div className="applybtn"
-                    onClick={!isLocked ? handleApplyDraft : undefined}
-                    style={{ opacity: isLocked ? 0.4 : 1, cursor: isLocked ? 'not-allowed' : 'pointer' }}
-                  >
-                    답변 초안 사용
-                  </div>
-                  <div className="applybtn"
+            ) : (
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <div
+                  className="applybtn"
+                  onClick={!isLocked ? handleGenDraft : undefined}
+                  style={{ opacity: isLocked ? 0.4 : 1, cursor: isLocked ? 'not-allowed' : 'pointer' }}
+                >
+                  AI 초안 생성
+                </div>
+                {aiDraft && (
+                  <div
+                    className="applybtn"
                     onClick={!isLocked ? handleGenDraft : undefined}
                     style={{ opacity: isLocked ? 0.4 : 1, cursor: isLocked ? 'not-allowed' : 'pointer' }}
                   >
                     다시 생성
                   </div>
-                </div>
-              </>
-            ) : (
-              <div className="applybtn"
-                onClick={!isLocked ? handleGenDraft : undefined}
-                style={{ opacity: isLocked ? 0.4 : 1, cursor: isLocked ? 'not-allowed' : 'pointer' }}
-              >
-                AI 답변 초안 생성
+                )}
               </div>
             )}
           </div>
         </div>
       )}
 
-      {user?.system_role_code !== "02" ? (
-        <div className="tiptap-wrapper">
-          <h3 className="dtitle" style={{ fontSize: '15px', margin: '16px 20px' }}>기획서 작성</h3>
-          <div className="tiptap-editor-wrapper">
-            <TiptapToolbar editor={editor} />
-            <EditorContent editor={editor} className="tiptap-editor" />
-          </div>
-          <div className="bottomrow" style={{ padding: '0 20px 16px' }}>
-            <div className={`export-wrap${isExportOpen ? " open" : ""}`} ref={exportRef}>
-              <button className="btn btn-ghost" onClick={() => setIsExportOpen((p) => !p)}>
-                내보내기
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3">
-                  <path d="m6 9 6 6 6-6" />
-                </svg>
-              </button>
-              {isExportOpen && (
-                <div className="export-menu">
-                  {[
-                    { label: "Word (.docx)", color: "#2B579A", format: "docx" },
-                    { label: "한글 (.hwpx)", color: "#4CAF50", format: "hwpx" },
-                    { label: "PDF (.pdf)", color: "#EC1C24", format: "pdf" },
-                  ].map((item) => (
-                    <div
-                      key={item.label}
-                      className="export-item"
-                      onClick={() => { handleExport(item.format); setIsExportOpen(false); }}
-                    >
-                      <span className="dot" style={{ background: item.color, width: 8, height: 8, borderRadius: "50%", display: "inline-block" }} />
-                      {item.label}로 내보내기
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-            {!isLocked && (
-              <div style={{ display: "flex", gap: "8px" }}>
-                <button className="btn btn-ghost" onClick={handleSave}>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2Z" />
-                    <path d="M17 21v-8H7v8M7 3v5h8" />
-                  </svg>
-                  저장
-                </button>
-                <button className="btn btn-navy" onClick={handleComplete}>
-                  승인 완료
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                    <path d="M20 6 9 17l-5-5" />
-                  </svg>
-                </button>
+      <div className="tiptap-wrapper">
+        <h3 className="dtitle" style={{ fontSize: '15px', margin: '16px 20px' }}>기획서 작성</h3>
+        {SECTION_LIST.map(({ key, label }) => (
+          <SectionEditor
+            key={key}
+            label={label}
+            content={sections[key]}
+            onChange={(html) => setSections((prev) => ({ ...prev, [key]: html }))}
+            isLocked={isLocked}
+            isOpen={openSections[key]}
+            onToggle={() => setOpenSections((prev) => ({ ...prev, [key]: !prev[key] }))}
+            projectData={project}
+          />
+        ))}
+        <div className="bottomrow" style={{ padding: '0 20px 16px' }}>
+          <div className={`export-wrap${isExportOpen ? " open" : ""}`} ref={exportRef}>
+            <button className="btn btn-ghost" onClick={() => setIsExportOpen((p) => !p)}>
+              내보내기
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3">
+                <path d="m6 9 6 6 6-6" />
+              </svg>
+            </button>
+            {isExportOpen && (
+              <div className="export-menu">
+                {[
+                  { label: "Word (.docx)", color: "#2B579A", format: "docx" },
+                  { label: "한글 (.hwpx)", color: "#4CAF50", format: "hwpx" },
+                  { label: "PDF (.pdf)", color: "#EC1C24", format: "pdf" },
+                ].map((item) => (
+                  <div
+                    key={item.label}
+                    className="export-item"
+                    onClick={() => { handleExport(item.format); setIsExportOpen(false); }}
+                  >
+                    <span className="dot" style={{ background: item.color, width: 8, height: 8, borderRadius: "50%", display: "inline-block" }} />
+                    {item.label}로 내보내기
+                  </div>
+                ))}
               </div>
             )}
           </div>
+          {!isLocked && (
+            <div style={{ display: "flex", gap: "8px" }}>
+              <button className="btn btn-ghost" onClick={handleSave}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2Z" />
+                  <path d="M17 21v-8H7v8M7 3v5h8" />
+                </svg>
+                저장
+              </button>
+              <button className="btn btn-navy" onClick={handleComplete}>
+                승인 완료
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <path d="M20 6 9 17l-5-5" />
+                </svg>
+              </button>
+            </div>
+          )}
         </div>
-      ) : (
-        <div className="dcard">
-          <div className="section-title">기획서 본문</div>
-          <div
-            className="tiptap-editor"
-            style={{ padding: '12px', lineHeight: '1.8', fontSize: '14px', color: 'var(--ink)' }}
-            dangerouslySetInnerHTML={{ __html: project?.reportContent || '<p style="color:var(--ink-tertiary)">작성된 기획서가 없습니다.</p>' }}
-          />
-        </div>
-      )}
+      </div>
 
       {isDeleteModalOpen && (
         <div className="del-modal-overlay" onClick={() => setIsDeleteModalOpen(false)}>
