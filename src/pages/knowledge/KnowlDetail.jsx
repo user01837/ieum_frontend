@@ -1,11 +1,21 @@
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Placeholder from '@tiptap/extension-placeholder';
 import { useDropzone } from 'react-dropzone';
+import { useKnowledgeDetailQuery } from '../../hooks/queries/useKnowledgeQuery';
+import {
+  useUpdateKnowledgeMutation,
+  useCreateKnowledgeLogMutation,
+  useUpdateKnowledgeLogMutation,
+  useDeleteKnowledgeLogMutation,
+} from "../../hooks/mutations/useKnowledgeMutations";
+import useAuthStore from '../../store/useAuthStore';
 import '../Petition/Detail_petition.css'; // Shared styles
 import './KnowlDetail.css';
+import './KnowlCreate.css'; // 생성 페이지의 카테고리 스타일을 가져오기 위해 추가
+import './knowl.css'; // 목록 페이지의 뱃지 스타일을 가져오기 위해 추가
 import '../../styles/global.css';
 import KnowhowLogModal from './KnowhowLogModal';
 import Pagination from '../../components/Pagination/Pagination';
@@ -21,8 +31,38 @@ const TiptapToolbar = ({ editor }) => {
     );
 };
 
+const CATEGORY_CLASS_MAP = {
+    '민원처리': 'badge-new',
+    '사업추진': 'badge-warn',
+    '예산': 'badge-done',
+    '인허가': 'badge-done',
+    '실패사례': 'badge-danger',
+    '기타': 'badge-soft',
+};
+
+// 백엔드 `CATEGORY_NAME_MAP` 기반 카테고리 옵션
+const CATEGORY_OPTIONS = [
+    { key: '01', label: '민원처리' },
+    { key: '02', label: '사업추진' },
+    { key: '03', label: '예산' },
+    { key: '04', label: '인허가' },
+    { key: '05', label: '실패사례' },
+    { key: '99', label: '기타' },
+];
+
 function DetailKnowl() {
+    const { id: knowledgeId } = useParams();
     const navigate = useNavigate();
+    const isAdmin = useMemo(() => useAuthStore.getState().user?.system_role_code === '02', []);
+    const user = useAuthStore((state) => state.user);
+
+    // API 데이터 조회 및 수정
+    const { data: knowledgeData, isLoading, isError } = useKnowledgeDetailQuery(knowledgeId);
+    const updateKnowledgeMutation = useUpdateKnowledgeMutation();
+    const createLogMutation = useCreateKnowledgeLogMutation();
+    const updateLogMutation = useUpdateKnowledgeLogMutation();
+    const deleteLogMutation = useDeleteKnowledgeLogMutation();
+
     const [isEditing, setIsEditing] = useState(false);
     const [activeTag, setActiveTag] = useState('전체');
     const [modalInfo, setModalInfo] = useState({ isOpen: false, log: null }); // 모달 상태 통합
@@ -35,103 +75,124 @@ function DetailKnowl() {
     const ITEMS_PER_PAGE = 5; // 한 페이지에 보여줄 카드 개수
 
     // --- 수정 모드용 데이터 상태 ---
-    const [summary, setSummary] = useState('<ul><li>이의신청 기한은 단속일로부터 60일.</li><li>과태료 감경은 사전납부(20%) 또는 자진납부(20%) 중 하나만 적용.</li></ul>');
-    const [warning, setWarning] = useState('단속 영상은 정보공개청구 외 경로로 전달 제공 불가 — 직접 제공 시 개인정보보호법 위반');
-    const [documents, setDocuments] = useState([
-        { id: 1, name: '도로교통법 시행규칙 별표28.pdf', url: '#!' },
-        { id: 2, name: '불법주정차 단속 메뉴얼.hwp', url: '#!' },
-    ]);
+    const [summary, setSummary] = useState('');
+    const [warning, setWarning] = useState('');
+    const [editingTitle, setEditingTitle] = useState(''); // 수정 모드용 제목 상태
+    const [editingScopeCode, setEditingScopeCode] = useState(''); // 수정 모드용 공개범위 상태
+    const [editingCategoryCode, setEditingCategoryCode] = useState(''); // 수정 모드용 카테고리 상태
+    const [deletedAttachmentIds, setDeletedAttachmentIds] = useState([]);
+    const [documents, setDocuments] = useState([]);
     const [newFiles, setNewFiles] = useState([]);
     // --------------------------------
 
     // 노하우 로그 데이터 State
-    const [knowhowLogs, setKnowhowLogs] = useState([
-        { 
-            id: 1, 
-            tag: '시스템', 
-            author: '정OO', 
-            date: '2024.07.02', 
-            content: '단속 시스템에서 차량번호 오인식 시, 수기 정정 후 내부 결재 필요. 전산팀 박대리(내선 8912)에게 문의.', 
-            updatedBy: '이OO', 
-            updateDate: '2026.07.18', 
-            updateReason: '담당자 변경 (김대리 → 박대리)' 
-        },
-        { 
-            id: 2, 
-            tag: '민원대응', 
-            author: '최OO', 
-            date: '2024.06.15', 
-            content: '장애인 주차구역 위반은 과태료 감경 대상이 아님을 명확히 안내해야 함.', 
-            updatedBy: null 
-        },
-        { 
-            id: 3, 
-            tag: '정보공개', 
-            author: '이OO', 
-            date: '2024.06.01', 
-            content: '단속 영상은 정보공개청구를 통해서만 제공 가능. 민원인이 직접 방문하여 열람하는 것이 원칙.', 
-            updatedBy: null 
-        },
-        { 
-            id: 4, 
-            tag: '민원대응', 
-            author: '박OO', 
-            date: '2024.05.10', 
-            content: '반복적인 불법 주정차 민원인은 최초 1회 경고 후, 2회차부터 즉시 과태료 부과. 관련 근거: 도로교통법 제32조.', 
-            updatedBy: null 
-        },
-        { 
-            id: 5, 
-            tag: '시스템', 
-            author: '김OO', 
-            date: '2024.04.20', 
-            content: '야간 단속 카메라 오작동 시 서버 재부팅 후 로그 확인 필요.', 
-            updatedBy: null 
-        },
-        { 
-            id: 6, 
-            tag: '민원대응', 
-            author: '김민준', 
-            date: '2024.04.15', 
-            content: '전화 민원 응대 시, 소속과 이름을 먼저 밝히고 용건을 물어보는 것이 신뢰도를 높입니다.', 
-            updatedBy: null 
-        },
-        { 
-            id: 7, 
-            tag: '정보공개', 
-            author: '이서연', 
-            date: '2024.04.10', 
-            content: '정보공개 청구서에 기재된 내용이 불명확할 경우, 보완 요청 공문을 발송해야 합니다. (7일 이내)', 
-            updatedBy: null 
-        },
-    ]);
+    const [knowhowLogs, setKnowhowLogs] = useState([]);
+
+    // API 데이터를 로컬 상태에 동기화
+    useEffect(() => {
+        if (knowledgeData) {
+            setSummary(knowledgeData.summary || '');
+            setEditingTitle(knowledgeData.title || '');
+            setWarning(knowledgeData.warning_note || '');
+            setEditingCategoryCode(knowledgeData.category_code || '');
+            setEditingScopeCode(knowledgeData.scope_code || '01');
+            // API 응답의 attachments를 UI 상태에 맞게 매핑
+            const apiAttachments = (knowledgeData.attachments || []).map(att => ({
+                id: att.attachment_id,
+                name: att.file_name,
+                url: att.file_url,
+            }));
+            setDocuments(apiAttachments);
+
+            // API 로그 구조를 UI에서 사용하는 구조로 매핑하고 최신순으로 정렬
+            const mappedLogs = (knowledgeData.logs || []).map(log => ({
+                id: log.log_id,
+                tags: log.tags, // 수정 모달에 전달할 전체 태그 배열
+                tag: log.tags?.[0]?.name || '미분류',
+                author: log.user_name,
+                date: log.created_at?.split('T')[0].replace(/-/g, '.'),
+                content: log.content,
+                // 수정 여부 판단
+                updatedBy: log.updated_at && log.updated_at !== log.created_at ? (log.updated_by_name || '수정자 정보 없음') : null,
+                updateDate: log.updated_at?.split('T')[0].replace(/-/g, '.'),
+        })).sort((a, b) => new Date(b.updateDate || b.date) - new Date(a.updateDate || a.date)); // 최신순 정렬
+
+            setKnowhowLogs(mappedLogs);
+        }
+    }, [knowledgeData]);
+
+    // warning_note 내용이 비어있는지 확인하여 렌더링 여부를 결정합니다.
+    const isWarningVisible = useMemo(() => {
+        if (!warning) return false;
+        // Tiptap 에디터의 빈 콘텐츠는 '<p></p>'일 수 있으므로,
+        // HTML 태그를 제거하고 남은 텍스트가 있는지 확인합니다.
+        const textContent = warning.replace(/<[^>]+>/g, '').trim();
+        return textContent.length > 0;
+    }, [warning]);
+
+    // 공개범위 수정 가능 여부 확인
+    const canEditScope = useMemo(() => {
+        if (!isEditing || !user || !knowledgeData) {
+            return false;
+        }
+        return user.departmentCode === knowledgeData.department_code;
+    }, [isEditing, user, knowledgeData]);
+
+    const handleDownload = useCallback(async (e, fileUrl, fileName) => {
+        e.preventDefault();
+        e.stopPropagation();
+    
+        if (!fileUrl) return;
+    
+        try {
+            const response = await fetch(fileUrl);
+            if (!response.ok) throw new Error('파일을 불러오는데 실패했습니다.');
+    
+            const blob = await response.blob();
+            
+            // 1. 강제 다운로드를 위해 MIME 타입을 octet-stream으로 지정
+            const downloadedBlob = new Blob([blob], { type: 'application/octet-stream' });
+            const url = window.URL.createObjectURL(downloadedBlob);
+    
+            // 2. 보이지 않는 임시 iframe 생성
+            const iframe = document.createElement('iframe');
+            iframe.style.display = 'none';
+            iframe.src = url;
+            document.body.appendChild(iframe);
+    
+            // 3. 백업용 a 태그 다운로드 동시 실행
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', fileName || 'download');
+            document.body.appendChild(link);
+            link.click();
+    
+            // 4. 메모리 정리
+            setTimeout(() => {
+                iframe.remove();
+                link.remove();
+                window.URL.revokeObjectURL(url);
+            }, 1000);
+    
+        } catch (error) {
+            console.error('Download error:', error);
+            alert('다운로드 중 오류가 발생했습니다.');
+        }
+    }, []);
 
     // 노하우 추가/수정 통합 처리
     const handleSaveLog = (logData) => {
-        if (modalInfo.log) { // 수정 모드
-            setKnowhowLogs(prev => prev.map(log => 
-                log.id === logData.id 
-                ? { 
-                    ...log,
-                    ...logData,
-                    updatedBy: '나(테스트)',
-                    updateDate: new Date().toISOString().split('T')[0].replace(/-/g, '.'),
-                  }
-                : log
-            ));
-            alert('로그가 수정되었습니다.');
+        if (modalInfo.log) { // 수정
+            updateLogMutation.mutate({
+                logId: modalInfo.log.id,
+                knowledgeId,
+                data: { content: logData.content, tag_ids: logData.tag_ids },
+            });
         } else { // 추가 모드
-            const newLogEntry = {
-                id: Date.now(),
-                date: new Date().toISOString().split('T')[0].replace(/-/g, '.'),
-                author: '나(테스트)',
-                tag: logData.tag || '일반',
-                content: logData.body || logData.content,
-                updatedBy: null,
-            };
-            setKnowhowLogs(prev => [newLogEntry, ...prev]);
-            setCurrentPage(1);
-            alert('새로운 노하우 로그가 추가되었습니다.');
+            createLogMutation.mutate({
+                knowledgeId,
+                data: { content: logData.content, tag_ids: logData.tag_ids },
+            });
         }
         setModalInfo({ isOpen: false, log: null }); // 모달 닫기
     };
@@ -189,8 +250,7 @@ function DetailKnowl() {
     // 노하우 로그 삭제 처리
     const handleDeleteLog = (logId) => {
         if (window.confirm('이 노하우 로그를 삭제하시겠습니까?')) {
-            setKnowhowLogs(prev => prev.filter(log => log.id !== logId));
-            alert('로그가 삭제되었습니다.');
+            deleteLogMutation.mutate({ logId, knowledgeId });
         }
     };
 
@@ -217,7 +277,11 @@ function DetailKnowl() {
         setNewFiles(prevFiles => prevFiles.filter(file => file !== fileToRemove));
     };
     const removeExistingFile = (docId) => {
-        setDocuments(prevDocs => prevDocs.filter(doc => doc.id !== docId));
+        // UI에서 파일을 숨기고, 저장 시 삭제할 ID 목록에 추가
+        if (window.confirm('이 첨부파일을 삭제하시겠습니까? (저장 시 반영됩니다)')) {
+            setDocuments(prevDocs => prevDocs.filter(doc => doc.id !== docId));
+            setDeletedAttachmentIds(prevIds => [...prevIds, docId]);
+        }
     };
 
     // --- 수정 모드 핸들러 ---
@@ -226,41 +290,99 @@ function DetailKnowl() {
     };
 
     const handleCancel = () => {
-        // 에디터 내용을 원래대로 복구
-        summaryEditor?.commands.setContent(summary);
-        warningEditor?.commands.setContent(warning);
+        // API 데이터로 UI 상태 복원
+        if (knowledgeData) {
+            const apiAttachments = (knowledgeData.attachments || []).map(att => ({
+                id: att.attachment_id,
+                name: att.file_name,
+                url: att.file_url,
+            }));
+            setDocuments(apiAttachments);
+        }
         setNewFiles([]); // 새로 추가된 파일 목록 비우기
+        setDeletedAttachmentIds([]); // 삭제 예정 목록 초기화
         setIsEditing(false);
     };
 
     const handleSave = () => {
+        if (!editingTitle.trim()) {
+            alert('제목을 입력해주세요.');
+            return;
+        }
+
         // 에디터 내용을 상태에 저장
         setSummary(summaryEditor.getHTML());
         setWarning(warningEditor.getHTML());
-        
-        // 실제 앱에서는 여기서 newFiles를 서버에 업로드하고,
-        // 응답으로 받은 파일 정보로 documents 상태를 업데이트합니다.
-        // 여기서는 임시로 합칩니다.
-        const newlyAddedDocs = newFiles.map((file, index) => ({ id: `new-${Date.now()}-${index}`, name: file.name, url: '#!' }));
-        setDocuments(prev => [...prev, ...newlyAddedDocs]);
-        setNewFiles([]);
 
-        setIsEditing(false);
-        alert('저장되었습니다.');
+        const formData = new FormData();
+        formData.append('title', editingTitle.trim());
+        formData.append('summary', summaryEditor.getHTML());
+        formData.append('warning_note', warningEditor.getHTML());
+        formData.append('category_code', editingCategoryCode);
+        formData.append('scope_code', editingScopeCode);
+
+        // 새로 추가된 파일들을 FormData에 추가
+        newFiles.forEach(file => {
+            formData.append('files', file);
+        });
+
+        // 삭제할 첨부파일 ID들을 FormData에 추가
+        deletedAttachmentIds.forEach(id => {
+            formData.append('deleted_attachment_ids', id);
+        });
+
+        updateKnowledgeMutation.mutate({
+            knowledgeId,
+            // FormData를 전송합니다. API 함수는 이를 처리하도록 수정되어야 합니다.
+            data: formData,
+        }, { onSuccess: () => {
+            setIsEditing(false);
+            setNewFiles([]);
+            setDeletedAttachmentIds([]);
+        } });
     };
 
     // isEditing 상태가 변경될 때 에디터의 편집 가능 상태를 업데이트
     useEffect(() => {
         summaryEditor?.setEditable(isEditing);
         warningEditor?.setEditable(isEditing);
-    }, [isEditing, summaryEditor, warningEditor]);
+
+        // 수정 모드로 전환될 때, API에서 받아온 최신 데이터로 에디터 내용을 채웁니다.
+        // isEditing이 true일 때만 실행하여 불필요한 업데이트를 방지합니다.
+        if (isEditing && knowledgeData) {
+            setEditingTitle(knowledgeData.title || '');
+            setEditingScopeCode(knowledgeData.scope_code || '01');
+            if (summaryEditor && !summaryEditor.isDestroyed) {
+                summaryEditor.commands.setContent(knowledgeData.summary || '');
+            }
+            if (warningEditor && !warningEditor.isDestroyed) {
+                warningEditor.commands.setContent(knowledgeData.warning_note || '');
+            }
+        }
+    }, [isEditing, summaryEditor, warningEditor, knowledgeData]);
+
+    if (isLoading) {
+        return (
+            <div className="dcontent" style={{ textAlign: 'center', padding: '50px' }}>
+                <h2>지식 정보를 불러오는 중입니다...</h2>
+            </div>
+        );
+    }
+
+    if (isError) {
+        return (
+            <div className="dcontent" style={{ textAlign: 'center', padding: '50px', color: 'var(--danger)' }}>
+                <h2>오류가 발생했습니다.</h2>
+            </div>
+        );
+    }
 
     return (
         <>
             {modalInfo.isOpen && (
                 <KnowhowLogModal
                     logToEdit={modalInfo.log}
-                    existingTags={[...new Set(knowhowLogs.map(log => log.tag))]}
+                    departmentCode={knowledgeData?.department_code}
                     onClose={() => setModalInfo({ isOpen: false, log: null })}
                     onSave={handleSaveLog}
                 />
@@ -269,32 +391,89 @@ function DetailKnowl() {
             <div className="dcontent">
                 {/* 상단 네비게이션 */}
                 <div className="top-nav">
-                    <div className="breadcrumb" onClick={() => navigate('/knowledge')} style={{ cursor: 'pointer' }}>
+                    <div
+                        className="breadcrumb"
+                        onClick={() => navigate('/knowledge')}
+                        style={{ cursor: 'pointer' }}
+                    >
                         &lt; 목록으로 <span>|</span> 홈 &gt; 지식베이스 &gt; 상세 조회
                     </div>
-                    {isEditing ? (
-                        <div className="card-actions">
-                            <button className="btn-edit-main" onClick={handleCancel}>취소</button>
-                            <button className="btn-edit-main primary" onClick={handleSave}>저장</button>
-                        </div>
-                    ) : (
-                        <button className="btn-edit-main" onClick={handleEdit}>수정</button>
+
+                    {!isAdmin && (
+                        isEditing ? (
+                            <div className="card-actions">
+                                <button className="btn-edit-main" onClick={handleCancel}>
+                                    취소
+                                </button>
+                                <button className="btn-edit-main primary" onClick={handleSave}>
+                                    저장
+                                </button>
+                            </div>
+                        ) : (
+                            <button className="btn-edit-main" onClick={handleEdit}>
+                                수정
+                            </button>
+                        )
                     )}
                 </div>
 
+                {isAdmin && (
+                    <div className="locked-banner">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <rect x="4" y="10" width="16" height="10" rx="2" />
+                            <path d="M8 10V7a4 4 0 0 1 8 0v3" />
+                        </svg>
+                        관리자 계정은 열람만 가능합니다.
+                    </div>
+                )}
+
                 {/* 문서 헤더 카드 */}
                 <div className="section-card">
-                    <span className="header-badge">사업추진</span>
-                    <h1 className="doc-title">불법 주정차 단속 민원 처리</h1>
+                    {isEditing ? (
+                        <div className="form-group" style={{ marginBottom: '12px' }}>
+                            <label style={{ marginBottom: '10px' }}>카테고리 <span className="required">*</span></label>
+                            <div className="category">
+                                {CATEGORY_OPTIONS.map(opt => (
+                                    <label key={opt.key}>
+                                        <input
+                                            type="radio"
+                                            name="category"
+                                            value={opt.key}
+                                            checked={editingCategoryCode === opt.key}
+                                            onChange={(e) => setEditingCategoryCode(e.target.value)}
+                                        />
+                                        {opt.label}
+                                    </label>
+                                ))}
+                            </div>
+                        </div>
+                    ) : (
+                        <span className={`header-badge ${CATEGORY_CLASS_MAP[knowledgeData?.category_name] || 'badge-soft'}`}>
+                            {knowledgeData?.category_name || '미분류'}
+                        </span>
+                    )}
+                    {isEditing ? (
+                        <div className="form-group" style={{ margin: '12px 0 10px' }}>
+                            <input
+                                type="text"
+                                value={editingTitle}
+                                onChange={(e) => setEditingTitle(e.target.value)}
+                                placeholder="제목을 입력하세요"
+                                style={{ fontSize: '17px', fontWeight: '700', padding: '10px', border: '1px solid var(--line-strong)', borderRadius: '8px', width: '100%' }}
+                            />
+                        </div>
+                    ) : (
+                        <h1 className="dtitle">{knowledgeData?.title || '제목 없음'}</h1>
+                    )}
                     <div className="doc-meta">
-                        <span>최초 작성자: 김OO</span>
-                        <span>최종 수정일: 2026-07-18</span>
+                        <span>최초 작성자: {knowledgeData?.created_by_name || '정보 없음'}</span>
+                        <span>최종 수정일: {knowledgeData?.updated_at?.split('T')[0] || '정보 없음'}</span>
                     </div>
                 </div>
 
                 {/* 핵심 요약 카드 */}
                 <div className="section-card">
-                    <h2 className="summary-title">핵심 요약</h2>
+                    <h2 className="section-title">핵심 요약</h2>
                     {isEditing ? (
                         <>
                             <div className="tiptap-bordered" style={{ marginBottom: '12px' }}>
@@ -309,9 +488,11 @@ function DetailKnowl() {
                     ) : (
                         <>
                             <div className="prose-content" dangerouslySetInnerHTML={{ __html: summary }} />
-                            <div className="alert-box">
-                                ⚠️ <span dangerouslySetInnerHTML={{ __html: warning }} />
-                            </div>
+                            {isWarningVisible && (
+                                <div className="alert-box">
+                                    ⚠️ <span dangerouslySetInnerHTML={{ __html: warning }} />
+                                </div>
+                            )}
                         </>
                     )}
                 </div>
@@ -319,8 +500,8 @@ function DetailKnowl() {
                 {/* 노하우 로그 카드 */}
                 <div className="section-card">
                     <div className="knowhow-header">
-                        <h2 className="summary-title" style={{ marginBottom: 0 }}>노하우 로그</h2>
-                        <button className="btn-add" onClick={() => setModalInfo({ isOpen: true, log: null })}>+ 노하우 추가</button>
+                        <h2 className="section-title" style={{ marginBottom: 0 }}>노하우 로그</h2>
+                        {!isAdmin && <button className="btn-add" onClick={() => setModalInfo({ isOpen: true, log: null })}>+ 노하우 추가</button>}
                     </div>
                     <p className="knowhow-sub">담당자가 직접 남기는 실무 경험 (최신순 제공 / 수정 가능)</p>
 
@@ -363,10 +544,12 @@ function DetailKnowl() {
                                                 {log.updatedBy && <span className="edited-mark">(수정됨)</span>}
                                             </span>
                                         </div>
-                                        <div className="card-actions">
-                                            <button className="btn-card-edit" onClick={() => setModalInfo({ isOpen: true, log: log })}>수정</button>
-                                            <button className="btn-card-delete" onClick={() => handleDeleteLog(log.id)}>삭제</button>
-                                        </div>
+                                        {!isAdmin && (
+                                            <div className="card-actions">
+                                                <button className="btn-card-edit" onClick={() => setModalInfo({ isOpen: true, log: log })}>수정</button>
+                                                <button className="btn-card-delete" onClick={() => handleDeleteLog(log.id)}>삭제</button>
+                                            </div>
+                                        )}
                                     </div>
                                     <div className="knowhow-content">
                                         {log.content}
@@ -397,7 +580,7 @@ function DetailKnowl() {
 
                 {/* 관련 문서 카드 */}
                 <div className="section-card">
-                    <h2 className="related-title">관련 문서 / 공문</h2>
+                    <h2 className="section-title">관련 문서 / 공문</h2>
                     <div className="related-links">
                         {isEditing && (
                             <div {...getRootProps({ className: `attach-addbtn ${isDragActive ? 'dropzone-active' : ''}` })} style={{ justifyContent: 'center', flexDirection: 'column', maxWidth: '100%', marginBottom: '12px' }}>
@@ -408,29 +591,63 @@ function DetailKnowl() {
                                 </div>
                             </div>
                         )}
-                        <div className="doc-list">
+                        <div className="attach-list" style={{ marginTop: '12px' }}>
                             {documents.map(doc => (
-                                <div key={doc.id} className="doc-item">
-                                    <a href={doc.url}><i className="ti ti-file" aria-hidden="true"></i> {doc.name}</a>
+                                <div key={doc.id} className="reply-attach-chip">
+                                    <svg className="ic" viewBox="0 0 24 24"><path fill="currentColor" d="M16.5 6v11.5c0 2.21-1.79 4-4 4s-4-1.79-4-4V5a2.5 2.5 0 0 1 5 0v10.5c0 .83-.67 1.5-1.5 1.5s-1.5-.67-1.5-1.5V6H10v9.5c0 1.38 1.12 2.5 2.5 2.5s2.5-1.12 2.5-2.5V5c-1.93 0-3.5 1.57-3.5 3.5v11.5c0 2.76 2.24 5 5 5s5-2.24 5-5V6h-1.5z"></path></svg>
+                                    <a href={doc.url} onClick={(e) => handleDownload(e, doc.url, doc.name)} style={{ cursor: 'pointer', flex: '1' }}>
+                                        {doc.name}
+                                    </a>
                                     {isEditing && (
-                                        <button className="doc-remove-btn" onClick={() => removeExistingFile(doc.id)}>&times;</button>
+                                        <button className="rm" onClick={() => removeExistingFile(doc.id)}>
+                                            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.47 2 2 6.47 2 12s4.47 10 10 10 10-4.47 10-10S17.53 2 12 2zm5 13.59L15.59 17 12 13.41 8.41 17 7 15.59 10.59 12 7 8.41 8.41 7 12 10.59 15.59 7 17 8.41 13.41 12 17 15.59z"></path></svg>
+                                        </button>
                                     )}
                                 </div>
                             ))}
                             {newFiles.map((file, index) => (
-                                <div key={index} className="doc-item new">
-                                    <a><i className="ti ti-file" aria-hidden="true"></i> {file.name}</a>
+                                <div key={index} className="reply-attach-chip">
+                                    <svg className="ic" viewBox="0 0 24 24"><path fill="currentColor" d="M16.5 6v11.5c0 2.21-1.79 4-4 4s-4-1.79-4-4V5a2.5 2.5 0 0 1 5 0v10.5c0 .83-.67 1.5-1.5 1.5s-1.5-.67-1.5-1.5V6H10v9.5c0 1.38 1.12 2.5 2.5 2.5s2.5-1.12 2.5-2.5V5c-1.93 0-3.5 1.57-3.5 3.5v11.5c0 2.76 2.24 5 5 5s5-2.24 5-5V6h-1.5z"></path></svg>
+                                    <span>{file.name} - {(file.size / 1024).toFixed(2)} KB</span>
                                     {isEditing && (
-                                        <button className="doc-remove-btn" onClick={() => removeNewFile(file)}>&times;</button>
+                                        <button className="rm" onClick={() => removeNewFile(file)}>
+                                            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.47 2 2 6.47 2 12s4.47 10 10 10 10-4.47 10-10S17.53 2 12 2zm5 13.59L15.59 17 12 13.41 8.41 17 7 15.59 10.59 12 7 8.41 8.41 7 12 10.59 15.59 7 17 8.41 13.41 12 17 15.59z"></path></svg>
+                                        </button>
                                     )}
                                 </div>
                             ))}
                         </div>
                     </div>
                 </div>
+
+                {canEditScope && (
+                    <div className="section-card">
+                        <h2 className="section-title">공개범위 설정</h2>
+                        <div className="form-group" style={{marginBottom: 0}}>
+                            <div className="category">
+                                <label>
+                                    <input 
+                                        type="radio" 
+                                        name="scope" 
+                                        value="01"
+                                        checked={editingScopeCode === '01'}
+                                        onChange={(e) => setEditingScopeCode(e.target.value)}
+                                    />
+                                     같은 과 공개
+                                </label>
+                                <label>
+                                    <input type="radio" name="scope" value="02" checked={editingScopeCode === '02'} onChange={(e) => setEditingScopeCode(e.target.value)} />
+                                     전체 부서 공개
+                                </label>
+                            </div>
+                            <p className="hint">{editingScopeCode === '01' ? '같은 과 내의 직원들만 이 지식베이스를 조회할 수 있습니다.' : '모든 부서의 직원들이 이 지식베이스를 조회할 수 있습니다.'}</p>
+                        </div>
+                    </div>
+                )}
             </div>
         </>
     );
+    
 }
 
 export default DetailKnowl;
