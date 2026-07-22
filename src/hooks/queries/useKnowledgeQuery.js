@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { getKnowledgeList, getKnowledgeDetail } from '../../api/knowledge';
+import { getKnowledgeList, getKnowledgeDetail, getKnowledgeTags } from '../../api/knowledge';
 
 /**
  * 지식베이스 목록을 조회하는 React Query 훅
@@ -36,6 +36,20 @@ export const useKnowledgeDetailQuery = (knowledgeId) => {
     queryKey: ['knowledgeDetail', knowledgeId],
     queryFn: () => getKnowledgeDetail(knowledgeId),
     enabled: !!knowledgeId, // knowledgeId가 있을 때만 쿼리 실행
+    staleTime: 1000 * 60 * 5, // 5분
+    refetchOnWindowFocus: false,
+  });
+};
+
+/**
+ * 부서 코드에 해당하는 지식 태그 목록을 조회하는 React Query 훅
+ * @param {string} departmentCode - 부서 코드
+ */
+export const useKnowledgeTagsQuery = (departmentCode) => {
+  return useQuery({
+    queryKey: ['knowledgeTags', departmentCode],
+    queryFn: () => getKnowledgeTags(departmentCode),
+    enabled: !!departmentCode, // departmentCode가 있을 때만 쿼리 실행
     staleTime: 1000 * 60 * 5, // 5분
     refetchOnWindowFocus: false,
   });

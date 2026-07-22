@@ -5,6 +5,7 @@ import '../../pages/Petition/Petition_list.css'; // 공용 드롭다운 스타�
 
 function KnowhowPanel({ onClose }) {
   const {
+    isLoadingList,
     existingCards,
     selectedCardId,
     setSelectedCardId,
@@ -12,6 +13,7 @@ function KnowhowPanel({ onClose }) {
     setNewCardTitle,
     tags,
     newTagInput,
+    isLoadingTags,
     setNewTagInput,
     currentFilter,
     setCurrentFilter,
@@ -58,11 +60,21 @@ function KnowhowPanel({ onClose }) {
               <svg className="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="m6 9 6 6 6-6"/></svg>
             </div>
             <div className="dropdown-menu">
-              {existingCards.map(card => (
-                <div key={card.id} className={`dropdown-item ${selectedCardId === card.id ? 'active' : ''}`} onClick={() => { setSelectedCardId(card.id); setIsDropdownOpen(false); }}>
-                  {card.title}
-                </div>
-              ))}
+              {isLoadingList ? (
+                <div className="dropdown-item">목록 로딩 중...</div>
+              ) : (
+                <>
+                  {existingCards.map(card => (
+                    <div key={card.id} className={`dropdown-item ${selectedCardId === card.id ? 'active' : ''}`} onClick={() => { setSelectedCardId(card.id); setIsDropdownOpen(false); }}>
+                      {card.title}
+                    </div>
+                  ))}
+                  <div className="dropdown-divider"></div>
+                  <div className={`dropdown-item ${selectedCardId === 'new' ? 'active' : ''}`} onClick={() => { setSelectedCardId('new'); setIsDropdownOpen(false); }}>
+                    + 새 지식베이스 만들기...
+                  </div>
+                </>
+              )}
             </div>
           </div>
           {selectedCardId === 'new' && (
@@ -79,15 +91,19 @@ function KnowhowPanel({ onClose }) {
         <div className="kh-section">
           <div className="kh-label">태그 선택</div>
           <div className="kh-tags">
-            {tags.map((tag, index) => (
-              <button
-                key={index}
-                className={`kh-tag ${tag.active ? 'active' : ''}`}
-                onClick={() => toggleTag(index)}
-              >
-                {tag.name}
-              </button>
-            ))}
+            {isLoadingTags ? (
+              <div>태그 로딩 중...</div>
+            ) : (
+              tags.map((tag) => (
+                <button
+                  key={tag.id}
+                  className={`kh-tag ${tag.active ? 'active' : ''}`}
+                  onClick={() => toggleTag(tag.id)}
+                >
+                  {tag.name}
+                </button>
+              ))
+            )}
           </div>
           <div className="kh-new-tag">
             <input
