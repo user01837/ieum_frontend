@@ -2,6 +2,8 @@ import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom';
 import { useKnowledgeListQuery } from '../../hooks/queries/useKnowledgeQuery';
 import '../Petition/Petition_list.css';
+import useAuthStore from '../../store/useAuthStore';
+import { useDepartmentsQuery } from '../../hooks/queries/useDeptQuery';
 import './knowl.css';
 import Pagination from '../../components/Pagination/Pagination';
 
@@ -13,11 +15,6 @@ const CATEGORY_OPTIONS = [
     { key: '04', label: '인허가' },
     { key: '05', label: '실패사례' },
     { key: '99', label: '기타' },
-];
-
-const SORT_OPTIONS = [
-    { key: 'all_depts', label: '전체 부서' },
-    { key: 'my_dept', label: '내 부서' },
 ];
 
 const CATEGORY_CLASS_MAP = {
@@ -33,6 +30,9 @@ const ITEMS_PER_PAGE = 10;
 
 function Knowl() {
     const navigate = useNavigate();
+    const user = useAuthStore((state) => state.user);
+    const isAdmin = useMemo(() => user?.system_role_code === '02', [user]);
+    const { data: departmentsData } = useDepartmentsQuery();
     const [isCategoryOpen, setIsCategoryOpen] = useState(false);
     const [isSortOpen, setIsSortOpen] = useState(false);
     const [categoryFilter, setCategoryFilter] = useState('all');
@@ -62,14 +62,41 @@ function Knowl() {
         setCurrentPage(1);
     }, [categoryFilter, sortFilter, appliedSearchTerm]);
     
-    const queryParams = useMemo(() => ({
-        category_code: categoryFilter === 'all' ? null : categoryFilter,
-        scope_code: sortFilter === 'my_dept' ? '01' : null,
-        keyword: appliedSearchTerm,
-        // API 페이지네이션을 0부터 시작하도록 통일하기 위해, UI의 1-based 페이지에서 1을 뺍니다.
-        page: currentPage - 1,
-        size: ITEMS_PER_PAGE,
-    }), [categoryFilter, sortFilter, appliedSearchTerm, currentPage]);
+    const deptSortOptions = useMemo(() => {
+        if (isAdmin) {
+            const deptOptions = (departmentsData || []).map(d => ({ key: d.code, label: d.name }));
+            return [{ key: 'all_depts', label: '전체 부서' }, ...deptOptions];
+        }
+        return [
+            { key: 'all_depts', label: '전체 부서' },
+            { key: 'my_dept', label: '내 부서' },
+        ];
+    }, [isAdmin, departmentsData]);
+
+    const queryParams = useMemo(() => {
+        const params = {
+            category_code: categoryFilter === 'all' ? null : categoryFilter,
+            keyword: appliedSearchTerm,
+            page: currentPage - 1,
+            size: ITEMS_PER_PAGE,
+        };
+
+        if (isAdmin) {
+            // 관리자가 '전체 부서'를 선택하면, scope와 department 필터 없이 모든 것을 조회합니다.
+            if (sortFilter === 'all_depts') {
+                // 아무 파라미터도 추가하지 않습니다.
+            } else {
+                // 특정 부서를 선택하면 해당 부서 코드로 필터링합니다.
+                params.department_code = sortFilter;
+            }
+        } else {
+            // 일반 사용자는 scope_code로 필터링
+            if (sortFilter === 'my_dept') {
+                params.scope_code = '01';
+            }
+        }
+        return params;
+    }, [categoryFilter, sortFilter, appliedSearchTerm, currentPage, isAdmin]);
 
     const { data: knowledgeData, isLoading, isError } = useKnowledgeListQuery(queryParams);
 
@@ -128,11 +155,11 @@ function Knowl() {
                     </div>
                     <div className={`dropdown-wrap ${isSortOpen ? "open" : ""}`} ref={sortRef}>
                         <div className="dropdown" onClick={() => {setIsSortOpen(p => !p); setIsCategoryOpen(false);}}>
-                            <span>{SORT_OPTIONS.find(o => o.key === sortFilter)?.label}</span>
+                            <span>{deptSortOptions.find(o => o.key === sortFilter)?.label}</span>
                             <svg className="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="m6 9 6 6 6-6"/></svg>
                         </div>
                         <div className="dropdown-menu">
-                            {SORT_OPTIONS.map(opt => (
+                            {deptSortOptions.map(opt => (
                                 <div key={opt.key} className={`dropdown-item ${sortFilter === opt.key ? 'active' : ''}`} onClick={() => {setSortFilter(opt.key); setIsSortOpen(false);}}>{opt.label}</div>
                             ))}
                         </div>

@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { getKnowledgeList, getKnowledgeDetail, getKnowledgeTags } from '../../api/knowledge';
+import useAuthStore from '../../store/useAuthStore';
 
 /**
  * 지식베이스 목록을 조회하는 React Query 훅
@@ -11,6 +12,8 @@ import { getKnowledgeList, getKnowledgeDetail, getKnowledgeTags } from '../../ap
  * @param {number} params.size
  */
 export const useKnowledgeListQuery = (params) => {
+  const userId = useAuthStore((state) => state.user?.userId);
+
   // API로 보내기 전에 null이나 undefined 값을 가진 파라미터를 제거합니다.
   // 이렇게 하면 백엔드가 예기치 않은 빈 파라미터(예: ?sort=)를 수신하는 것을 방지할 수 있습니다.
   const cleanParams = Object.fromEntries(
@@ -19,8 +22,10 @@ export const useKnowledgeListQuery = (params) => {
 
   return useQuery({
     // params 객체의 속성을 모두 쿼리 키에 포함시켜, 파라미터가 변경될 때마다 쿼리를 다시 실행합니다.
-    queryKey: ['knowledgeList', cleanParams],
+    // userId를 쿼리 키에 추가하여 사용자별로 캐시를 분리합니다.
+    queryKey: ['knowledgeList', cleanParams, userId],
     queryFn: () => getKnowledgeList(cleanParams),
+    enabled: !!userId, // 사용자 ID가 있을 때만 쿼리를 실행합니다.
     staleTime: 1000 * 60 * 5, // 5분
     refetchOnWindowFocus: false,
     keepPreviousData: true, // 페이지네이션 UX 개선

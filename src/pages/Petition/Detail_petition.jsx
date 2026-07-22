@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Placeholder from '@tiptap/extension-placeholder';
 import { useDropzone } from 'react-dropzone';
 import EmployeeSearchModal from '../../components/EmpSearchModal/EmpSearchModal';
 import KnowhowPanel from '../../components/knowhow/KnowhowPanel';
+import useAuthStore from '../../store/useAuthStore';
 import { usePetitionDetailQuery } from '../../hooks/queries/usePetitionQuery';
 import { useDepartmentsQuery } from '../../hooks/queries/useDeptQuery';
 import StickySideBarButton from '../../components/StickySideBar/StickySideBarButton';
@@ -105,14 +106,12 @@ const TiptapToolbar = ({ editor }) => {
  * 민원 상세 처리 페이지
  * @param {boolean} isAdmin - 관리자 여부 (읽기 전용 모드 활성화)
  */
-function DetailPetition({ isAdmin: propIsAdmin = false }) {
+function DetailPetition() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const location = useLocation();
-
-  // 라우터 state로 전달된 isAdmin 값을 우선적으로 사용하고, 없으면 prop을 사용합니다.
-  const isAdmin = location.state?.isAdmin ?? propIsAdmin;
   
+  const user = useAuthStore((state) => state.user);
+  const isAdmin = useMemo(() => user?.system_role_code === '02', [user]);
   // React Query를 사용하여 민원 상세 정보 조회
   const { data: complaint, isLoading, isError, error } = usePetitionDetailQuery(id);
   // React Query를 사용하여 민원 정보 업데이트 (저장, 완료)
@@ -159,6 +158,31 @@ function DetailPetition({ isAdmin: propIsAdmin = false }) {
     });
     return { petitionerAttachments: petitioner, staffAttachments: staff };
   }, [complaint?.attachments]);
+
+  const handleDownload = useCallback(async (e, fileUrl, fileName) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    try {
+        const response = await fetch(fileUrl);
+        if (!response.ok) throw new Error('파일을 불러오는데 실패했습니다.');
+
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = fileName;
+        document.body.appendChild(link);
+        link.click();
+        
+        link.remove();
+        window.URL.revokeObjectURL(url);
+    } catch (error) {
+        console.error('Download error:', error);
+        window.open(fileUrl, '_blank', 'noopener,noreferrer');
+    }
+  }, []);
 
   const handleCloseImageModal = useCallback(() => {
     setImageModalUrl(null);
@@ -487,6 +511,16 @@ function DetailPetition({ isAdmin: propIsAdmin = false }) {
         </div>
         <div className="crumb">홈 &gt; 민원 처리 &gt; <b>상세 조회</b></div>
 
+        {isAdmin && (
+          <div className="locked-banner">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <rect x="4" y="10" width="16" height="10" rx="2" />
+              <path d="M8 10V7a4 4 0 0 1 8 0v3" />
+            </svg>
+            관리자 계정은 열람만 가능합니다.
+          </div>
+        )}
+
         <div className="dcard">
           <div className="dhead-row">
             <div className={`status ${STATUS_CLASS_MAP[complaint.statusName] || ''}`}>
@@ -521,14 +555,7 @@ function DetailPetition({ isAdmin: propIsAdmin = false }) {
                     href={file.fileUrl}
                     key={file.attachmentId}
                     className="attach-chip"
-                    onClick={(e) => {
-                      if (isImage) {
-                        e.preventDefault();
-                        setImageModalUrl(file.fileUrl);
-                      }
-                    }}
-                    target={isImage ? '_self' : '_blank'}
-                    rel="noopener noreferrer"
+                    onClick={(e) => isImage ? (e.preventDefault(), setImageModalUrl(file.fileUrl)) : handleDownload(e, file.fileUrl, file.fileName)}
                   >
                     <svg className="ic" viewBox="0 0 24 24"><path fill="currentColor" d="M16.5 6v11.5c0 2.21-1.79 4-4 4s-4-1.79-4-4V5a2.5 2.5 0 0 1 5 0v10.5c0 .83-.67 1.5-1.5 1.5s-1.5-.67-1.5-1.5V6H10v9.5c0 1.38 1.12 2.5 2.5 2.5s2.5-1.12 2.5-2.5V5c-1.93 0-3.5 1.57-3.5 3.5v11.5c0 2.76 2.24 5 5 5s5-2.24 5-5V6h-1.5z"></path></svg>
                     <span>{file.fileName}</span>
@@ -643,14 +670,7 @@ function DetailPetition({ isAdmin: propIsAdmin = false }) {
                         href={file.fileUrl}
                         key={`staff-${file.attachmentId}`}
                         className="attach-chip"
-                        onClick={(e) => {
-                          if (isImage) {
-                            e.preventDefault();
-                            setImageModalUrl(file.fileUrl);
-                          }
-                        }}
-                        target={isImage ? '_self' : '_blank'}
-                        rel="noopener noreferrer"
+                        onClick={(e) => isImage ? (e.preventDefault(), setImageModalUrl(file.fileUrl)) : handleDownload(e, file.fileUrl, file.fileName)}
                       >
                         <svg className="ic" viewBox="0 0 24 24"><path fill="currentColor" d="M16.5 6v11.5c0 2.21-1.79 4-4 4s-4-1.79-4-4V5a2.5 2.5 0 0 1 5 0v10.5c0 .83-.67 1.5-1.5 1.5s-1.5-.67-1.5-1.5V6H10v9.5c0 1.38 1.12 2.5 2.5 2.5s2.5-1.12 2.5-2.5V5c-1.93 0-3.5 1.57-3.5 3.5v11.5c0 2.76 2.24 5 5 5s5-2.24 5-5V6h-1.5z"></path></svg>
                         <span>{file.fileName}</span>
@@ -690,7 +710,7 @@ function DetailPetition({ isAdmin: propIsAdmin = false }) {
                         className="reply-attach-chip"
                       >
                         <svg className="ic" viewBox="0 0 24 24"><path fill="currentColor" d="M16.5 6v11.5c0 2.21-1.79 4-4 4s-4-1.79-4-4V5a2.5 2.5 0 0 1 5 0v10.5c0 .83-.67 1.5-1.5 1.5s-1.5-.67-1.5-1.5V6H10v9.5c0 1.38 1.12 2.5 2.5 2.5s2.5-1.12 2.5-2.5V5c-1.93 0-3.5 1.57-3.5 3.5v11.5c0 2.76 2.24 5 5 5s5-2.24 5-5V6h-1.5z"></path></svg>
-                        <a href={file.fileUrl} onClick={(e) => { if (isImage) { e.preventDefault(); setImageModalUrl(file.fileUrl); } }} target={isImage ? '_self' : '_blank'} rel="noopener noreferrer">{file.fileName}</a>
+                        <a href={file.fileUrl} onClick={(e) => isImage ? (e.preventDefault(), setImageModalUrl(file.fileUrl)) : handleDownload(e, file.fileUrl, file.fileName)}>{file.fileName}</a>
                         <button onClick={() => handleDeleteAttachment(file.attachmentId)} className="rm" aria-label="첨부파일 삭제">
                           <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.47 2 2 6.47 2 12s4.47 10 10 10 10-4.47 10-10S17.53 2 12 2zm5 13.59L15.59 17 12 13.41 8.41 17 7 15.59 10.59 12 7 8.41 8.41 7 12 10.59 15.59 7 17 8.41 13.41 12 17 15.59z"></path></svg>
                         </button>

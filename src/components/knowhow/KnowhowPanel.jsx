@@ -9,12 +9,10 @@ function KnowhowPanel({ onClose }) {
     existingCards,
     selectedCardId,
     setSelectedCardId,
-    newCardTitle,
-    setNewCardTitle,
     tags,
     newTagInput,
     isLoadingTags,
-    setNewTagInput,
+    handleNewTagInputChange,
     currentFilter,
     setCurrentFilter,
     memoText,
@@ -53,9 +51,7 @@ function KnowhowPanel({ onClose }) {
           <div className={`dropdown-wrap ${isDropdownOpen ? "open" : ""}`} ref={dropdownRef}>
             <div className="dropdown" onClick={() => setIsDropdownOpen(p => !p)}>
               <span>
-                {selectedCardId === 'new' 
-                  ? '새 지식베이스 만들기...' 
-                  : existingCards.find(c => c.id === selectedCardId)?.title || '지식베이스 선택...'}
+                {existingCards.find(c => c.id === selectedCardId)?.title || '지식베이스 선택...'}
               </span>
               <svg className="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="m6 9 6 6 6-6"/></svg>
             </div>
@@ -63,30 +59,14 @@ function KnowhowPanel({ onClose }) {
               {isLoadingList ? (
                 <div className="dropdown-item">목록 로딩 중...</div>
               ) : (
-                <>
-                  {existingCards.map(card => (
-                    <div key={card.id} className={`dropdown-item ${selectedCardId === card.id ? 'active' : ''}`} onClick={() => { setSelectedCardId(card.id); setIsDropdownOpen(false); }}>
-                      {card.title}
-                    </div>
-                  ))}
-                  <div className="dropdown-divider"></div>
-                  <div className={`dropdown-item ${selectedCardId === 'new' ? 'active' : ''}`} onClick={() => { setSelectedCardId('new'); setIsDropdownOpen(false); }}>
-                    + 새 지식베이스 만들기...
+                existingCards.map(card => (
+                  <div key={card.id} className={`dropdown-item ${selectedCardId === card.id ? 'active' : ''}`} onClick={() => { setSelectedCardId(card.id); setIsDropdownOpen(false); }}>
+                    {card.title}
                   </div>
-                </>
+                ))
               )}
             </div>
           </div>
-          {selectedCardId === 'new' && (
-            <input
-              type="text"
-              className="kh-input"
-              placeholder="새 지식베이스 제목 입력"
-              value={newCardTitle}
-              onChange={(e) => setNewCardTitle(e.target.value)}
-              style={{ marginTop: '8px' }}
-            />
-          )}
         </div>
         <div className="kh-section">
           <div className="kh-label">태그 선택</div>
@@ -110,7 +90,7 @@ function KnowhowPanel({ onClose }) {
               type="text"
               placeholder="새 태그 추가"
               value={newTagInput}
-              onChange={(e) => setNewTagInput(e.target.value)}
+              onChange={(e) => handleNewTagInputChange(e.target.value)}
               onKeyPress={(e) => e.key === 'Enter' && addTag()}
             />
             <button onClick={addTag}>+</button>

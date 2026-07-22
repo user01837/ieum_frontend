@@ -314,6 +314,7 @@ export default function Admin() {
               <input
                 type="text"
                 placeholder="이름, 사번으로 검색"
+                style={{ padding: '9px 12px 9px 36px', border: '1px solid var(--line-strong)', borderRadius: '8px', background: 'var(--surface)' }}
                 value={searchInputValue}
                 onChange={(e) => setSearchInputValue(e.target.value)}
                 onKeyPress={(e) => {

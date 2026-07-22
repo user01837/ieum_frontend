@@ -11,6 +11,7 @@ import {
   useUpdateKnowledgeLogMutation,
   useDeleteKnowledgeLogMutation,
 } from "../../hooks/mutations/useKnowledgeMutations";
+import useAuthStore from '../../store/useAuthStore';
 import '../Petition/Detail_petition.css'; // Shared styles
 import './KnowlDetail.css';
 import './KnowlCreate.css'; // 생성 페이지의 카테고리 스타일을 가져오기 위해 추가
@@ -52,6 +53,8 @@ const CATEGORY_OPTIONS = [
 function DetailKnowl() {
     const { id: knowledgeId } = useParams();
     const navigate = useNavigate();
+    const isAdmin = useMemo(() => useAuthStore.getState().user?.system_role_code === '02', []);
+    const user = useAuthStore((state) => state.user);
 
     // API 데이터 조회 및 수정
     const { data: knowledgeData, isLoading, isError } = useKnowledgeDetailQuery(knowledgeId);
@@ -75,7 +78,9 @@ function DetailKnowl() {
     const [summary, setSummary] = useState('');
     const [warning, setWarning] = useState('');
     const [editingTitle, setEditingTitle] = useState(''); // 수정 모드용 제목 상태
+    const [editingScopeCode, setEditingScopeCode] = useState(''); // 수정 모드용 공개범위 상태
     const [editingCategoryCode, setEditingCategoryCode] = useState(''); // 수정 모드용 카테고리 상태
+    const [deletedAttachmentIds, setDeletedAttachmentIds] = useState([]);
     const [documents, setDocuments] = useState([]);
     const [newFiles, setNewFiles] = useState([]);
     // --------------------------------
@@ -90,6 +95,7 @@ function DetailKnowl() {
             setEditingTitle(knowledgeData.title || '');
             setWarning(knowledgeData.warning_note || '');
             setEditingCategoryCode(knowledgeData.category_code || '');
+            setEditingScopeCode(knowledgeData.scope_code || '01');
             // API 응답의 attachments를 UI 상태에 맞게 매핑
             const apiAttachments = (knowledgeData.attachments || []).map(att => ({
                 id: att.attachment_id,
@@ -123,6 +129,14 @@ function DetailKnowl() {
         const textContent = warning.replace(/<[^>]+>/g, '').trim();
         return textContent.length > 0;
     }, [warning]);
+
+    // 공개범위 수정 가능 여부 확인
+    const canEditScope = useMemo(() => {
+        if (!isEditing || !user || !knowledgeData) {
+            return false;
+        }
+        return user.departmentCode === knowledgeData.department_code;
+    }, [isEditing, user, knowledgeData]);
 
     const handleDownload = useCallback(async (e, fileUrl, fileName) => {
         e.preventDefault();
@@ -263,8 +277,10 @@ function DetailKnowl() {
         setNewFiles(prevFiles => prevFiles.filter(file => file !== fileToRemove));
     };
     const removeExistingFile = (docId) => {
-        if (window.confirm('이 첨부파일을 영구적으로 삭제하시겠습니까?')) {
-            deleteAttachmentMutation.mutate({ attachmentId: docId, knowledgeId });
+        // UI에서 파일을 숨기고, 저장 시 삭제할 ID 목록에 추가
+        if (window.confirm('이 첨부파일을 삭제하시겠습니까? (저장 시 반영됩니다)')) {
+            setDocuments(prevDocs => prevDocs.filter(doc => doc.id !== docId));
+            setDeletedAttachmentIds(prevIds => [...prevIds, docId]);
         }
     };
 
@@ -274,7 +290,17 @@ function DetailKnowl() {
     };
 
     const handleCancel = () => {
+        // API 데이터로 UI 상태 복원
+        if (knowledgeData) {
+            const apiAttachments = (knowledgeData.attachments || []).map(att => ({
+                id: att.attachment_id,
+                name: att.file_name,
+                url: att.file_url,
+            }));
+            setDocuments(apiAttachments);
+        }
         setNewFiles([]); // 새로 추가된 파일 목록 비우기
+        setDeletedAttachmentIds([]); // 삭제 예정 목록 초기화
         setIsEditing(false);
     };
 
@@ -293,17 +319,27 @@ function DetailKnowl() {
         formData.append('summary', summaryEditor.getHTML());
         formData.append('warning_note', warningEditor.getHTML());
         formData.append('category_code', editingCategoryCode);
+        formData.append('scope_code', editingScopeCode);
 
         // 새로 추가된 파일들을 FormData에 추가
         newFiles.forEach(file => {
             formData.append('files', file);
         });
 
+        // 삭제할 첨부파일 ID들을 FormData에 추가
+        deletedAttachmentIds.forEach(id => {
+            formData.append('deleted_attachment_ids', id);
+        });
+
         updateKnowledgeMutation.mutate({
             knowledgeId,
             // FormData를 전송합니다. API 함수는 이를 처리하도록 수정되어야 합니다.
             data: formData,
-        }, { onSuccess: () => setIsEditing(false) });
+        }, { onSuccess: () => {
+            setIsEditing(false);
+            setNewFiles([]);
+            setDeletedAttachmentIds([]);
+        } });
     };
 
     // isEditing 상태가 변경될 때 에디터의 편집 가능 상태를 업데이트
@@ -315,6 +351,7 @@ function DetailKnowl() {
         // isEditing이 true일 때만 실행하여 불필요한 업데이트를 방지합니다.
         if (isEditing && knowledgeData) {
             setEditingTitle(knowledgeData.title || '');
+            setEditingScopeCode(knowledgeData.scope_code || '01');
             if (summaryEditor && !summaryEditor.isDestroyed) {
                 summaryEditor.commands.setContent(knowledgeData.summary || '');
             }
@@ -354,18 +391,41 @@ function DetailKnowl() {
             <div className="dcontent">
                 {/* 상단 네비게이션 */}
                 <div className="top-nav">
-                    <div className="breadcrumb" onClick={() => navigate('/knowledge')} style={{ cursor: 'pointer' }}>
+                    <div
+                        className="breadcrumb"
+                        onClick={() => navigate('/knowledge')}
+                        style={{ cursor: 'pointer' }}
+                    >
                         &lt; 목록으로 <span>|</span> 홈 &gt; 지식베이스 &gt; 상세 조회
                     </div>
-                    {isEditing ? (
-                        <div className="card-actions">
-                            <button className="btn-edit-main" onClick={handleCancel}>취소</button>
-                            <button className="btn-edit-main primary" onClick={handleSave}>저장</button>
-                        </div>
-                    ) : (
-                        <button className="btn-edit-main" onClick={handleEdit}>수정</button>
+
+                    {!isAdmin && (
+                        isEditing ? (
+                            <div className="card-actions">
+                                <button className="btn-edit-main" onClick={handleCancel}>
+                                    취소
+                                </button>
+                                <button className="btn-edit-main primary" onClick={handleSave}>
+                                    저장
+                                </button>
+                            </div>
+                        ) : (
+                            <button className="btn-edit-main" onClick={handleEdit}>
+                                수정
+                            </button>
+                        )
                     )}
                 </div>
+
+                {isAdmin && (
+                    <div className="locked-banner">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <rect x="4" y="10" width="16" height="10" rx="2" />
+                            <path d="M8 10V7a4 4 0 0 1 8 0v3" />
+                        </svg>
+                        관리자 계정은 열람만 가능합니다.
+                    </div>
+                )}
 
                 {/* 문서 헤더 카드 */}
                 <div className="section-card">
@@ -441,7 +501,7 @@ function DetailKnowl() {
                 <div className="section-card">
                     <div className="knowhow-header">
                         <h2 className="section-title" style={{ marginBottom: 0 }}>노하우 로그</h2>
-                        <button className="btn-add" onClick={() => setModalInfo({ isOpen: true, log: null })}>+ 노하우 추가</button>
+                        {!isAdmin && <button className="btn-add" onClick={() => setModalInfo({ isOpen: true, log: null })}>+ 노하우 추가</button>}
                     </div>
                     <p className="knowhow-sub">담당자가 직접 남기는 실무 경험 (최신순 제공 / 수정 가능)</p>
 
@@ -484,10 +544,12 @@ function DetailKnowl() {
                                                 {log.updatedBy && <span className="edited-mark">(수정됨)</span>}
                                             </span>
                                         </div>
-                                        <div className="card-actions">
-                                            <button className="btn-card-edit" onClick={() => setModalInfo({ isOpen: true, log: log })}>수정</button>
-                                            <button className="btn-card-delete" onClick={() => handleDeleteLog(log.id)}>삭제</button>
-                                        </div>
+                                        {!isAdmin && (
+                                            <div className="card-actions">
+                                                <button className="btn-card-edit" onClick={() => setModalInfo({ isOpen: true, log: log })}>수정</button>
+                                                <button className="btn-card-delete" onClick={() => handleDeleteLog(log.id)}>삭제</button>
+                                            </div>
+                                        )}
                                     </div>
                                     <div className="knowhow-content">
                                         {log.content}
@@ -557,9 +619,35 @@ function DetailKnowl() {
                         </div>
                     </div>
                 </div>
+
+                {canEditScope && (
+                    <div className="section-card">
+                        <h2 className="section-title">공개범위 설정</h2>
+                        <div className="form-group" style={{marginBottom: 0}}>
+                            <div className="category">
+                                <label>
+                                    <input 
+                                        type="radio" 
+                                        name="scope" 
+                                        value="01"
+                                        checked={editingScopeCode === '01'}
+                                        onChange={(e) => setEditingScopeCode(e.target.value)}
+                                    />
+                                     같은 과 공개
+                                </label>
+                                <label>
+                                    <input type="radio" name="scope" value="02" checked={editingScopeCode === '02'} onChange={(e) => setEditingScopeCode(e.target.value)} />
+                                     전체 부서 공개
+                                </label>
+                            </div>
+                            <p className="hint">{editingScopeCode === '01' ? '같은 과 내의 직원들만 이 지식베이스를 조회할 수 있습니다.' : '모든 부서의 직원들이 이 지식베이스를 조회할 수 있습니다.'}</p>
+                        </div>
+                    </div>
+                )}
             </div>
         </>
     );
+    
 }
 
 export default DetailKnowl;

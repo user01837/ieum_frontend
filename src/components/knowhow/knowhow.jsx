@@ -15,9 +15,7 @@ export default function useKnowledgeMemo() {
   })), [knowledgeListResponse]);
 
   // 'new' 또는 카드 ID를 가질 수 있습니다.
-  const [selectedCardId, setSelectedCardId] = useState(''); 
-  const [newCardTitle, setNewCardTitle] = useState('');
-  // --------------------------------
+  const [selectedCardId, setSelectedCardId] = useState('');
 
   // --- 상세 정보 및 태그 조회 ---
   const isValidKnowledgeId = selectedCardId && selectedCardId !== 'new';
@@ -59,12 +57,25 @@ export default function useKnowledgeMemo() {
   }, [currentFilter, previousLogs]);
 
   // 작성란 태그 활성/비활성 토글
-  const toggleTag = (tagId) => {
-    setTags((prevTags) =>
-      prevTags.map((tag) => (tag.id === tagId ? { ...tag, active: !tag.active } : tag))
+  const toggleTag = (clickedTagId) => {
+    setTags(prevTags =>
+      prevTags.map(tag => {
+        if (tag.id === clickedTagId) {
+          // 클릭된 태그는 active 상태를 토글합니다.
+          return { ...tag, active: !tag.active };
+        }
+        // 다른 모든 태그는 비활성화합니다.
+        return { ...tag, active: false };
+      })
     );
+    setNewTagInput(''); // 새 태그 입력란을 비웁니다.
   };
 
+  const handleNewTagInputChange = (value) => {
+    setNewTagInput(value);
+    // 새 태그를 입력하기 시작하면, 기존에 선택된 태그를 모두 해제합니다.
+    setTags(prevTags => prevTags.map(tag => ({ ...tag, active: false })));
+  };
   // 새 태그 추가
   const addTag = async () => {
     const val = newTagInput.trim();
@@ -83,14 +94,7 @@ export default function useKnowledgeMemo() {
 
   // 메모 저장 핸들러
   const handleSave = async () => {
-    let knowledgeIdToSave = selectedCardId;
-
-    if (selectedCardId === 'new') {
-      alert('새 지식베이스 생성 기능은 현재 지원되지 않습니다. 카테고리, 공개범위 선택 기능이 필요합니다.');
-      return;
-    }
-    
-    if (!knowledgeIdToSave) {
+    if (!selectedCardId) {
       alert('지식베이스를 선택해주세요.');
       return;
     }
@@ -120,7 +124,7 @@ export default function useKnowledgeMemo() {
     }
 
     createLogMutation.mutate({
-      knowledgeId: knowledgeIdToSave,
+      knowledgeId: selectedCardId,
       data: {
         content: memoText.trim(),
         tag_ids: tagIdsToSave,
@@ -140,12 +144,10 @@ export default function useKnowledgeMemo() {
     existingCards,
     selectedCardId,
     setSelectedCardId,
-    newCardTitle,
-    setNewCardTitle,
     tags,
     isLoadingTags,
     newTagInput,
-    setNewTagInput,
+    handleNewTagInputChange,
     currentFilter,
     setCurrentFilter,
     memoText,

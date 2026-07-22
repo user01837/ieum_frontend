@@ -706,6 +706,21 @@
   box-shadow: 0 2px 5px rgba(0,0,0,.2);
 }
 
+.locked-banner {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 16px;
+    background: var(--bg);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    margin-bottom: 16px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--ink-soft);
+}
+.locked-banner svg { flex-shrink: 0; }
+
 .image-modal-close:hover {
   background: #f0f0f0;
   color: #000;
