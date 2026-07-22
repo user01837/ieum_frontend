@@ -123,9 +123,11 @@ label{font-size:12px;font-weight:700;color:var(--ink-soft);display:block;margin-
   width: 100%;
   border: none; /* <button> 태그의 기본 테두리 제거 */
   font-weight:700;
+  margin-top: 20px;
 }
 
 .buttonContainer {
+  
   text-align: center;
 }
 
@@ -146,4 +148,5 @@ label{font-size:12px;font-weight:700;color:var(--ink-soft);display:block;margin-
 .footlink{
   color: #fff; /* 또는 var(--white) 같은 색상 변수 사용 */
   text-decoration: none; /* 기본 밑줄 제거 */
+  text-align: center;
 }

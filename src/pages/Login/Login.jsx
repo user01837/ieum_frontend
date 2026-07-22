@@ -183,14 +183,6 @@ export default function Login() {
             )}
           </div>
 
-          {/* 기억하기 */}
-          <div className={styles.rowline}>
-            <div className={styles.rememberline} onClick={() => setRemember(!remember)}>
-              <div className={`${styles.checkbox} ${remember ? styles.on : ""}`}>✔</div>
-              아이디 저장
-            </div>
-          </div>
-
           {/* 버튼 */}
           <div className={styles.buttonContainer}>
             <button type="submit" className={styles['btn-primary']}>
