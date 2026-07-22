@@ -5,6 +5,7 @@ import StarterKit from '@tiptap/starter-kit';
 import Placeholder from '@tiptap/extension-placeholder';
 import { useDropzone } from 'react-dropzone';
 import './KnowlCreate.css';
+import '../Petition/Detail_petition.css'; // 상세 페이지 공통 스타일
 import '../../styles/global.css';
 
 const TiptapToolbar = ({ editor }) => {
@@ -103,7 +104,7 @@ function KnowlCreate() {
     }, [summaryEditor]);
 
     return (
-        <div className="container">
+        <div className="dcontent">
             <div className="back" onClick={() => navigate(-1)}>
                 <i className="ti ti-arrow-left"></i> 목록으로
             </div>

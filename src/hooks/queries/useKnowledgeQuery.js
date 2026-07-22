@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { getKnowledgeList } from '../../api/knowledge';
+import { getKnowledgeList, getKnowledgeDetail } from '../../api/knowledge';
 
 /**
  * 지식베이스 목록을 조회하는 React Query 훅
@@ -24,5 +24,19 @@ export const useKnowledgeListQuery = (params) => {
     staleTime: 1000 * 60 * 5, // 5분
     refetchOnWindowFocus: false,
     keepPreviousData: true, // 페이지네이션 UX 개선
+  });
+};
+
+/**
+ * 지식베이스 상세 정보를 조회하는 React Query 훅
+ * @param {number} knowledgeId - 지식베이스 ID
+ */
+export const useKnowledgeDetailQuery = (knowledgeId) => {
+  return useQuery({
+    queryKey: ['knowledgeDetail', knowledgeId],
+    queryFn: () => getKnowledgeDetail(knowledgeId),
+    enabled: !!knowledgeId, // knowledgeId가 있을 때만 쿼리 실행
+    staleTime: 1000 * 60 * 5, // 5분
+    refetchOnWindowFocus: false,
   });
 };

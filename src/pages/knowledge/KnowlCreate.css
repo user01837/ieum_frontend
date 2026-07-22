@@ -29,7 +29,7 @@
 }
 
 .header h2{
-    font-size:26px;
+    font-size:16px;
 }
 
 .save-btn{
@@ -51,7 +51,7 @@
 }
 
 .card-title{
-    font-size:18px;
+    font-size:16px;
     font-weight:600;
     margin-bottom:20px;
 }
@@ -90,7 +90,7 @@ input[type=text]{
     padding:12px;
     border:1px solid #d1d5db;
     border-radius:8px;
-    font-size:14px;
+    font-size:13.5px; /* 글씨 크기 조정 */
     font-family: inherit;
 }
 
@@ -100,7 +100,7 @@ textarea{
     border-radius:8px;
     padding:14px;
     resize:vertical;
-    font-size:14px;
+    font-size:13.5px; /* 글씨 크기 조정 */
     font-family: inherit;
 }
 
