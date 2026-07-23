@@ -9,6 +9,7 @@
   height: 100vh;
   position: sticky;
   top: 0;
+  overflow-y: auto; /*사이드바 내용이 넘칠 때 대비*/
 }
 
 /* 이하 동일 */
