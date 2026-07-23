@@ -174,7 +174,7 @@
   text-align: center;
 }
 
-.status {
+.project-trow .status {
   display: flex;
   align-items: center;
   gap: 5px;
@@ -182,7 +182,7 @@
   white-space: nowrap;
 }
 
-.status .dot {
+.project-trow .status .dot {
   width: 7px !important;
   height: 7px !important;
   border-radius: 50% !important;

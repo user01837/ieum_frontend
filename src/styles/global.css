@@ -42,11 +42,13 @@ body {
 
 .layout {
   display: flex;
-  min-height: 100vh;
+  height: 100vh;
+  overflow: hidden;
 }
 
 .content {
   flex: 1;
+  overflow-y: auto; /*이 영역만 스크롤*/
   padding-bottom: 100px; /* 챗봇 버튼이 위치할 공간 확보 */
 }
 
