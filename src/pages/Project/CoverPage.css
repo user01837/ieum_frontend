@@ -1,0 +1,94 @@
+.cover-toggle-label {
+    padding: 12px 18px;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--ink);
+    border-bottom: 1px solid var(--line, #e2e8f0);
+    background: var(--surface, #f8fafc);
+}
+
+.cover-body {
+    padding: 48px 32px 40px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.cover-year {
+    font-size: 16px;
+    color: #1a202c;
+    font-weight: 700;
+    margin-bottom: 16px;
+}
+
+.cover-title-input {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--ink, #1a202c);
+    text-align: center;
+    border: none;
+    background: transparent;
+    width: 80%;
+    padding: 4px 8px;
+    margin-bottom: 0;
+    outline: none;
+    resize: none;
+    overflow: hidden;
+    line-height: 1.4;
+    height: auto;
+    min-height: 32px;
+}
+
+.cover-title-input--locked {
+    cursor: default;
+}
+
+.cover-title-input::placeholder {
+    color: #aab;
+    font-weight: 400;
+}
+
+.cover-line-top {
+    width: 84%;
+    height: 4px;
+    background: #0078D7;
+    margin-bottom: 20px;
+}
+
+.cover-line-bottom {
+    width: 84%;
+    height: 4px;
+    background: #0078D7;
+    margin-top: 20px;
+    margin-bottom: 32px;
+}
+
+.cover-info-table {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    width: 300px;
+}
+
+.cover-info-row {
+    display: flex;
+    gap: 8px;
+    font-size: 13.5px;
+}
+
+.cover-label {
+    color: #666;
+    min-width: 72px;
+    flex-shrink: 0;
+}
+
+.cover-value {
+    color: var(--ink, #1a202c);
+    font-weight: 500;
+}
+
+.cover-note {
+    margin-top: 10px;
+    font-size: 11.5px;
+    color: #bbb;
+}

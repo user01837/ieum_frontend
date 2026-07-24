@@ -11,6 +11,7 @@ import '../Petition/Detail_petition.css';
 import '../../styles/global.css';
 import StickySideBarButton from "../../components/StickySideBar/StickySideBarButton";
 import KnowhowPanel from "../../components/knowhow/KnowhowPanel";
+import CoverPage from "./CoverPage";
 
 export default function ProjectDetail() {
   const navigate = useNavigate();
@@ -54,6 +55,7 @@ export default function ProjectDetail() {
   const isInitialized = useRef(false);
   const user = useAuthStore((state) => state.user);
   const [isKnowhowPanelOpen, setIsKnowhowPanelOpen] = useState(false);
+  const [coverTitle, setCoverTitle] = useState("");
 
   const SECTION_LIST = [
     { key: "secOverview", label: "Ⅰ. 사업 개요" },
@@ -101,7 +103,8 @@ export default function ProjectDetail() {
         secExpectedEffect: project.secExpectedEffect || "",
         secPostManagement: project.secPostManagement || "",
       });
-      setTimeout(() => { isInitialized.current = true; }, 0); // ← 추가
+      setCoverTitle(project.coverTitle || "");
+      setTimeout(() => { isInitialized.current = true; }, 0);
     }
   }, [project]);
 
@@ -201,6 +204,7 @@ export default function ProjectDetail() {
         secBudget: sections.secBudget,
         secExpectedEffect: sections.secExpectedEffect,
         secPostManagement: sections.secPostManagement,
+        coverTitle: coverTitle,
         memberUserIds: teamMembers
           .filter((m) => m.roleName !== "주관")
           .map((m) => m.userId),
@@ -217,7 +221,7 @@ export default function ProjectDetail() {
     approveProject(undefined, {
       onSuccess: () => {
         setIsLocked(true);
-        setIsApproved(true); // ← 추가
+        setIsApproved(true);
       },
       onError: () => alert("승인 처리에 실패했습니다."),
     });
@@ -530,6 +534,12 @@ export default function ProjectDetail() {
 
         <div className="tiptap-wrapper">
           <h3 className="dtitle" style={{ fontSize: '15px', margin: '16px 20px' }}>기획서 작성</h3>
+          <CoverPage
+            coverTitle={coverTitle}
+            onChange={(val) => { setCoverTitle(val); setIsSaved(false); }}
+            isLocked={isLocked}
+            projectData={project}
+          />
           {SECTION_LIST.map(({ key, label }) => (
             <SectionEditor
               key={key}
