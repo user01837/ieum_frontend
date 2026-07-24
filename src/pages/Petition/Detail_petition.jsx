@@ -499,8 +499,8 @@ function DetailPetition() {
 
   return (
     <div className={`split-layout ${isCaseDetailOpen || isKnowhowPanelOpen ? 'split-active' : ''}`}>
-      {/* 패널이 열려있을 때는 스티키 버튼을 숨깁니다. */}
-      {!(isCaseDetailOpen || isKnowhowPanelOpen) && <StickySideBarButton onClick={handleOpenWriteForm} />}
+      {/* 패널이 열려있거나 관리자 계정일 때는 스티키 버튼을 숨깁니다. */}
+      {!(isCaseDetailOpen || isKnowhowPanelOpen) && !isAdmin && <StickySideBarButton onClick={handleOpenWriteForm} />}
 
       <div className="dcontent">
         <div className="backrow">
