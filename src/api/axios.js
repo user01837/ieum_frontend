@@ -86,9 +86,7 @@ api.interceptors.response.use(
 
       try {
         console.log('Access token expired. Attempting to refresh...');
-        // 환경변수가 꼬이더라도 무조건 안전한 https 도메인으로 요청을 꽂아넣습니다.
-        const baseUrl = import.meta.env.VITE_API_BASE_URL || 'https://api.ggieum.site';
-        const { data } = await axios.post(`${baseUrl}/auth/refresh`, { refreshToken });
+        const { data } = await api.post('/auth/refresh', { refreshToken });
         const newAccessToken = data.accessToken;
 
         setToken(newAccessToken);
