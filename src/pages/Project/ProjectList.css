@@ -5,7 +5,6 @@
   margin: 0 auto;
 }
 
-/*추가*/
 .project-toolbar {
   display: flex;
   flex-direction: column;
@@ -85,7 +84,6 @@
 .project-search-reset:hover {
   background: var(--bg);
 }
-/* △ 추가 △ */
 
 .project-newbtn {
   margin-left: auto;

@@ -455,7 +455,7 @@
   color: var(--ink-tertiary);
 }
 
-/* ===== Task 추가 폼 ===== */
+/*Task 추가 폼*/
 .add-task-form {
   display: flex;
   gap: 10px;
