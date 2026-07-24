@@ -2,7 +2,7 @@ import axios from "axios";
 import useAuthStore from "../store/useAuthStore";
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL, //백엔드 주소를 env파일에서 설정된 내용으로 가지고옴
+  baseURL: 'https://api.ggieum.site', //백엔드 주소를 env파일에서 설정된 내용으로 가지고옴
 });
 
 // 토큰 재발급 중인지 여부와 대기 중인 요청을 관리하기 위한 변수
