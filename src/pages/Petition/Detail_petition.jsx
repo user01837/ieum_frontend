@@ -273,7 +273,7 @@ function DetailPetition() {
 
   const findSimilarPetitionsMutation = useFindSimilarPetitionsMutation({
     onSuccess: (data, variables) => {
-      const newCases = data.results.map(result => ({
+       const newCases = data.results.map(result => ({
         id: result.complaint_id,
         title: result.title,
         dept: departmentsData?.find(d => d.code === result.department_code)?.name || result.department_code,

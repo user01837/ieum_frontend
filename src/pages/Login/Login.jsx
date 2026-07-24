@@ -79,6 +79,9 @@ export default function Login() {
     handleLogin();
   };
 
+  // 부서 API 응답값 확인을 위한 콘솔 로그 추가
+  console.log("부서 API 응답값 확인:", deptList);
+
   return (
     <div className={styles.loginPage}>
       <div className={styles.wrap}>
@@ -112,7 +115,7 @@ export default function Login() {
               <div className={styles['dropdown-menu']}>
                 {isDeptLoading ? (
                   <div className={styles['dropdown-item']}>불러오는 중...</div>
-                ) : deptList && deptList.length > 0 ? (
+                ) : Array.isArray(deptList) && deptList.length > 0 ? (
                   deptList.map((d) => (
                     <div
                       key={d.code}
