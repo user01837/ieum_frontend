@@ -7,20 +7,6 @@ const NotFound = () => {
 
   return (
     <div className="fullscreen-error-container">
-      {/* 상단 헤더 (사이드바가 없으므로 로고를 헤더 왼쪽에 배치) */}
-      <header className="error-header">
-        <div className="header-logo">
-          <div className="logo-icon">공</div>
-          <span className="logo-text">공무원 업무지원 플랫폼</span>
-        </div>
-        <div className="header-user">
-          <span>안녕하세요, <strong>박주임님</strong></span>
-          <span className="divider">|</span>
-          <span className="date">2026년 7월 3일 (금)</span>
-          <button className="logout-btn">로그아웃</button>
-        </div>
-      </header>
-
       {/* 중앙 404 콘텐츠 영역 */}
       <main className="error-main">
         <div className="error-card">

@@ -86,7 +86,6 @@ const router = createBrowserRouter([
   {
     path: "/",
     element: <Login />,
-    errorElement: <NotFound />,
   },
   {
     path: "/login",
@@ -97,6 +96,7 @@ const router = createBrowserRouter([
       <AuthLoader><MainLayout /></AuthLoader>
     ),
     loader: protectedLoader,
+    errorElement: <NotFound />,
     children: [
 
       {
