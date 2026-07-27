@@ -5,7 +5,7 @@ import api from './axios';
  * @param {object} params - 쿼리 파라미터
  */
 export const getPetitions = async (params) => {
-  const response = await api.get('/petitions', { params });
+  const response = await api.get('/petitions/', { params });
   return response.data;
 };
 
