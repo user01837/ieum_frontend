@@ -430,11 +430,12 @@ function DetailPetition() {
         tempSavePetitionMutation.mutate({
           complaintId: id,
           manualAnswer: editor.getHTML(),
-          assigneeUserId: newAssignee.id,
+          assigneeUserId: newAssignee.userId,
           files: attachedFiles,
         }, {
           onSuccess: () => {
             setAttachedFiles([]); // 로컬에서 관리하던 첨부파일 목록 초기화
+            navigate('/petitions');
           }
         });
       }
