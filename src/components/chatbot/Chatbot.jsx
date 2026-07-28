@@ -109,7 +109,7 @@ function Chatbot() {
   });
 
   const handleSendMessage = () => {
-    if (inputMessage.trim() === '' || chatMutation.isLoading) return;
+    if (inputMessage.trim() === '' || chatMutation.isPending) return;
 
     const newUserMessage = {
       id: Date.now(),
@@ -179,9 +179,9 @@ function Chatbot() {
               value={inputMessage}
               onChange={(e) => setInputMessage(e.target.value)}
               onKeyPress={handleKeyPress}
-              disabled={chatMutation.isLoading}
+              disabled={chatMutation.isPending}
             />
-            <button onClick={handleSendMessage} disabled={chatMutation.isLoading}>전송</button>
+            <button onClick={handleSendMessage} disabled={chatMutation.isPending}>전송</button>
           </div>
         </div>
       )}
