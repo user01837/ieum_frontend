@@ -64,7 +64,7 @@ function Knowl() {
     
     const deptSortOptions = useMemo(() => {
         if (isAdmin) {
-            const deptOptions = (departmentsData || []).map(d => ({ key: d.code, label: d.name }));
+            const deptOptions = (departmentsData || []).filter(d => d.code !== "09").map(d => ({ key: d.code, label: d.name }));
             return [{ key: 'all_depts', label: '전체 부서' }, ...deptOptions];
         }
         return [
