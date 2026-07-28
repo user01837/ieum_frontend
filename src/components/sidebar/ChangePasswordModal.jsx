@@ -80,10 +80,14 @@ function ChangePasswordModal({ onClose }) {
               새 비밀번호는 영문 대소문자, 숫자, 특수문자를 포함하여 8자 이상이어야 합니다.
             </p>
           </div>
-          <button type="button" aria-label="닫기" className="modal-close-btn" onClick={onClose} disabled={mustChangePassword}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3"><path d="M18 6 6 18M6 6l12 12" /></svg>
-            <i className="ti ti-x ic" aria-hidden="true"></i>
-          </button>
+          {
+            !mustChangePassword && (
+              <button type="button" aria-label="닫기" className="modal-close-btn" onClick={onClose}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3"><path d="M18 6 6 18M6 6l12 12" /></svg>
+                <i className="ti ti-x ic" aria-hidden="true"></i>
+              </button>
+            )
+          }
         </div>
 
         <div className="pw-change-form">
