@@ -479,6 +479,9 @@ function DetailKnowl() {
                     )}
                     <div className="doc-meta">
                         <span>최초 작성자: {knowledgeData?.created_by_name || '정보 없음'}</span>
+                        {knowledgeData?.updated_by_name && (
+                            <span>마지막 수정자: {knowledgeData.updated_by_name}</span>
+                        )}
                         <span>최종 수정일: {knowledgeData?.updated_at?.split('T')[0] || '정보 없음'}</span>
                     </div>
                 </div>
@@ -632,7 +635,7 @@ function DetailKnowl() {
                     </div>
                 </div>
 
-                {canEditScope && (
+                {isEditing && (
                     <div className="section-card">
                         <h2 className="section-title">공개범위 설정</h2>
                         <div className="form-group" style={{marginBottom: 0}}>
@@ -644,11 +647,12 @@ function DetailKnowl() {
                                         value="01"
                                         checked={editingScopeCode === '01'}
                                         onChange={(e) => setEditingScopeCode(e.target.value)}
+                                        disabled={!canEditScope}
                                     />
                                      같은 과 공개
                                 </label>
                                 <label>
-                                    <input type="radio" name="scope" value="02" checked={editingScopeCode === '02'} onChange={(e) => setEditingScopeCode(e.target.value)} />
+                                    <input type="radio" name="scope" value="02" checked={editingScopeCode === '02'} onChange={(e) => setEditingScopeCode(e.target.value)} disabled={!canEditScope} />
                                      전체 부서 공개
                                 </label>
                             </div>

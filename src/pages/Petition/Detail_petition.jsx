@@ -226,7 +226,7 @@ function DetailPetition() {
     onDrop,
     onDropRejected, // 거부되었을 때 실행할 콜백 연결
     multiple: true,
-    maxSize: 10485760, // 10MB (10 * 1024 * 1024)
+    maxSize: 10485761, // 10MB (10 * 1024 * 1024)
     accept: { // 허용할 파일 타입 지정 (악성코드 방지)
       'image/jpeg': ['.jpeg', '.jpg'],
       'image/png': ['.png'],
