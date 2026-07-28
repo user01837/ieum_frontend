@@ -426,7 +426,7 @@ export default function Admin() {
 
       {/* 신규 직원 등록 / 수정 모달 */}
       {isUserFormOpen && (
-        <div className="modal-overlay" onClick={() => setIsUserFormOpen(false)}>
+        <div className="modal-overlay">
           <div className="modal-card wide" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <div>
