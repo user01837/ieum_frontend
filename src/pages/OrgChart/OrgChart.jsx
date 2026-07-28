@@ -50,26 +50,17 @@ export default function OrgChart() {
     let topManager = null;
     let remainingMembers = [...members];
 
-    if (selectedDeptCode === '09') {
-      // '09' 부서인 경우, 첫 번째 멤버를 '관리자'로 지정합니다.
-      // 백엔드에서 해당 부서의 관리자만 보내준다고 가정합니다.
-      const admin = members[0];
-      if (admin) {
-        topManager = { ...admin, positionName: '관리자' };
-        remainingMembers = members.filter((m) => m.userId !== admin.userId);
-      }
-    } else {
-      // 다른 부서인 경우, '부장'을 최상위 관리자로 찾습니다.
-      topManager = members.find((m) => m.positionName === '부장');
-      if (topManager) {
-        remainingMembers = members.filter((m) => m.userId !== topManager.userId);
-      }
+    
+    // 다른 부서인 경우, '부장'을 최상위 관리자로 찾습니다.
+    topManager = members.find((m) => m.positionName === '부장');
+    if (topManager) {
+      remainingMembers = members.filter((m) => m.userId !== topManager.userId);
     }
 
     const leads = remainingMembers.filter((m) => m.positionName === '팀장');
-    const staff = remainingMembers.filter((m) => m.positionName === '주무관');
+    const staff = remainingMembers.filter((m) => m.positionName === '주무관' || !m.positionName);
     const others = remainingMembers.filter(
-      (m) => !m.positionName || !KNOWN_POSITIONS.includes(m.positionName)
+      (m) => m.positionName && !KNOWN_POSITIONS.includes(m.positionName)
     );
 
     return { manager: topManager, leads, staff, others };
@@ -81,26 +72,26 @@ export default function OrgChart() {
         <div className="org-panel-header">
           <h2>조직 구성</h2>
           <div className="org-panel-controls">
-            <div className={`dropdown-wrap ${isDeptOpen ? "open" : ""}`} ref={deptDropdownRef} style={{minWidth: '150px'}}>
+            <div className={`dropdown-wrap ${isDeptOpen ? "open" : ""}`} ref={deptDropdownRef} style={{ minWidth: 'fit-content' }}>
               <div className="dropdown" onClick={() => !isLoadingDepts && setIsDeptOpen(p => !p)}>
-                  <span>
-                      {isLoadingDepts 
-                          ? '부서 로딩중...' 
-                          : departments?.find(d => d.code === selectedDeptCode)?.name || '부서 선택'
-                      }
-                  </span>
-                  <svg className="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="m6 9 6 6 6-6"/></svg>
+                <span>
+                  {isLoadingDepts
+                    ? '부서 로딩중...'
+                    : departments?.find(d => d.code === selectedDeptCode)?.name || '부서 선택'
+                  }
+                </span>
+                <svg className="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="m6 9 6 6 6-6" /></svg>
               </div>
               <div className="dropdown-menu">
-                  {departments?.map(dept => (
-                      <div 
-                          key={dept.code} 
-                          className={`dropdown-item ${selectedDeptCode === dept.code ? 'active' : ''}`} 
-                          onClick={() => handleDeptSelect(dept.code)}
-                      >
-                          {dept.name}
-                      </div>
-                  ))}
+                {departments?.map(dept => (
+                  <div
+                    key={dept.code}
+                    className={`dropdown-item ${selectedDeptCode === dept.code ? 'active' : ''}`}
+                    onClick={() => handleDeptSelect(dept.code)}
+                  >
+                    {dept.name}
+                  </div>
+                ))}
               </div>
             </div>
             <span className="org-total-count">총 <strong>{members?.length || 0}</strong>명</span>
@@ -121,7 +112,7 @@ export default function OrgChart() {
                     <div className="org-avatar">{getInitials(manager.name)}</div>
                     <div>
                       <div className="org-rank">{manager.positionName}</div>
-                    <div className="org-name">{manager.name} <span className="org-userid">({manager.userId})</span></div>
+                      <div className="org-name">{manager.name} <span className="org-userid">({manager.userId})</span></div>
                     </div>
                   </div>
                   {(leads.length > 0 || staff.length > 0 || others.length > 0) && <div className="org-stem"></div>}
@@ -145,8 +136,8 @@ export default function OrgChart() {
 
               {/* 주무관 (Staff) */}
               {staff.length > 0 && (
-                <div className="org-staff-section">
-                  <div className="org-staff-label">주무관 · {staff.length}명</div>
+                <div className={`org-staff-section ${selectedDeptCode === '09' ? 'no-border' : ''}`}>
+                  {selectedDeptCode !== '09' && <div className="org-staff-label">주무관 · {staff.length}명</div>}
                   <div className="org-staff-chips">
                     {staff.map(p => (
                       <span className="org-chip" key={p.userId}>
