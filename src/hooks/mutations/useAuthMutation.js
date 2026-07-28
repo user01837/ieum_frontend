@@ -42,7 +42,17 @@ export const useLoginMutation = () => {
     onError: (error) => {
       // 로그인 실패 시 처리
       console.error('Login failed:', error);
-      alert('로그인 실패: 아이디 또는 비밀번호를 확인해주세요.');
+
+      // 백엔드에서 보낸 구체적인 에러 메시지가 있는지 확인
+      const detailMessage = error?.response?.data?.detail;
+
+      if (detailMessage) {
+        // 백엔드 메시지가 있으면 해당 메시지를 사용자에게 보여줌
+        alert(detailMessage);
+      } else {
+        // 그렇지 않으면 일반적인 에러 메시지를 보여줌
+        alert('로그인 실패: 아이디 또는 비밀번호를 확인해주세요.');
+      }
     },
   });
 };
