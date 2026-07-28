@@ -278,6 +278,7 @@ function DetailPetition() {
         title: result.title,
         dept: departmentsData?.find(d => d.code === result.department_code)?.name || result.department_code,
         date: result.received_date || '날짜 정보 없음',
+        similarity: result.similarity,
         status: STATUS_CODE_MAP[result.status_code] || result.status_code || '상태 미지정',
         fullContent: `[민원 요지]\n${result.content}\n\n[답변 내용]\n${result.answer}`,
         answerContent: result.answer || ''
@@ -589,7 +590,7 @@ function DetailPetition() {
                       >
                         <div>
                           <div className="sim-title">{simCase.title}</div>
-                          <div className="sim-meta">{simCase.dept} | {simCase.date}</div>
+                          <div className="sim-meta">{simCase.dept} | {simCase.date} | 유사도 {Math.round(simCase.similarity)}%</div>
                         </div>
                         <div className="chev-btn">
                           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3"><path d="m9 18 6-6-6-6"></path></svg>
@@ -804,6 +805,8 @@ function DetailPetition() {
                 <span>{selectedCase.dept}</span>
                 <span className="dotsep">·</span>
                 <span>{selectedCase.date}</span>
+                <span className="dotsep">·</span>
+                <span>유사도 {Math.round(selectedCase.similarity)}%</span>
                 {selectedCase.status && (
                   <>
                     <span className="dotsep">·</span>
