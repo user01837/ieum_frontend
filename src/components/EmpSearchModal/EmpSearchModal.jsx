@@ -7,7 +7,7 @@ function getInitials(name) {
   return name ? name.slice(-2) : '';
 }
 
-function EmployeeSearchModal({ currentDept, onSelect, onClose, forceDeptScope = false }) {
+function EmployeeSearchModal({ currentDept, onSelect, onConfirm, onClose, forceDeptScope = false, multiSelect = false }) {
   const { data: deptList = [] } = useDepartmentsQuery();
 
   // 전달받은 부서 이름(currentDept)으로 부서 코드를 찾습니다.
@@ -19,6 +19,7 @@ function EmployeeSearchModal({ currentDept, onSelect, onClose, forceDeptScope = 
   const [query, setQuery] = useState('');
   // 부서 필터 상태. 초기값은 'all'
   const [deptFilter, setDeptFilter] = useState('all');
+  const [selectedMap, setSelectedMap] = useState({}); // multiSelect일 때만 사용: { [userId]: emp }
 
   // API에 전달할 최종 부서 코드를 결정합니다.
   const apiDeptCode = useMemo(() => {
@@ -97,26 +98,43 @@ function EmployeeSearchModal({ currentDept, onSelect, onClose, forceDeptScope = 
             ) : employees.length === 0 ? (
               <div className="modal-empty-results">검색 결과가 없습니다.</div>
             ) : (
-              employees.map((emp) => (
-                <div
-                  key={emp.userId}
-                  className="modal-result-row"
-                  onClick={() => onSelect(emp)}
-                >
-                  <div className="modal-avatar">{getInitials(emp.name)}</div>
-                  <div className="modal-result-info">
-                    <p className="modal-employee-name">
-                      {emp.name}
-                      <span className="modal-employee-role">{emp.positionName}</span>
-                    </p>
-                    <p className="modal-employee-id">{emp.userId}</p>
+              employees.map((emp) => {
+                const isSelected = multiSelect && !!selectedMap[emp.userId];
+                return (
+                  <div
+                    key={emp.userId}
+                    className={`modal-result-row ${isSelected ? 'selected' : ''}`}
+                    onClick={() => {
+                      if (multiSelect) {
+                        setSelectedMap((prev) => {
+                          const next = { ...prev };
+                          if (next[emp.userId]) {
+                            delete next[emp.userId];
+                          } else {
+                            next[emp.userId] = emp;
+                          }
+                          return next;
+                        });
+                      } else {
+                        onSelect(emp);
+                      }
+                    }}
+                  >
+                    <div className="modal-avatar">{getInitials(emp.name)}</div>
+                    <div className="modal-result-info">
+                      <p className="modal-employee-name">
+                        {emp.name}
+                        <span className="modal-employee-role">{emp.positionName}</span>
+                      </p>
+                      <p className="modal-employee-id">{emp.userId}</p>
+                    </div>
+                    {scope === 'all' && deptFilter === 'all' && (
+                      <span className="modal-employee-dept">{emp.departmentName}</span>
+                    )}
+                    {multiSelect && isSelected && <span className="modal-selected-check">✓</span>}
                   </div>
-                  {/* 부서 필터가 '전체'일 때만 각 항목에 부서 표시 */}
-                  {scope === 'all' && deptFilter === 'all' && (
-                    <span className="modal-employee-dept">{emp.departmentName}</span>
-                  )}
-                </div>
-              ))
+                );
+              })
             )}
           </div>
         </div>
@@ -137,6 +155,15 @@ function EmployeeSearchModal({ currentDept, onSelect, onClose, forceDeptScope = 
                 범위: 전체 부서
               </button>
             </div>
+          )}
+          {multiSelect && (
+            <button
+              className="modal-footer-btn active"
+              onClick={() => onConfirm(Object.values(selectedMap))}
+              disabled={Object.keys(selectedMap).length === 0}
+            >
+              선택 완료 ({Object.keys(selectedMap).length})
+            </button>
           )}
           <button className="modal-footer-btn" onClick={onClose}>취소</button>
         </div>
