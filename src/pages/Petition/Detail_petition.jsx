@@ -277,7 +277,7 @@ function DetailPetition() {
         id: result.complaint_id,
         title: result.title,
         dept: departmentsData?.find(d => d.code === result.department_code)?.name || result.department_code,
-        date: '날짜 정보 없음',
+        date: result.received_date || '날짜 정보 없음',
         status: STATUS_CODE_MAP[result.status_code] || result.status_code || '상태 미지정',
         fullContent: `[민원 요지]\n${result.content}\n\n[답변 내용]\n${result.answer}`,
         answerContent: result.answer || ''
