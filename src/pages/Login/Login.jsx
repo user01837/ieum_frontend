@@ -136,7 +136,7 @@ export default function Login() {
             )}
 
             {deptError && (
-              <div className={`${styles['field-error']} show`}>소속 부서를 선택해 주세요.</div>
+              <div className={`${styles['field-error']} show`}>* 소속 부서를 선택해 주세요.</div>
             )}
           </div>
 
