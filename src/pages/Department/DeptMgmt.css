@@ -329,7 +329,7 @@
   white-space: nowrap;
 }
 
-.pos-badge--과장  { background: var(--navy); color: #fff; }
+.pos-badge--부장 { background: #D6E4FE; color: var(--navy); }
 .pos-badge--팀장  { background: var(--blue-soft); color: var(--navy); }
 .pos-badge--주무관 { background: var(--bg); color: var(--ink-soft); }
 

@@ -9,8 +9,8 @@ import { useDepartmentsQuery, useDepartmentMembersQuery } from '../../hooks/quer
 import { useComplaintsSummaryQuery, useDueSoonComplaintsQuery, useTasksSummaryQuery } from '../../hooks/queries/useDashboardQuery';
 import { useNavigate } from 'react-router-dom';
 
-const POSITION_RANK = { 과장: 0, 팀장: 1, 주무관: 2 };
-const POSITION_CLASSES = ['과장', '팀장', '주무관'];
+const POSITION_RANK = { 부장: 0, 팀장: 1, 주무관: 2 };
+const POSITION_CLASSES = ['부장', '팀장', '주무관'];
 
 /* =========================================================
    서브 컴포넌트: 팝오버 (외부 클릭으로 닫힘)
@@ -469,13 +469,17 @@ function DeptMgmt() {
 
   const handleDelete = (taskId) => {
     const taskToDelete = tasks.find((t) => t.id === taskId);
-    if (window.confirm(`'${taskToDelete?.name || '해당'}' Task를 정말 삭제하시겠습니까? \n이 작업은 복구할 수 없습니다.`)) {
-      deleteTaskMutate(taskId);
+    if (window.confirm(`'${taskToDelete?.name || '해당'}' Task를 정말 삭제하시겠습니까?`)) {
+      deleteTaskMutate(taskId, {
+        onSuccess: () => {
+          dispatch({ type: 'DELETE_TASK', payload: taskId });
+        }
+      });
     }
   };
 
   const handleAddTask = (name) => {
-    createTaskMutate({ name, departmentCode: isAdmin ? selectedDeptCode : undefined });
+    createTaskMutate({ name, departmentCode: isAdmin ? selectedDeptCode : user?.department_code });
   };
 
   const handleAddAssignee = (taskId, memberId) => addAssigneeMutate({ taskId, userId: memberId });
