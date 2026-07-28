@@ -6,6 +6,7 @@ import useAuthStore from "../store/useAuthStore";
 import { getMe } from "../api/auth";
 
 import Login from "../pages/Login/Login";
+import Apply from "../pages/Apply/Apply";
 import PetitionList from "../pages/Petition/Petition_list";
 import DetailPetition from "../pages/Petition/Detail_petition";
 import Home from "../pages/Home/Home";
@@ -90,6 +91,10 @@ const router = createBrowserRouter([
   {
     path: "/login",
     element: <Login />,
+  },
+  {
+    path: "/apply",
+    element: <Apply />,
   },
   {
     element: (

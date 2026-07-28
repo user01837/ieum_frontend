@@ -133,3 +133,16 @@ export const createDraftAnswer = async (payload) => {
   const response = await api.post('/ai/draft-answer', payload);
   return response.data;
 };
+
+/**
+ * 시민이 로그인 없이 민원을 접수하는 공개 API (외부 민원 접수 API를 그대로 재사용)
+ * @param {object} payload - { title, content }
+ */
+export const submitExternalPetition = async ({ title, content }) => {
+  const response = await api.post(
+    '/petitions/external',
+    { title, content },
+    { headers: { 'X-API-Key': import.meta.env.VITE_EXTERNAL_PETITION_API_KEY } }
+  );
+  return response.data;
+};

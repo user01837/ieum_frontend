@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { answerPetition, tempSavePetition, deleteAttachment, findSimilarPetitions, createDraftAnswer } from '../../api/petition';
+import { answerPetition, tempSavePetition, deleteAttachment, findSimilarPetitions, createDraftAnswer, submitExternalPetition } from '../../api/petition';
 import { useNavigate } from 'react-router-dom';
 
 export const useCompletePetitionMutation = () => {
@@ -63,6 +63,17 @@ export const useDeleteAttachmentMutation = () => {
       const message = error.response?.data?.detail || "파일 삭제 중 오류가 발생했습니다.";
       alert(message);
     },
+  });
+};
+
+/**
+ * 민원 접수 공개 폼(/apply)에서 쓰는 Mutation
+ * @param {object} options - react-query useMutation options
+ */
+export const useSubmitExternalPetitionMutation = (options) => {
+  return useMutation({
+    mutationFn: submitExternalPetition,
+    ...options,
   });
 };
 
