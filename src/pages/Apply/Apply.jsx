@@ -5,19 +5,6 @@ import { useQuery } from "@tanstack/react-query";
 import { getDepartments } from "../../api/dept";
 import { useSubmitExternalPetitionMutation } from "../../hooks/mutations/usePetitionMutations";
 
-function addDays(date, days) {
-  const result = new Date(date);
-  result.setDate(result.getDate() + days);
-  return result;
-}
-
-function formatDate(date) {
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, "0");
-  const d = String(date.getDate()).padStart(2, "0");
-  return `${y}-${m}-${d}`;
-}
-
 export default function Apply() {
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
@@ -37,10 +24,11 @@ export default function Apply() {
       setResult({
         petitionId: data.petitionId,
         departmentCode: data.departmentCode,
-        dueDate: formatDate(addDays(new Date(), 14)),
+        dueDate: data.dueDate,
       });
     },
-    onError: () => {
+    onError: (error) => {
+      console.error('민원 접수 실패:', error);
       setSubmitError("일시적인 오류로 접수에 실패했습니다. 잠시 후 다시 시도해주세요.");
     },
   });

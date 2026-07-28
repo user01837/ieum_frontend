@@ -141,8 +141,11 @@ export const createDraftAnswer = async (payload) => {
 export const submitExternalPetition = async ({ title, content }) => {
   const response = await api.post(
     '/petitions/external',
-    { title, content },
-    { headers: { 'X-API-Key': import.meta.env.VITE_EXTERNAL_PETITION_API_KEY } }
+    { title: title.trim(), content },
+    {
+      headers: { 'X-API-Key': import.meta.env.VITE_EXTERNAL_PETITION_API_KEY },
+      skipAuthRedirect: true,
+    }
   );
   return response.data;
 };

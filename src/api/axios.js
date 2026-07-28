@@ -47,6 +47,11 @@ api.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
+    // 로그인 필요 없는 공개 요청(예: 민원 접수 공개 폼)은 401이어도 로그인 페이지로 보내지 않음
+    if (originalRequest?.skipAuthRedirect) {
+      return Promise.reject(error);
+    }
+
     // 401 에러이고, 재시도된 요청이 아닐 경우
     if (error.response?.status === 401 && !originalRequest._retry) {
       // 이미 토큰 재발급이 진행 중인 경우, 현재 요청을 큐에 추가하고 대기
