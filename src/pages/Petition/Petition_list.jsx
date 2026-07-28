@@ -103,7 +103,7 @@ function PetitionList() {
 
     const scopeOptions = useMemo(() => {
         if (isAdmin) {
-            const deptOptions = departments.map(d => ({ key: d.code, label: d.name }));
+            const deptOptions = departments.filter(d => d.code !== "09").map(d => ({ key: d.code, label: d.name }));
             return [{ key: 'ALL_DEPTS', label: '전체 부서' }, ...deptOptions];
         }
         return nonAdminScopeOptions;

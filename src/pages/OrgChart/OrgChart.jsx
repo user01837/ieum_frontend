@@ -1,5 +1,6 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import './OrgChart.css';
+import '../Petition/Petition_list.css'; // 공용 드롭다운 스타일 추가
 import { useDepartmentsQuery, useDepartmentMembersQuery } from '../../hooks/queries/useDeptQuery';
 
 // 화이트리스트: 이 값들만 정식 직책으로 인식 (관리자 추가)
@@ -7,6 +8,8 @@ const KNOWN_POSITIONS = ["부장", "팀장", "주무관", "관리자"];
 
 export default function OrgChart() {
   const [selectedDeptCode, setSelectedDeptCode] = useState(null);
+  const [isDeptOpen, setIsDeptOpen] = useState(false);
+  const deptDropdownRef = useRef(null);
 
   const { data: departments, isLoading: isLoadingDepts } = useDepartmentsQuery();
 
@@ -17,11 +20,22 @@ export default function OrgChart() {
     }
   }, [departments, selectedDeptCode]);
 
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (deptDropdownRef.current && !deptDropdownRef.current.contains(e.target)) {
+        setIsDeptOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
   const { data: members, isLoading: isLoadingMembers } = useDepartmentMembersQuery(selectedDeptCode);
 
   // 부서 변경 핸들러
-  const handleDeptChange = (e) => {
-    setSelectedDeptCode(e.target.value);
+  const handleDeptSelect = (deptCode) => {
+    setSelectedDeptCode(deptCode);
+    setIsDeptOpen(false);
   };
 
   // 이름 이니셜 추출 함수 (뒤의 2글자 반환)
@@ -67,15 +81,28 @@ export default function OrgChart() {
         <div className="org-panel-header">
           <h2>조직 구성</h2>
           <div className="org-panel-controls">
-            <select id="deptSelect" value={selectedDeptCode || ''} onChange={handleDeptChange} disabled={isLoadingDepts}>
-              {isLoadingDepts ? (
-                <option>부서 로딩중...</option>
-              ) : (
-                departments?.map(dept => (
-                  <option key={dept.code} value={dept.code}>{dept.name}</option>
-                ))
-              )}
-            </select>
+            <div className={`dropdown-wrap ${isDeptOpen ? "open" : ""}`} ref={deptDropdownRef} style={{minWidth: '150px'}}>
+              <div className="dropdown" onClick={() => !isLoadingDepts && setIsDeptOpen(p => !p)}>
+                  <span>
+                      {isLoadingDepts 
+                          ? '부서 로딩중...' 
+                          : departments?.find(d => d.code === selectedDeptCode)?.name || '부서 선택'
+                      }
+                  </span>
+                  <svg className="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="m6 9 6 6 6-6"/></svg>
+              </div>
+              <div className="dropdown-menu">
+                  {departments?.map(dept => (
+                      <div 
+                          key={dept.code} 
+                          className={`dropdown-item ${selectedDeptCode === dept.code ? 'active' : ''}`} 
+                          onClick={() => handleDeptSelect(dept.code)}
+                      >
+                          {dept.name}
+                      </div>
+                  ))}
+              </div>
+            </div>
             <span className="org-total-count">총 <strong>{members?.length || 0}</strong>명</span>
           </div>
         </div>
