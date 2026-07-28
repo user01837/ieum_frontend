@@ -404,24 +404,6 @@ export default function Admin() {
                 onPageChange={setCurrentPage}
               />
               )}
-
-              {/* 페이지 크기 */}
-              <div style={{ position: 'absolute', right: 16 }}>
-                <div className={`dropdown-wrap ${isPageSizeOpen ? 'open' : ''}`} ref={pageSizeRef}>
-                  <div className="dropdown" onClick={() => setIsPageSizeOpen(p => !p)}>
-                    <span>{pageSize}개씩 보기</span>
-                    <svg className="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="m6 9 6 6 6-6" /></svg>
-                  </div>
-                  <div className="dropdown-menu">
-                    {PAGE_SIZE_OPTIONS.map(s => (
-                      <div key={s} className={`dropdown-item ${pageSize === s ? 'active' : ''}`}
-                        onClick={() => { setPageSize(s); setIsPageSizeOpen(false); setCurrentPage(1); }}>
-                        {s}개씩 보기
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
             </div>
           </div>
 
