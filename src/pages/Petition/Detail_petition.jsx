@@ -17,14 +17,18 @@ import '../../styles/global.css';
 
 const STATUS_CLASS_MAP = {
   '대기중': 'wait',
+  '확인중': 'check',
   '처리중': 'progress',
   '완료': 'done',
 };
 
+
+
 const STATUS_CODE_MAP = {
   "01": "대기중",
-  "02": "처리중",
-  "03": "완료",
+  "02": "확인중",
+  "03": "처리중",
+  "04": "완료"
 }
 
 const isImageFile = (fileName) => {
@@ -497,7 +501,7 @@ function DetailPetition() {
     );
   }
 
-  const isCompleted = complaint.statusCode === '03';
+  const isCompleted = complaint.statusCode === '04';
 
   return (
     <div className={`split-layout ${isCaseDetailOpen || isKnowhowPanelOpen ? 'split-active' : ''}`}>

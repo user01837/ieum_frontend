@@ -11,12 +11,14 @@ import { useDepartmentsQuery } from '../../hooks/queries/useDeptQuery.js';
 const statusOptions = [
     { key: 'all', label: '전체' },
     { key: '01', label: '대기중' },
-    { key: '02', label: '처리중' },
-    { key: '03', label: '완료' },
+    { key: '02', label: '확인중' },
+    { key: '03', label: '처리중' },
+    { key: '04', label: '완료' },
 ];
 
 const STATUS_CLASS_MAP = {
     '대기중': 'wait',
+    '확인중': 'check',
     '처리중': 'progress',
     '완료': 'done',
 };
