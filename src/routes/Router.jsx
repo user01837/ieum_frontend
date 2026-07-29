@@ -21,6 +21,9 @@ import Knowl from "../pages/knowledge/knowl";
 import DetailKnowl from "../pages/knowledge/KnowlDetail";
 import KnowlCreate from "../pages/knowledge/KnowlCreate";
 import ChatPage from "../pages/Chat/ChatPage";
+import AnnouncementList from "../pages/Announcement/AnnouncementList";
+import AnnouncementDetail from "../pages/Announcement/AnnouncementDetail";
+import AnnouncementForm from "../pages/Announcement/AnnouncementForm";
 
 function protectedLoader() {
   const { token } = useAuthStore.getState();
@@ -126,7 +129,7 @@ const router = createBrowserRouter([
       {
         path: "projects/new",
         element: <ProjectCreate />,
-        loader: nonAdminLoader 
+        loader: nonAdminLoader
       },
       {
         path: "projects/:id",
@@ -157,6 +160,24 @@ const router = createBrowserRouter([
         path: "admin",
         element: <Admin />,
         loader: adminLoader // 관리자 전용 loader 적용
+      },
+      {
+        path: "announcements",
+        element: <AnnouncementList />
+      },
+      { 
+        path: "announcements/:id",
+        element: <AnnouncementDetail />
+      },
+      { 
+        path: "announcements/new",
+        element: <AnnouncementForm />,
+        loader: deptManagerLoader
+      },
+      { 
+        path: "announcements/:id/edit",
+        element: <AnnouncementForm />,
+        loader: deptManagerLoader
       },
     ],
   },
