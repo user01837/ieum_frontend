@@ -139,7 +139,7 @@ function ChatPage() {
                 type="text"
                 value={draft}
                 onChange={(e) => setDraft(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleSend()}
+                onKeyDown={(e) => e.key === 'Enter' && !e.nativeEvent.isComposing && handleSend()}
                 placeholder="메시지를 입력하세요"
               />
               <button onClick={handleSend}>전송</button>
