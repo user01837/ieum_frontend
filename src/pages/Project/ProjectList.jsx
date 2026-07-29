@@ -82,16 +82,16 @@ export default function ProjectList() {
 
       <div className="project-toolbar">
         {/* 윗줄: 새 프로젝트 생성 버튼 */}
-          {!isAdmin && (
-        <div className="project-toolbar-top">
+        {!isAdmin && (
+          <div className="project-toolbar-top">
             <div className="project-newbtn" onClick={() => navigate("/projects/new")}>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3">
                 <path d="M12 5v14M5 12h14" />
               </svg>
               새 프로젝트 생성
             </div>
-        </div>
-          )}
+          </div>
+        )}
 
         {/* 아랫줄: 드롭다운 + 검색 */}
         <div className="project-toolbar-bottom">
@@ -262,16 +262,11 @@ export default function ProjectList() {
                 <div className="project-title">{project.name}</div>
                 <div className="project-subline">{project.departmentName}</div>
               </div>
-              <span className="status">
+              <span className="status" style={{ justifyContent: 'center' }}>
                 {isAdmin ? "전체" : (ROLE_LABEL[project.roleType] ?? "-")}
               </span>
-              <span className="status">
-                <span
-                  className="dot"
-                  style={{
-                    background: project.stageName === "승인완료" ? "var(--good)" : "var(--blue)"
-                  }}
-                />
+              <span className="status" style={{ justifyContent: 'flex-start' }}>
+                <span className="dot" style={{ background: project.stageName === "승인완료" ? "var(--good)" : "var(--blue)" }} />
                 {project.stageName}
               </span>
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">

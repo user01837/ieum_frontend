@@ -130,7 +130,7 @@
 
 .project-trow {
   display: grid;
-  grid-template-columns: 90px 90px 1fr 70px 65px 28px;
+  grid-template-columns: 90px 90px 1fr 100px 70px 28px;
   align-items: center;
   padding: 15px 20px;
   border-bottom: 1px solid var(--line);
@@ -167,9 +167,12 @@
   border-top: 1px solid var(--line);
 }
 
-.project-trow.head span:nth-child(4),
-.project-trow.head span:nth-child(5) {
+.project-trow.head span:nth-child(4) {
   text-align: center;
+}
+
+.project-trow.head span:nth-child(5) {
+  text-align: left;
 }
 
 .project-trow .status {
