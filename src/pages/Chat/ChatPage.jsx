@@ -21,17 +21,22 @@ function ChatPage() {
   const markReadMutation = useMarkChatRoomReadMutation();
 
   useEffect(() => {
+    // 읽음 처리는 REST 호출이라 WebSocket 연결 상태와 무관합니다.
+    // 소켓이 끊겨있거나 재연결 백오프 중이어도(최대 15초) 방을 선택/전환하면 즉시 호출되어야 합니다.
+    if (!selectedRoomId) return;
+    markReadMutation.mutate(selectedRoomId, {
+      onError: () => setRoomError('읽음 처리에 실패했습니다.'),
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedRoomId]);
+
+  useEffect(() => {
     // 소켓이 연결되어 있을 때만 active_room을 보낼 수 있습니다.
     // isConnected가 false -> true로 바뀔 때(최초 연결/재연결 모두)도 이 effect가 다시 실행되어
     // 현재 선택된 방을 서버에 다시 알립니다.
     if (!isConnected) return undefined;
 
     setActiveRoom(selectedRoomId);
-    if (selectedRoomId) {
-      markReadMutation.mutate(selectedRoomId, {
-        onError: () => setRoomError('읽음 처리에 실패했습니다.'),
-      });
-    }
     return () => setActiveRoom(null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedRoomId, isConnected]);
