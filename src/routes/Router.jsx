@@ -20,6 +20,7 @@ import Admin from "../pages/Admin/Admin";
 import Knowl from "../pages/knowledge/knowl";
 import DetailKnowl from "../pages/knowledge/KnowlDetail";
 import KnowlCreate from "../pages/knowledge/KnowlCreate";
+import ChatPage from "../pages/Chat/ChatPage";
 
 function protectedLoader() {
   const { token } = useAuthStore.getState();
@@ -142,6 +143,10 @@ const router = createBrowserRouter([
       {
         path: "knowledge/:id",
         element: <DetailKnowl />,
+      },
+      {
+        path: "chat",
+        element: <ChatPage />,
       },
       {
         path: "departments",

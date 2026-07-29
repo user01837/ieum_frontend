@@ -4,9 +4,12 @@ import "../styles/global.css";
 import Header from "../components/header/Header";
 import { format } from 'date-fns';
 import Chatbot from "../components/chatbot/Chatbot.jsx";
+import { ChatSocketProvider } from "../store/ChatSocketContext";
+import { useFcmToken } from "../hooks/useFcmToken";
 
 function MainLayout() {
   const outlet = useOutlet();
+  useFcmToken();
   const location = useLocation();
   const formattedDate = format(new Date(), 'yyyy년 M월 d일 (E)');
 
@@ -30,6 +33,9 @@ function MainLayout() {
     if (path.startsWith("/admin")) {
       return "관리자";
     }
+    if (path.startsWith("/chat")) {
+      return "채팅";
+    }
     return "IEUM";
   };
 
@@ -39,16 +45,18 @@ function MainLayout() {
     outlet?.props?.children?.props?.isCaseDetailOpen === true;
 
   return (
-    <div className="layout">
-      <Sidebar />
+    <ChatSocketProvider>
+      <div className="layout">
+        <Sidebar />
 
-      {/* isSplitViewActive가 true일 때 'no-max-width' 클래스 추가 */}
-      <main className={`content ${isSplitViewActive ? 'no-max-width' : ''}`}>
-        <Header title={getTitle()} userName="박주임" currentDate={formattedDate} />
-        <Outlet />
-        <Chatbot />
-      </main>
-    </div>
+        {/* isSplitViewActive가 true일 때 'no-max-width' 클래스 추가 */}
+        <main className={`content ${isSplitViewActive ? 'no-max-width' : ''}`}>
+          <Header title={getTitle()} userName="박주임" currentDate={formattedDate} />
+          <Outlet />
+          <Chatbot />
+        </main>
+      </div>
+    </ChatSocketProvider>
   );
 }
 
