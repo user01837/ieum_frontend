@@ -52,7 +52,7 @@
 .due-date { color: var(--danger-soft); font-weight: 600; }
 .status{display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:700;color:var(--ink);padding:4px 2px;}
 .status .dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
-.status.wait .dot{background:#3d3d3d;}
+.status.wait .dot{background:#919191;}
 .status.check .dot{background:#E08A2B;}
 .status.progress .dot{background:#2453D8;}
 .status.done .dot{background:#189A5C;}

@@ -79,7 +79,7 @@
   flex-shrink: 0;
 }
 
-.status.wait .dot { background: #3d3d3d; }
+.status.wait .dot { background: #919191; }
 .status.check .dot { background: #E08A2B; }
 .status.progress .dot { background: #2453D8; }
 .status.done .dot { background: #189A5C; }

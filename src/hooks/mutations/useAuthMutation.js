@@ -32,7 +32,7 @@ export const useLoginMutation = () => {
 
         // 로그인 성공 후 무조건 메인 페이지로 이동합니다.
         // 비밀번호 변경이 필요하면 MainLayout에서 모달이 뜰 것입니다.
-        navigate('/petitions');
+        navigate('/');
       } else {
         // 응답 데이터가 예상과 다를 경우 처리
         console.error('Login successful, but user data or token missing in response.', response.data);
