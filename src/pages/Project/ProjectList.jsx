@@ -20,7 +20,7 @@ export default function ProjectList() {
   const [roleFilter, setRoleFilter] = useState(null);
   const [statusFilter, setStatusFilter] = useState(null);
   const SCOPE_OPTIONS = ["ALL", "MY", "PREDECESSOR"];
-  const SCOPE_LABEL = { "ALL": "전체", "MY": "내 업무", "PREDECESSOR": "전임자" };
+  const SCOPE_LABEL = { "ALL": "전체", "MY": "내 사업", "PREDECESSOR": "전임자" };
   const ROLE_OPTIONS = [null, "01", "02"];
   const ROLE_LABEL = { null: "전체", "01": "주관", "02": "협력" };
   const STATUS_OPTIONS = [null, "01", "02"];
@@ -99,7 +99,7 @@ export default function ProjectList() {
           {isAdmin ? null : (
             <div className={`dropdown-wrap ${isScopeOpen ? "open" : ""}`} ref={scopeRef}>
               <div className="dropdown" onClick={() => setIsScopeOpen((p) => !p)}>
-                <span>{SCOPE_LABEL[scopeFilter]}</span>
+                <span>범위: {SCOPE_LABEL[scopeFilter]}</span>
                 <svg className="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                   <path d="m6 9 6 6 6-6" />
                 </svg>
@@ -157,7 +157,7 @@ export default function ProjectList() {
           {!isAdmin && (
             <div className={`dropdown-wrap ${isRoleOpen ? "open" : ""}`} ref={roleRef}>
               <div className="dropdown" onClick={() => setIsRoleOpen((p) => !p)}>
-                <span>{ROLE_LABEL[roleFilter]}</span>
+                <span>역할: {ROLE_LABEL[roleFilter]}</span>
                 <svg className="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                   <path d="m6 9 6 6 6-6" />
                 </svg>
