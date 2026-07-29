@@ -27,3 +27,11 @@ export const getTasksSummary = async (departmentCode) => {
     const { data } = await api.get('/dashboard/tasks/summary', { params });
     return data;
 };
+
+/**
+ * 사용자 홈 대시보드 데이터 조회 API
+ */
+export const getHomeDashboardData = async () => {
+    const { data } = await api.get('/home');
+    return data;
+};

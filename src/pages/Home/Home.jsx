@@ -1,14 +1,17 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { Chart as ChartJS, ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement } from 'chart.js';
 import { Doughnut, Bar } from 'react-chartjs-2';
+import { Link, useNavigate } from 'react-router-dom';
 import './Home.css';
 import useAuthStore from '../../store/useAuthStore';
+import { useHomeDashboardQuery } from '../../hooks/queries/useDashboardQuery';
 
 ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement);
 
 export default function Home() {
   const user = useAuthStore((state) => state.user);
   const isAdmin = useMemo(() => user?.system_role_code === '02', [user]);
+  const navigate = useNavigate();
 
   // 클라이언트 사이드 렌더링 시점에서만 UI를 그리도록 하여
   // 서버/클라이언트 간 불일치(hydration mismatch) 오류를 방지합니다.
@@ -16,6 +19,21 @@ export default function Home() {
   useEffect(() => {
     setIsClient(true);
   }, []);
+
+  // --- API 데이터 로드 ---
+  const { data: dashboardData, isLoading, isError } = useHomeDashboardQuery({
+    enabled: isClient && !isAdmin, // 관리자가 아닐 때만 이 쿼리를 실행합니다.
+  });
+
+  // API 응답 데이터 구조 분해 할당
+  const {
+    myPetitionSummary = { total: 0, waiting: 0, checked: 0, inProgress: 0, completed: 0 },
+    announcements = [],
+    urgentPetitions = [],
+    recentPetitions = [],
+    myProjects = [],
+  } = dashboardData || {};
+
   // ==========================================
   // 1. 일반 직원용 차트 데이터
   // ==========================================
@@ -23,7 +41,12 @@ export default function Home() {
     labels: ['대기중', '확인중', '처리중', '완료'],
     datasets: [
       {
-        data: [30, 50, 20, 2],
+        data: [
+          myPetitionSummary.waiting,
+          myPetitionSummary.checked,
+          myPetitionSummary.inProgress,
+          myPetitionSummary.completed,
+        ],
         backgroundColor: ['#919191', '#E08A2B', '#2563eb', '#10b981'],
         borderWidth: 0,
       },
@@ -83,6 +106,19 @@ export default function Home() {
     ],
   };
 
+  // --- 상태별 색상/클래스 맵 ---
+  const statusColorClassMap = {
+    '대기중': 'text-amber',
+    '확인중': 'text-amber', // '확인중'도 '대기중'과 유사한 주의 상태로 간주
+    '처리중': 'text-blue',
+    '완료': 'text-emerald',
+  };
+
+  const projectStageMap = {
+    '저장': { className: 'in-progress', text: '저장' },
+    '승인완료': { className: 'planning', text: '승인완료' },
+  };
+
   // 사용자 정보가 로드되기 전까지 로딩 상태를 표시합니다.
   if (!isClient || !user) {
     return (
@@ -91,6 +127,11 @@ export default function Home() {
       </div>
     );
   }
+
+  // 직원 대시보드 데이터 로딩/에러 처리
+  if (!isAdmin && isLoading) return <div className="dashboard-container" style={{ padding: '40px', textAlign: 'center' }}>대시보드 데이터를 불러오는 중입니다...</div>;
+  if (!isAdmin && isError) return <div className="dashboard-container" style={{ padding: '40px', textAlign: 'center', color: 'var(--danger)' }}>데이터 로딩 중 오류가 발생했습니다.</div>;
+
 
   return (
     <div className="dashboard-container">
@@ -267,18 +308,18 @@ export default function Home() {
                   <h3 className="card-title">내 민원 현황</h3>
                   <div className="status-flex">
                     <div className="status-info">
-                      <div className="status-total">이번 달 총 민원 수: 102건</div>
+                      <div className="status-total">이번 달 총 민원 수: {myPetitionSummary.total}건</div>
                       <div className="status-item">
-                        <span>대기 중</span> <span style={{ color: '#919191' }} className="font-bold">30건</span>
+                        <span>대기 중</span> <span style={{ color: '#919191' }} className="font-bold">{myPetitionSummary.waiting}건</span>
                       </div>
                       <div className="status-item">
-                        <span>확인 중</span> <span style={{ color: '#E08A2B' }} className="font-bold">50건</span>
+                        <span>확인 중</span> <span style={{ color: '#E08A2B' }} className="font-bold">{myPetitionSummary.checked}건</span>
                       </div>
                       <div className="status-item">
-                        <span>처리 중</span> <span className="text-blue font-bold">20건</span>
+                        <span>처리 중</span> <span className="text-blue font-bold">{myPetitionSummary.inProgress}건</span>
                       </div>
                       <div className="status-item">
-                        <span>처리 완료</span> <span className="text-emerald font-bold">2건</span>
+                        <span>처리 완료</span> <span className="text-emerald font-bold">{myPetitionSummary.completed}건</span>
                       </div>
                     </div>
                     <div className="chart-box-sm">
@@ -290,25 +331,21 @@ export default function Home() {
                 <div className="card">
                   <div className="card-header-flex">
                     <h3 className="card-title">공지사항</h3>
-                    <a href="#notice" className="more-btn">더보기 +</a>
+                    <Link to="/notice" className="more-btn">더보기 +</Link>
                   </div>
                   <ul className="simple-list">
-                    <li>
-                      <span className="list-title">[안내] 2026년 하반기 교통 시스템 점검 일정</span>
-                      <span className="list-date">2026.07.28</span>
-                    </li>
-                    <li>
-                      <span className="list-title">[중요] 민원 처리 기한 준수 및 가이드라인 재안내</span>
-                      <span className="list-date">2026.07.25</span>
-                    </li>
-                    <li>
-                      <span className="list-title">[업데이트] 공공이음 대시보드 신규 기능 적용</span>
-                      <span className="list-date">2026.07.20</span>
-                    </li>
-                    <li>
-                      <span className="list-title">[안내] 여름철 개인정보보호 및 보안 수칙 점검</span>
-                      <span className="list-date">2026.07.15</span>
-                    </li>
+                    {announcements.length > 0 ? (
+                      announcements.slice(0, 4).map(notice => (
+                        <li key={notice.id}>
+                          <span className="list-title">{notice.title}</span>
+                          <span className="list-date">{notice.date}</span>
+                        </li>
+                      ))
+                    ) : (
+                      <li style={{ textAlign: 'center', color: 'var(--ink-tertiary)', fontSize: '12px', padding: '20px 0' }}>
+                        등록된 공지사항이 없습니다.
+                      </li>
+                    )}
                   </ul>
                 </div>
               </div>
@@ -318,18 +355,22 @@ export default function Home() {
                 <div className="card">
                   <h3 className="card-title">처리 기한 임박 민원</h3>
                   <div className="alert-list">
-                    <div className="alert-item alert-danger">
-                      <span className="font-bold">[긴급] 주차장 출입 차단기 오류로 인한 정체</span>
-                      <span className="alert-badge-danger">오늘 만료</span>
-                    </div>
-                    <div className="alert-item alert-warning">
-                      <span>[주의] 캠퍼스 가로등 고장 신고 (3건 누적)</span>
-                      <span className="alert-badge-warning">D-1</span>
-                    </div>
-                    <div className="alert-item alert-info">
-                      <span>[일반] 학생식당 앞 셔틀버스 승강장 개선 요청</span>
-                      <span className="alert-badge-info">D-3</span>
-                    </div>
+                    {urgentPetitions.length > 0 ? (
+                      urgentPetitions.map(p => {
+                        const urgency = p.dDay <= 0 ? 'danger' : p.dDay <= 2 ? 'warning' : 'info';
+                        const badgeText = p.dDay <= 0 ? '오늘 만료' : `D-${p.dDay}`;
+                        return (
+                          <Link to={`/petitions/${p.complaintId}`} key={p.complaintId} className={`alert-item alert-${urgency}`}>
+                            <span className={urgency === 'danger' ? 'font-bold' : ''}>{p.title}</span>
+                            <span className={`alert-badge-${urgency}`}>{badgeText}</span>
+                          </Link>
+                        );
+                      })
+                    ) : (
+                      <div style={{ textAlign: 'center', color: 'var(--ink-tertiary)', fontSize: '12px', padding: '20px 0' }}>
+                        기한이 임박한 민원이 없습니다.
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -339,7 +380,7 @@ export default function Home() {
                 <div className="card">
                   <div className="card-header-flex">
                     <h3 className="card-title">최근 접수 민원</h3>
-                    <a href="petitions" className="more-btn">전체보기 +</a>
+                    <Link to="/petitions" className="more-btn">전체보기 +</Link>
                   </div>
                   <table className="recent-table">
                     <thead>
@@ -351,24 +392,22 @@ export default function Home() {
                       </tr>
                     </thead>
                     <tbody>
-                      <tr>
-                        <td>2026-07-13</td>
-                        <td className="text-danger font-medium">2026-07-15 (오늘)</td>
-                        <td className="font-semibold text-dark">주차장 출입 차단기 오류</td>
-                        <td className="status-dot text-blue">● 처리중</td>
-                      </tr>
-                      <tr>
-                        <td>2026-07-13</td>
-                        <td className="font-medium">2026-07-17</td>
-                        <td className="font-semibold text-dark">캠퍼스 가로등 고장 신고</td>
-                        <td className="status-dot text-amber">● 대기중</td>
-                      </tr>
-                      <tr>
-                        <td>2026-07-13</td>
-                        <td className="font-medium">2026-07-20</td>
-                        <td className="font-semibold text-dark">셔틀버스 배차 간격 조정 요청</td>
-                        <td className="status-dot text-amber">● 대기중</td>
-                      </tr>
+                      {recentPetitions.length > 0 ? (
+                        recentPetitions.map(p => (
+                          <tr key={p.complaintId} onClick={() => navigate(`/petitions/${p.complaintId}`)} style={{ cursor: 'pointer' }}>
+                            <td>{p.receivedAt?.split('T')[0]}</td>
+                            <td className="font-medium">{p.dueDate?.split('T')[0]}</td>
+                            <td className="font-semibold text-dark">{p.title}</td>
+                            <td className={`status-dot ${statusColorClassMap[p.statusName] || 'text-dark'}`}>● {p.statusName}</td>
+                          </tr>
+                        ))
+                      ) : (
+                        <tr>
+                          <td colSpan="4" style={{ textAlign: 'center', color: 'var(--ink-tertiary)', fontSize: '12px', padding: '20px 0' }}>
+                            최근 접수된 민원이 없습니다.
+                          </td>
+                        </tr>
+                      )}
                     </tbody>
                   </table>
                 </div>
@@ -376,30 +415,27 @@ export default function Home() {
                 <div className="card">
                   <div className="card-header-flex">
                     <h3 className="card-title">사업 / 프로젝트 목록</h3>
-                    <a href="projects" className="more-btn">전체보기 +</a>
+                    <Link to="/projects" className="more-btn">전체보기 +</Link>
                   </div>
                   <div className="project-list">
-                    <div className="project-item">
-                      <div className="project-info">
-                        <span className="project-name">스마트 주차 관리 시스템 구축</span>
-                        <span className="project-dept">교통부 | 주관</span>
+                    {myProjects.length > 0 ? (
+                      myProjects.map(p => {
+                        const stage = projectStageMap[p.stageName] || { className: '', text: p.stageName };
+                        return (
+                          <div key={p.projectId} className="project-item" onClick={() => navigate(`/projects/${p.projectId}`)} style={{ cursor: 'pointer' }}>
+                            <div className="project-info">
+                              <span className="project-name">{p.name}</span>
+                              <span className="project-dept">{p.departmentName} | {p.roleName}</span>
+                            </div>
+                            <span className={`project-status ${stage.className}`}>{stage.text}</span>
+                          </div>
+                        );
+                      })
+                    ) : (
+                      <div style={{ textAlign: 'center', color: 'var(--ink-tertiary)', fontSize: '12px', padding: '20px 0' }}>
+                        참여중인 프로젝트가 없습니다.
                       </div>
-                      <span className="project-status in-progress">진행중</span>
-                    </div>
-                    <div className="project-item">
-                      <div className="project-info">
-                        <span className="project-name">보행자 안전용 CPTED 가로등 교체</span>
-                        <span className="project-dept">교통부 | 협력</span>
-                      </div>
-                      <span className="project-status in-progress">진행중</span>
-                    </div>
-                    <div className="project-item">
-                      <div className="project-info">
-                        <span className="project-name">친환경 전기 셔틀버스 도입 검토</span>
-                        <span className="project-dept">교통부 | 협력</span>
-                      </div>
-                      <span className="project-status planning">기획중</span>
-                    </div>
+                    )}
                   </div>
                 </div>
               </div>
