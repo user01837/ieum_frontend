@@ -16,12 +16,15 @@ export default function ProjectList() {
   const [searchKeyword, setSearchKeyword] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const ITEMS_PER_PAGE = 10;
-  const [statusFilter, setStatusFilter] = useState("01");
-  const [scopeFilter, setScopeFilter] = useState("MY");
-  const STATUS_OPTIONS = ["01", "02"];
-  const STATUS_LABEL = { "01": "저장", "02": "승인완료" };
-  const SCOPE_OPTIONS = ["MY", "JOINED", "PREDECESSOR"];
-  const SCOPE_LABEL = { "MY": "주관", "JOINED": "참여", "PREDECESSOR": "전임자", "ADMIN": "전체" };
+  const [scopeFilter, setScopeFilter] = useState("ALL");
+  const [roleFilter, setRoleFilter] = useState(null);
+  const [statusFilter, setStatusFilter] = useState(null);
+  const SCOPE_OPTIONS = ["ALL", "MY", "PREDECESSOR"];
+  const SCOPE_LABEL = { "ALL": "전체", "MY": "내 업무", "PREDECESSOR": "전임자" };
+  const ROLE_OPTIONS = [null, "01", "02"];
+  const ROLE_LABEL = { null: "전체", "01": "주관", "02": "협력" };
+  const STATUS_OPTIONS = [null, "01", "02"];
+  const STATUS_LABEL = { null: "전체", "01": "저장", "02": "승인완료" };
   const scopeRef = useRef(null);
   const statusRef = useRef(null);
   const user = useAuthStore((state) => state.user);
@@ -30,6 +33,8 @@ export default function ProjectList() {
   const [deptFilter, setDeptFilter] = useState(null);
   const [isDeptOpen, setIsDeptOpen] = useState(false);
   const deptRef = useRef(null);
+  const roleRef = useRef(null);
+  const [isRoleOpen, setIsRoleOpen] = useState(false);
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -42,6 +47,9 @@ export default function ProjectList() {
       if (deptRef.current && !deptRef.current.contains(e.target)) {
         setIsDeptOpen(false);
       }
+      if (roleRef.current && !roleRef.current.contains(e.target)) {
+        setIsRoleOpen(false);
+      }
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
@@ -49,6 +57,7 @@ export default function ProjectList() {
 
   const { data, isLoading } = useProjectsQuery({
     scope: scopeFilter,
+    role: roleFilter,
     stage: statusFilter,
     page: currentPage - 1,
     size: ITEMS_PER_PAGE,
@@ -73,16 +82,16 @@ export default function ProjectList() {
 
       <div className="project-toolbar">
         {/* 윗줄: 새 프로젝트 생성 버튼 */}
-        <div className="project-toolbar-top">
           {!isAdmin && (
+        <div className="project-toolbar-top">
             <div className="project-newbtn" onClick={() => navigate("/projects/new")}>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3">
                 <path d="M12 5v14M5 12h14" />
               </svg>
               새 프로젝트 생성
             </div>
-          )}
         </div>
+          )}
 
         {/* 아랫줄: 드롭다운 + 검색 */}
         <div className="project-toolbar-bottom">
@@ -104,7 +113,6 @@ export default function ProjectList() {
                       setScopeFilter(s);
                       setIsScopeOpen(false);
                       setCurrentPage(1);
-                      if (s === "PREDECESSOR") setStatusFilter("02");
                     }}
                   >
                     {SCOPE_LABEL[s]}
@@ -145,10 +153,37 @@ export default function ProjectList() {
             </div>
           )}
 
+          {/* 역할 드롭다운 */}
+          {!isAdmin && (
+            <div className={`dropdown-wrap ${isRoleOpen ? "open" : ""}`} ref={roleRef}>
+              <div className="dropdown" onClick={() => setIsRoleOpen((p) => !p)}>
+                <span>{ROLE_LABEL[roleFilter]}</span>
+                <svg className="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <path d="m6 9 6 6 6-6" />
+                </svg>
+              </div>
+              <div className="dropdown-menu">
+                {ROLE_OPTIONS.map((r) => (
+                  <div
+                    key={String(r)}
+                    className={`dropdown-item ${roleFilter === r ? "active" : ""}`}
+                    onClick={() => {
+                      setRoleFilter(r);
+                      setIsRoleOpen(false);
+                      setCurrentPage(1);
+                    }}
+                  >
+                    {ROLE_LABEL[r]}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* stage 드롭다운 */}
           <div className={`dropdown-wrap ${isStatusOpen ? "open" : ""}`} ref={statusRef}>
             <div className="dropdown" onClick={() => setIsStatusOpen((p) => !p)}>
-              <span>{STATUS_LABEL[statusFilter]}</span>
+              <span>상태: {STATUS_LABEL[statusFilter]}</span>
               <svg className="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                 <path d="m6 9 6 6 6-6" />
               </svg>
@@ -156,7 +191,7 @@ export default function ProjectList() {
             <div className="dropdown-menu">
               {STATUS_OPTIONS.map((s) => (
                 <div
-                  key={s}
+                  key={String(s)}
                   className={`dropdown-item ${statusFilter === s ? "active" : ""}`}
                   onClick={() => { setStatusFilter(s); setIsStatusOpen(false); setCurrentPage(1); }}
                 >
@@ -206,7 +241,7 @@ export default function ProjectList() {
           <span>시작일</span>
           <span>목표일</span>
           <span>프로젝트명 / 부서명</span>
-          <span>구분</span>
+          <span>역할</span>
           <span>진행상태</span>
           <span></span>
         </div>
@@ -228,7 +263,7 @@ export default function ProjectList() {
                 <div className="project-subline">{project.departmentName}</div>
               </div>
               <span className="status">
-                {SCOPE_LABEL[project.roleType]}
+                {isAdmin ? "전체" : (ROLE_LABEL[project.roleType] ?? "-")}
               </span>
               <span className="status">
                 <span
