@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import './ChatPage.css';
 import { useChatRoomsQuery, useChatRoomMessagesQuery } from '../../hooks/queries/useChatQuery';
 import { useCreateChatRoomMutation, useMarkChatRoomReadMutation } from '../../hooks/mutations/useChatMutations';
@@ -9,7 +10,12 @@ import EmployeeSearchModal from '../../components/EmpSearchModal/EmpSearchModal'
 function ChatPage() {
   const currentUser = useAuthStore((state) => state.user);
   const { data: rooms = [], isError: isRoomsError } = useChatRoomsQuery();
-  const [selectedRoomId, setSelectedRoomId] = useState(null);
+  const [searchParams] = useSearchParams();
+  // 알림벨에서 /chat?room=123 형태로 딥링크했을 때, 해당 방을 초기 선택 상태로 사용합니다.
+  // 유효하지 않거나 접근 권한이 없는 room_id는 이후 메시지 조회(GET /chat/rooms/{id}/messages)에서
+  // 백엔드의 멤버십 검증에 의해 자연스럽게 실패하므로 여기서 별도 검증하지 않습니다.
+  const roomParam = searchParams.get('room');
+  const [selectedRoomId, setSelectedRoomId] = useState(roomParam ? Number(roomParam) : null);
   const [draft, setDraft] = useState('');
   const [isPickerOpen, setIsPickerOpen] = useState(false);
   const [sendError, setSendError] = useState('');
@@ -19,6 +25,17 @@ function ChatPage() {
   const { isConnected, sendMessage, setActiveRoom } = useChatSocketContext();
   const createRoomMutation = useCreateChatRoomMutation();
   const markReadMutation = useMarkChatRoomReadMutation();
+
+  useEffect(() => {
+    // 이미 /chat 페이지에 머무른 상태에서 알림벨을 통해 다른 room으로 다시 딥링크되는 경우
+    // (컴포넌트가 언마운트되지 않으므로 위 useState 초기값만으로는 반영되지 않음),
+    // room 쿼리 파라미터가 바뀔 때마다 동일한 setSelectedRoomId 경로로 선택 상태를 갱신합니다.
+    if (!roomParam) return;
+    const parsedRoomId = Number(roomParam);
+    if (Number.isNaN(parsedRoomId)) return;
+    setSelectedRoomId(parsedRoomId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [roomParam]);
 
   useEffect(() => {
     // 읽음 처리는 REST 호출이라 WebSocket 연결 상태와 무관합니다.
