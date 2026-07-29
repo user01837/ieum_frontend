@@ -124,13 +124,18 @@
   justify-content: space-between;
   align-items: center;
   font-size: 0.825rem;
-  padding-bottom: 0.5rem;
   border-bottom: 1px solid #f1f5f9;
+  cursor: pointer;
+  padding: 0.5rem;
+  margin: 0 -0.5rem; /* 패딩으로 인한 레이아웃 밀림 방지 */
+  border-radius: 6px;
+  transition: background-color 0.15s ease;
 }
+
+.simple-list li:hover { background-color: #f8fafc; }
 
 .simple-list li:last-child {
   border-bottom: none;
-  padding-bottom: 0;
 }
 
 .list-title {
@@ -223,11 +228,14 @@
   padding: 0.65rem 0.5rem;
 }
 
-/* ★ 상태 텍스트 세로 깨짐 방지 핵심 속성 ★ */
-.status-dot {
-  white-space: nowrap !important;
-  font-weight: 700;
-}
+/* 민원 상태 표시 (민원 목록과 동일한 디자인) */
+.status{display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:700;color:var(--ink);padding:4px 2px;}
+.status .dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+.status.wait .dot{background:#919191;}
+.status.check .dot{background:#E08A2B;}
+.status.progress .dot{background:#2453D8;}
+.status.done .dot{background:#189A5C;}
+
 
 /* 5. 사업/프로젝트 목록 */
 .project-list {

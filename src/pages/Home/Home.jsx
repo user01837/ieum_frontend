@@ -107,16 +107,16 @@ export default function Home() {
   };
 
   // --- 상태별 색상/클래스 맵 ---
-  const statusColorClassMap = {
-    '대기중': 'text-amber',
-    '확인중': 'text-amber', // '확인중'도 '대기중'과 유사한 주의 상태로 간주
-    '처리중': 'text-blue',
-    '완료': 'text-emerald',
+  const STATUS_CLASS_MAP = {
+    '대기중': 'wait',
+    '확인중': 'check',
+    '처리중': 'progress',
+    '완료': 'done',
   };
 
   const projectStageMap = {
-    '저장': { className: 'in-progress', text: '저장' },
-    '승인완료': { className: 'planning', text: '승인완료' },
+    '저장': { className: 'planning', text: '기획중' },
+    '승인완료': { className: 'in-progress', text: '진행중' },
   };
 
   // 사용자 정보가 로드되기 전까지 로딩 상태를 표시합니다.
@@ -331,12 +331,15 @@ export default function Home() {
                 <div className="card">
                   <div className="card-header-flex">
                     <h3 className="card-title">공지사항</h3>
-                    <Link to="/notice" className="more-btn">더보기 +</Link>
+                    <Link to="/announcements" className="more-btn">더보기 +</Link>
                   </div>
                   <ul className="simple-list">
                     {announcements.length > 0 ? (
-                      announcements.slice(0, 4).map(notice => (
-                        <li key={notice.id}>
+                      announcements.slice(0, 4).map((notice) => (
+                        <li
+                          key={notice.id}
+                          onClick={() => navigate(`/announcements/${notice.id}`)}
+                        >
                           <span className="list-title">{notice.title}</span>
                           <span className="list-date">{notice.date}</span>
                         </li>
@@ -398,7 +401,11 @@ export default function Home() {
                             <td>{p.receivedAt?.split('T')[0]}</td>
                             <td className="font-medium">{p.dueDate?.split('T')[0]}</td>
                             <td className="font-semibold text-dark">{p.title}</td>
-                            <td className={`status-dot ${statusColorClassMap[p.statusName] || 'text-dark'}`}>● {p.statusName}</td>
+                            <td>
+                              <span className={`status ${STATUS_CLASS_MAP[p.statusName] || ''}`}>
+                                <span className="dot"></span>{p.statusName}
+                              </span>
+                            </td>
                           </tr>
                         ))
                       ) : (

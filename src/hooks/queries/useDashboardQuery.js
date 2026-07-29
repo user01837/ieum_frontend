@@ -23,7 +23,9 @@ export const useHomeDashboardQuery = (options) => {
     return useQuery({
         queryKey: ['homeDashboard'],
         queryFn: getHomeDashboardData,
-        staleTime: 1000 * 60 * 5, // 5분
+        // 홈 화면에 진입할 때마다 최신 데이터를 불러오기 위해 staleTime을 0으로 설정합니다.
+        // 이렇게 하면 데이터가 즉시 'stale' 상태가 되어, 컴포넌트가 마운트될 때마다 refetch가 발생합니다.
+        staleTime: 0,
         refetchOnWindowFocus: false,
         ...options,
     });
