@@ -3,6 +3,7 @@ import './Header.css';
 import { useLogoutMutation } from "../../hooks/mutations/useAuthMutation";
 import { useNavigate } from 'react-router-dom';
 import useAuthStore from '../../store/useAuthStore';
+import NotificationBell from './NotificationBell';
 
 function Header({ title, currentDate }) {
   const { mutate: logoutMutate } = useLogoutMutation();
@@ -33,6 +34,7 @@ function Header({ title, currentDate }) {
     <div className="topbar">
       <h1>{title}</h1>
       <div className="topbar-right">
+        <NotificationBell />
         <span>안녕하세요, <b>{user?.name || '사용자'}</b>님</span>
         <span>|</span>
         <span>{currentDate}</span>
