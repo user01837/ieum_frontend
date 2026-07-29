@@ -6,8 +6,13 @@
 
 .ann-toolbar {
   display: flex;
-  justify-content: flex-end;
+  align-items: center;
+  justify-content: space-between;
   margin-bottom: 16px;
+}
+
+.ann-toolbar .project-search-area {
+  margin-left: 0;
 }
 
 .ann-newbtn {
@@ -25,12 +30,16 @@
 
 .ann-trow {
   display: grid;
-  grid-template-columns: 60px 1fr 100px 100px 120px;
+  grid-template-columns: 60px 1fr 100px 80px 100px 120px;
   align-items: center;
   padding: 14px 20px;
   border-bottom: 1px solid var(--line);
   column-gap: 14px;
   cursor: pointer;
+}
+
+.ann-trow .ann-meta {
+  text-align: center;
 }
 
 .ann-trow.head {
@@ -40,6 +49,7 @@
 }
 
 .ann-trow.head span {
+  text-align: center;
   font-size: 11px;
   font-weight: 700;
   color: var(--ink-soft);
@@ -47,6 +57,10 @@
 
 .ann-trow:not(.head):hover {
   background: var(--blue-soft);
+}
+
+.ann-trow.no-action {
+  grid-template-columns: 60px 1fr 100px 80px 100px;
 }
 
 .ann-num {
@@ -75,7 +89,8 @@
   gap: 6px;
 }
 
-.ann-edit-btn, .ann-del-btn {
+.ann-edit-btn,
+.ann-del-btn {
   font-size: 11.5px;
   font-weight: 600;
   padding: 5px 10px;
@@ -104,4 +119,8 @@
   padding: 16px 20px;
   background: var(--bg);
   border-top: 1px solid var(--line);
+}
+
+.ann-trow.head span:nth-child(2) {
+  text-align: left;
 }
