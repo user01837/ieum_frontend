@@ -24,9 +24,17 @@ function NotificationBell() {
 
   const unreadCount = notifications.filter((n) => !n.is_read).length;
 
+  const sortedNotifications = [...notifications].sort((a, b) => {
+    if (a.type === "ANNOUNCEMENT" && b.type !== "ANNOUNCEMENT") return -1;
+    if (a.type !== "ANNOUNCEMENT" && b.type === "ANNOUNCEMENT") return 1;
+    return 0;
+  });
+
   const handleClick = (notification) => {
     setIsOpen(false);
-    if (notification.room_id) {
+    if (notification.type === "ANNOUNCEMENT") {
+      navigate("/announcements");
+    } else if (notification.room_id) {
       markReadMutation.mutate(notification.room_id);
       navigate(`/chat?room=${notification.room_id}`);
     }
@@ -46,13 +54,15 @@ function NotificationBell() {
           {notifications.length === 0 ? (
             <div className="bell-empty">알림이 없습니다.</div>
           ) : (
-            notifications.map((n) => (
+            sortedNotifications.map((n) => (
               <div
                 key={n.notification_id}
                 className={`bell-item ${n.is_read ? '' : 'unread'}`}
                 onClick={() => handleClick(n)}
               >
-                새 채팅 메시지가 도착했습니다.
+                {n.type === "ANNOUNCEMENT"
+                  ? "새로운 공지사항이 등록되었습니다. 확인해주세요."
+                  : "새 채팅 메시지가 도착했습니다."}
               </div>
             ))
           )}
