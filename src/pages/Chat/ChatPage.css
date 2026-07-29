@@ -101,9 +101,14 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
+  /* flex 컨테이너의 기본값(stretch)이면 메시지 박스가 글자 수와 무관하게
+     항상 max-width(60%)까지 늘어나 보인다. flex-start로 바꿔 내용 크기만큼만
+     차지하게 한다 - 받는 메시지/보내는 메시지 둘 다 적용됨. */
+  align-items: flex-start;
 }
 
 .chat-message {
+  width: fit-content;
   max-width: 60%;
   background: #f3f4f6;
   border-radius: 8px;
@@ -123,16 +128,30 @@
 
 .chat-input-area {
   display: flex;
+  align-items: flex-end;
   gap: 8px;
   padding: 12px;
   border-top: 1px solid #e5e7eb;
+  /* 우측 하단에 떠 있는 챗봇 아이콘(150px + 24px 여백)과 겹치지 않도록
+     전송 버튼 쪽에 고정 여백을 둔다. */
+  padding-right: 190px;
 }
 
-.chat-input-area input {
+.chat-input-area textarea.chat-textarea {
   flex: 1;
   padding: 8px 12px;
   border-radius: 6px;
   border: 1px solid #d1d5db;
+  font-family: inherit;
+  font-size: 14px;
+  line-height: 1.4;
+  resize: none;
+  overflow-y: auto;
+  max-height: 160px;
+}
+
+.chat-input-area button {
+  flex-shrink: 0;
 }
 
 .chat-empty-state {

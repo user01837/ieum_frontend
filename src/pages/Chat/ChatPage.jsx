@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import './ChatPage.css';
 import { useChatRoomsQuery, useChatRoomMessagesQuery } from '../../hooks/queries/useChatQuery';
@@ -6,6 +6,7 @@ import { useCreateChatRoomMutation, useMarkChatRoomReadMutation } from '../../ho
 import { useChatSocketContext } from '../../store/ChatSocketContext';
 import useAuthStore from '../../store/useAuthStore';
 import EmployeeSearchModal from '../../components/EmpSearchModal/EmpSearchModal';
+import { useUserSearch } from '../../hooks/queries/useUserQuery';
 
 function ChatPage() {
   const currentUser = useAuthStore((state) => state.user);
@@ -25,6 +26,25 @@ function ChatPage() {
   const { isConnected, sendMessage, setActiveRoom } = useChatSocketContext();
   const createRoomMutation = useCreateChatRoomMutation();
   const markReadMutation = useMarkChatRoomReadMutation();
+  const textareaRef = useRef(null);
+
+  // 채팅방/메시지 API는 참여자를 사번(member_ids/sender_id)으로만 내려주므로,
+  // 화면에는 "부서 이름" 형태로 보여주기 위해 전체 직원 목록을 한 번 불러와
+  // 사번 -> {name, departmentName} 맵을 만들어 둔다.
+  const { data: allEmployees = [] } = useUserSearch({ scope: 'all' });
+  const userDisplayMap = useMemo(() => {
+    const map = {};
+    allEmployees.forEach((emp) => {
+      map[String(emp.userId)] = emp;
+    });
+    return map;
+  }, [allEmployees]);
+
+  const displayName = (userId) => {
+    const emp = userDisplayMap[String(userId)];
+    if (!emp) return String(userId);
+    return emp.departmentName ? `${emp.departmentName} ${emp.name}` : emp.name;
+  };
 
   useEffect(() => {
     // 이미 /chat 페이지에 머무른 상태에서 알림벨을 통해 다른 room으로 다시 딥링크되는 경우
@@ -62,6 +82,14 @@ function ChatPage() {
     setSendError('');
   }, [selectedRoomId]);
 
+  // 입력창 높이를 내용에 맞춰 늘렸다 줄였다 한다 (최대 높이는 CSS max-height로 제한).
+  useEffect(() => {
+    const el = textareaRef.current;
+    if (!el) return;
+    el.style.height = 'auto';
+    el.style.height = `${el.scrollHeight}px`;
+  }, [draft]);
+
   const handleSend = () => {
     if (!draft.trim() || !selectedRoomId) return;
     const sent = sendMessage(selectedRoomId, draft.trim());
@@ -93,9 +121,10 @@ function ChatPage() {
   };
 
   const roomLabel = (room) => {
-    if (room.name) return room.name;
+    // room.name은 방 생성 시점의 이름(사번/이름)만 저장되어 있어 부서 정보가 없다.
+    // 1:1/그룹 모두 항상 member_ids를 부서+이름으로 변환해 동일한 형식으로 보여준다.
     const others = room.member_ids.filter((id) => id !== currentUser?.userId);
-    return others.join(', ') || '(참여자 없음)';
+    return others.map(displayName).join(', ') || '(참여자 없음)';
   };
 
   return (
@@ -129,18 +158,25 @@ function ChatPage() {
               {isMessagesError && <div className="chat-inline-error">메시지를 불러오지 못했습니다.</div>}
               {[...messages].reverse().map((m) => (
                 <div key={m.message_id} className={`chat-message ${m.sender_id === currentUser?.userId ? 'mine' : ''}`}>
-                  <span className="chat-message-sender">{m.sender_id}</span>
+                  <span className="chat-message-sender">{displayName(m.sender_id)}</span>
                   <p>{m.content}</p>
                 </div>
               ))}
             </div>
             <div className="chat-input-area">
-              <input
-                type="text"
+              <textarea
+                ref={textareaRef}
+                rows={1}
+                className="chat-textarea"
                 value={draft}
                 onChange={(e) => setDraft(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && !e.nativeEvent.isComposing && handleSend()}
-                placeholder="메시지를 입력하세요"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !e.nativeEvent.isComposing && !e.shiftKey) {
+                    e.preventDefault();
+                    handleSend();
+                  }
+                }}
+                placeholder="메시지를 입력하세요 (Shift+Enter로 줄바꿈)"
               />
               <button onClick={handleSend}>전송</button>
             </div>
