@@ -86,7 +86,7 @@ function KnowlCreate() {
         onDrop,
         onDropRejected,
         multiple: true,
-        maxSize: 10485760, // 10MB
+        maxSize: 10485761, // 10MB
         accept: {
             'image/jpeg': ['.jpeg', '.jpg'],
             'image/png': ['.png'],

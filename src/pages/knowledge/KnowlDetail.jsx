@@ -54,8 +54,9 @@ const CATEGORY_OPTIONS = [
 function DetailKnowl() {
     const { id: knowledgeId } = useParams();
     const navigate = useNavigate();
-    const isAdmin = useMemo(() => useAuthStore.getState().user?.system_role_code === '02', []);
     const user = useAuthStore((state) => state.user);
+    // user 상태가 변경될 때마다 isAdmin 값을 다시 계산하도록 수정하여, 상태가 동기화되지 않는 문제를 해결합니다.
+    const isAdmin = useMemo(() => user?.system_role_code === '02', [user]);
 
     // API 데이터 조회 및 수정
     const { data: knowledgeData, isLoading, isError } = useKnowledgeDetailQuery(knowledgeId);
@@ -138,48 +139,34 @@ function DetailKnowl() {
         if (!isEditing || !user || !knowledgeData) {
             return false;
         }
-        return user.departmentCode === knowledgeData.department_code;
+        // 사용자의 부서 코드(user.department_code)와 지식베이스의 부서 코드가 일치하는지 확인합니다.
+        // 'departmentCode'가 아닌 'department_code'를 사용하도록 수정하여 문제를 해결합니다.
+        return user.department_code === knowledgeData.department_code;
     }, [isEditing, user, knowledgeData]);
 
     const handleDownload = useCallback(async (e, fileUrl, fileName) => {
         e.preventDefault();
         e.stopPropagation();
-    
-        if (!fileUrl) return;
-    
+
         try {
             const response = await fetch(fileUrl);
             if (!response.ok) throw new Error('파일을 불러오는데 실패했습니다.');
     
             const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
             
-            // 1. 강제 다운로드를 위해 MIME 타입을 octet-stream으로 지정
-            const downloadedBlob = new Blob([blob], { type: 'application/octet-stream' });
-            const url = window.URL.createObjectURL(downloadedBlob);
-    
-            // 2. 보이지 않는 임시 iframe 생성
-            const iframe = document.createElement('iframe');
-            iframe.style.display = 'none';
-            iframe.src = url;
-            document.body.appendChild(iframe);
-    
-            // 3. 백업용 a 태그 다운로드 동시 실행
             const link = document.createElement('a');
             link.href = url;
-            link.setAttribute('download', fileName || 'download');
+            link.download = fileName;
             document.body.appendChild(link);
             link.click();
     
-            // 4. 메모리 정리
-            setTimeout(() => {
-                iframe.remove();
-                link.remove();
-                window.URL.revokeObjectURL(url);
-            }, 1000);
+            link.remove();
+            window.URL.revokeObjectURL(url);
     
         } catch (error) {
             console.error('Download error:', error);
-            alert('다운로드 중 오류가 발생했습니다.');
+            window.open(fileUrl, '_blank', 'noopener,noreferrer');
         }
     }, []);
 
@@ -479,6 +466,14 @@ function DetailKnowl() {
                     )}
                     <div className="doc-meta">
                         <span>최초 작성자: {knowledgeData?.created_by_name || '정보 없음'}</span>
+                        {/*
+                          문서가 수정되었고, 수정자 정보가 있으며, 최초 작성자와 다른 경우에만 마지막 수정자를 표시.
+                        */}
+                        {knowledgeData?.created_at !== knowledgeData?.updated_at &&
+                            knowledgeData?.updated_by_name &&
+                            knowledgeData?.created_by_name !== knowledgeData?.updated_by_name && (
+                                <span>마지막 수정자: {knowledgeData.updated_by_name}</span>
+                            )}
                         <span>최종 수정일: {knowledgeData?.updated_at?.split('T')[0] || '정보 없음'}</span>
                     </div>
                 </div>
@@ -552,7 +547,8 @@ function DetailKnowl() {
                                         <div className="card-tags-group">
                                             <span className={`knowhow-tag ${log.tag}`}>{log.tag}</span>
                                             <span className="knowhow-author">
-                                                {log.author} · {log.updatedBy ? log.updateDate : log.date}
+                                                {/* 수정된 로그는 수정자 이름을, 그렇지 않으면 작성자 이름을 표시합니다. */}
+                                                {log.updatedBy || log.author} · {log.updatedBy ? log.updateDate : log.date}
                                                 {log.updatedBy && <span className="edited-mark">(수정됨)</span>}
                                             </span>
                                         </div>
@@ -632,7 +628,7 @@ function DetailKnowl() {
                     </div>
                 </div>
 
-                {canEditScope && (
+                {isEditing && (
                     <div className="section-card">
                         <h2 className="section-title">공개범위 설정</h2>
                         <div className="form-group" style={{marginBottom: 0}}>
@@ -644,11 +640,12 @@ function DetailKnowl() {
                                         value="01"
                                         checked={editingScopeCode === '01'}
                                         onChange={(e) => setEditingScopeCode(e.target.value)}
+                                        disabled={!canEditScope}
                                     />
                                      같은 과 공개
                                 </label>
                                 <label>
-                                    <input type="radio" name="scope" value="02" checked={editingScopeCode === '02'} onChange={(e) => setEditingScopeCode(e.target.value)} />
+                                    <input type="radio" name="scope" value="02" checked={editingScopeCode === '02'} onChange={(e) => setEditingScopeCode(e.target.value)} disabled={!canEditScope} />
                                      전체 부서 공개
                                 </label>
                             </div>

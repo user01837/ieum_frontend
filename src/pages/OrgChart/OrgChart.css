@@ -167,3 +167,9 @@ select#deptSelect {
   font-size: 13px;
   padding: 40px 0;
 }
+
+.org-staff-section.no-border {
+  border-top: none;
+  padding-top: 0;
+  margin-top: 0;
+}

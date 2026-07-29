@@ -121,7 +121,7 @@ function Sidebar() {
         <div className="avatar">{user?.name?.charAt(0) || ''}</div>
 
         <div>
-          <div className="user-name">{user?.name || '사용자'} {user?.positionName || ''}</div>
+          <div className="user-name">{user?.name || '사용자'} {user?.system_role_code === '02' ? '' : (user?.positionName || '')}</div>
           <div className="user-dept">{user?.deptName || '부서없음'}</div>
         </div>
         <div className="user-actions">

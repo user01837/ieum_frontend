@@ -17,14 +17,18 @@ import '../../styles/global.css';
 
 const STATUS_CLASS_MAP = {
   '대기중': 'wait',
+  '확인중': 'check',
   '처리중': 'progress',
   '완료': 'done',
 };
 
+
+
 const STATUS_CODE_MAP = {
   "01": "대기중",
-  "02": "처리중",
-  "03": "완료",
+  "02": "확인중",
+  "03": "처리중",
+  "04": "완료"
 }
 
 const isImageFile = (fileName) => {
@@ -226,7 +230,7 @@ function DetailPetition() {
     onDrop,
     onDropRejected, // 거부되었을 때 실행할 콜백 연결
     multiple: true,
-    maxSize: 10485760, // 10MB (10 * 1024 * 1024)
+    maxSize: 10485761, // 10MB (10 * 1024 * 1024)
     accept: { // 허용할 파일 타입 지정 (악성코드 방지)
       'image/jpeg': ['.jpeg', '.jpg'],
       'image/png': ['.png'],
@@ -497,7 +501,7 @@ function DetailPetition() {
     );
   }
 
-  const isCompleted = complaint.statusCode === '03';
+  const isCompleted = complaint.statusCode === '04';
 
   return (
     <div className={`split-layout ${isCaseDetailOpen || isKnowhowPanelOpen ? 'split-active' : ''}`}>

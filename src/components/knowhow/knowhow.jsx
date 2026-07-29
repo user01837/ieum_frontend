@@ -10,7 +10,7 @@ export default function useKnowledgeMemo() {
 
   // --- 지식베이스 선택 관련 상태 ---
   const existingCards = useMemo(() => (knowledgeListResponse?.items || []).map(item => ({
-    id: item.knowledge_id,
+    id: String(item.knowledge_id), // ID를 문자열로 변환하여 쿼리 키 일관성 유지
     title: item.title,
   })), [knowledgeListResponse]);
 
@@ -47,7 +47,18 @@ export default function useKnowledgeMemo() {
     } else {
       setTags([]);
     }
-  }, [tagsData]);
+  }, [tagsData, createLogMutation.isSuccess, createLogMutation.reset]);
+
+  // createLogMutation 성공 시 폼을 초기화하는 부수 효과
+  useEffect(() => {
+    // createLogMutation이 성공하면 폼을 초기화합니다.
+    if (createLogMutation.isSuccess) {
+      setMemoText('');
+      setNewTagInput('');
+      setTags((prevTags) => prevTags.map((t) => ({ ...t, active: false })));
+      createLogMutation.reset(); // 다음 뮤테이션을 위해 상태 리셋
+    }
+  }, [createLogMutation.isSuccess, createLogMutation.reset]);
 
   // --- 이전 로그 필터링 ---
   const [currentFilter, setCurrentFilter] = useState('all');
@@ -128,14 +139,7 @@ export default function useKnowledgeMemo() {
       data: {
         content: memoText.trim(),
         tag_ids: tagIdsToSave,
-      }
-    }, {
-      onSuccess: () => {
-        // 성공 후 폼 초기화
-        setMemoText('');
-        setNewTagInput('');
-        setTags(tags.map(t => ({ ...t, active: false })));
-      }
+      },
     });
   };
 

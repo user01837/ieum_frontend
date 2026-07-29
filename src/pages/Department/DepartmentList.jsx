@@ -55,6 +55,7 @@ function NewDashboard({ tasks, members, onOpenUrgentPanel, complaintsSummary, du
   // 1. 이번 달 민원 - API 데이터 사용
   const monthlyTotal = complaintsSummary?.total ?? 0;
   const monthlyWait = complaintsSummary?.waiting ?? 0;
+  const monthlyCheck = complaintsSummary?.checked ?? 0;
   const monthlyProgress = complaintsSummary?.inProgress ?? 0;
   const monthlyDone = complaintsSummary?.completed ?? 0;
 
@@ -74,6 +75,7 @@ function NewDashboard({ tasks, members, onOpenUrgentPanel, complaintsSummary, du
         <div className="dash-card-value">{monthlyTotal}<span className="unit">건</span></div>
         <div className="dash-card-sub">
           <span className="status-dot wait"></span>대기 {monthlyWait} &nbsp;
+          <span className="status-dot check"></span>확인 {monthlyCheck} &nbsp;
           <span className="status-dot progress"></span>처리 {monthlyProgress} &nbsp;
           <span className="status-dot done"></span>완료 {monthlyDone}
         </div>

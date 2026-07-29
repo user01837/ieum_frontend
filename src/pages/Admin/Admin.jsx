@@ -353,7 +353,7 @@ export default function Admin() {
           <div className="admin-tablewrap">
             <div className="admin-trow head">
               <span>사번</span><span>이름</span><span>부서</span>
-              <span>직급</span><span>직책</span><span>담당 Task</span>
+              <span>직책</span><span>담당 Task</span>
               <span>전임자</span><span>상태</span><span className="task-span">작업</span>
             </div>
 
@@ -369,7 +369,6 @@ export default function Admin() {
                   <span className="admin-user-id-cell">{user.userId}</span>
                   <span className="admin-user-name">{user.name}</span>
                   <span className="admin-user-dept">{user.departmentName}</span>
-                  <span className="admin-grade-text"></span> {/* 직급 정보 없음 */}
                   <span><span className={`admin-rank-badge ${user.positionName}`}>{user.positionName}</span></span>
                   <div className="admin-task-tags">
                     {user.taskNames?.slice(0, 2).map(t => <span key={t} className="admin-task-tag">{t}</span>)}
@@ -404,24 +403,6 @@ export default function Admin() {
                 onPageChange={setCurrentPage}
               />
               )}
-
-              {/* 페이지 크기 */}
-              <div style={{ position: 'absolute', right: 16 }}>
-                <div className={`dropdown-wrap ${isPageSizeOpen ? 'open' : ''}`} ref={pageSizeRef}>
-                  <div className="dropdown" onClick={() => setIsPageSizeOpen(p => !p)}>
-                    <span>{pageSize}개씩 보기</span>
-                    <svg className="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="m6 9 6 6 6-6" /></svg>
-                  </div>
-                  <div className="dropdown-menu">
-                    {PAGE_SIZE_OPTIONS.map(s => (
-                      <div key={s} className={`dropdown-item ${pageSize === s ? 'active' : ''}`}
-                        onClick={() => { setPageSize(s); setIsPageSizeOpen(false); setCurrentPage(1); }}>
-                        {s}개씩 보기
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
             </div>
           </div>
 
@@ -444,7 +425,7 @@ export default function Admin() {
 
       {/* 신규 직원 등록 / 수정 모달 */}
       {isUserFormOpen && (
-        <div className="modal-overlay" onClick={() => setIsUserFormOpen(false)}>
+        <div className="modal-overlay">
           <div className="modal-card wide" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <div>
@@ -485,9 +466,6 @@ export default function Admin() {
                       <option value="">부서를 선택하세요</option>
                       {departmentsData?.map(d => <option key={d.code} value={d.code}>{d.name}</option>)}
                     </select>
-                  </div>
-                  <div className="admin-field">
-                    {/* 직급 필드 제거됨 */}
                   </div>
                 </div>
 
