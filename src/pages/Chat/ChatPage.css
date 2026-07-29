@@ -61,12 +61,15 @@
   flex: 1;
   display: flex;
   flex-direction: column;
+  /* 우측 하단에 떠 있는 챗봇 아이콘(150px + 24px 여백)과 겹치지 않도록
+     헤더/메시지목록/입력창이 전부 공유하는 우측 여백을 여기서 한 번에 둔다. */
+  padding-right: 190px;
 }
 
 .chat-thread-header {
   display: flex;
   justify-content: flex-end;
-  padding: 8px 12px 0;
+  padding: 8px 24px 0;
 }
 
 .chat-connection-badge {
@@ -97,7 +100,7 @@
 .chat-message-list {
   flex: 1;
   overflow-y: auto;
-  padding: 16px;
+  padding: 16px 24px;
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -130,11 +133,8 @@
   display: flex;
   align-items: flex-end;
   gap: 8px;
-  padding: 12px;
+  padding: 12px 24px;
   border-top: 1px solid #e5e7eb;
-  /* 우측 하단에 떠 있는 챗봇 아이콘(150px + 24px 여백)과 겹치지 않도록
-     전송 버튼 쪽에 고정 여백을 둔다. */
-  padding-right: 190px;
 }
 
 .chat-input-area textarea.chat-textarea {
