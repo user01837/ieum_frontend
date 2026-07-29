@@ -2,6 +2,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import './EmpSearchModal.css';
 import { useUserSearch } from '../../hooks/queries/useUserQuery';
 import { useDepartmentsQuery } from '../../hooks/queries/useDeptQuery';
+import useAuthStore from '../../store/useAuthStore';
 
 function getInitials(name) {
   return name ? name.slice(-2) : '';
@@ -29,11 +30,21 @@ function EmployeeSearchModal({ currentDept, onSelect, onConfirm, onClose, forceD
     return deptFilter === 'all' ? undefined : deptFilter;
   }, [scope, initialDeptCode, deptFilter]);
 
-  const { data: employees = [], isLoading, isError } = useUserSearch({
+  const { data: rawEmployees = [], isLoading, isError } = useUserSearch({
     scope: 'all', // API 스코프는 'all'로 고정하고 departmentCode로 필터링
     departmentCode: apiDeptCode,
     keyword: query || undefined,
   });
+
+  const currentUser = useAuthStore((state) => state.user);
+
+  // multiSelect(예: 채팅 상대 선택)에서는 본인을 선택할 수 없어야 합니다.
+  // 본인만 선택한 채로 확인하면 백엔드가 "채팅 상대를 1명 이상 지정해야 합니다"로 거부하므로,
+  // 애초에 목록에서 본인을 제외해 그런 선택 자체가 불가능하도록 막습니다.
+  const employees = useMemo(() => {
+    if (!multiSelect || !currentUser?.userId) return rawEmployees;
+    return rawEmployees.filter((emp) => String(emp.userId) !== String(currentUser.userId));
+  }, [rawEmployees, multiSelect, currentUser]);
 
   const error = isError ? '직원 목록을 불러오지 못했습니다.' : null;
 
