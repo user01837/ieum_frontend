@@ -5,9 +5,11 @@ import Header from "../components/header/Header";
 import { format } from 'date-fns';
 import Chatbot from "../components/chatbot/Chatbot.jsx";
 import { ChatSocketProvider } from "../store/ChatSocketContext";
+import { useFcmToken } from "../hooks/useFcmToken";
 
 function MainLayout() {
   const outlet = useOutlet();
+  useFcmToken();
   const location = useLocation();
   const formattedDate = format(new Date(), 'yyyy년 M월 d일 (E)');
 
