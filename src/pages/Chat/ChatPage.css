@@ -63,6 +63,37 @@
   flex-direction: column;
 }
 
+.chat-thread-header {
+  display: flex;
+  justify-content: flex-end;
+  padding: 8px 12px 0;
+}
+
+.chat-connection-badge {
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 999px;
+}
+
+.chat-connection-badge.online {
+  color: #16a34a;
+  background: #dcfce7;
+}
+
+.chat-connection-badge.offline {
+  color: #b91c1c;
+  background: #fee2e2;
+}
+
+.chat-inline-error {
+  margin: 0 12px 8px;
+  padding: 6px 10px;
+  border-radius: 6px;
+  background: #fee2e2;
+  color: #b91c1c;
+  font-size: 12px;
+}
+
 .chat-message-list {
   flex: 1;
   overflow-y: auto;

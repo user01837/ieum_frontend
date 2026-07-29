@@ -8,40 +8,65 @@ import EmployeeSearchModal from '../../components/EmpSearchModal/EmpSearchModal'
 
 function ChatPage() {
   const currentUser = useAuthStore((state) => state.user);
-  const { data: rooms = [] } = useChatRoomsQuery();
+  const { data: rooms = [], isError: isRoomsError } = useChatRoomsQuery();
   const [selectedRoomId, setSelectedRoomId] = useState(null);
   const [draft, setDraft] = useState('');
   const [isPickerOpen, setIsPickerOpen] = useState(false);
+  const [sendError, setSendError] = useState('');
+  const [roomError, setRoomError] = useState('');
 
-  const { data: messages = [] } = useChatRoomMessagesQuery(selectedRoomId);
-  const { sendMessage, setActiveRoom } = useChatSocketContext();
+  const { data: messages = [], isError: isMessagesError } = useChatRoomMessagesQuery(selectedRoomId);
+  const { isConnected, sendMessage, setActiveRoom } = useChatSocketContext();
   const createRoomMutation = useCreateChatRoomMutation();
   const markReadMutation = useMarkChatRoomReadMutation();
 
   useEffect(() => {
+    // 소켓이 연결되어 있을 때만 active_room을 보낼 수 있습니다.
+    // isConnected가 false -> true로 바뀔 때(최초 연결/재연결 모두)도 이 effect가 다시 실행되어
+    // 현재 선택된 방을 서버에 다시 알립니다.
+    if (!isConnected) return undefined;
+
     setActiveRoom(selectedRoomId);
     if (selectedRoomId) {
-      markReadMutation.mutate(selectedRoomId);
+      markReadMutation.mutate(selectedRoomId, {
+        onError: () => setRoomError('읽음 처리에 실패했습니다.'),
+      });
     }
     return () => setActiveRoom(null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedRoomId, isConnected]);
+
+  useEffect(() => {
+    setSendError('');
   }, [selectedRoomId]);
 
   const handleSend = () => {
     if (!draft.trim() || !selectedRoomId) return;
-    sendMessage(selectedRoomId, draft.trim());
-    setDraft('');
+    const sent = sendMessage(selectedRoomId, draft.trim());
+    if (sent) {
+      setDraft('');
+      setSendError('');
+    } else {
+      setSendError('연결이 끊겨 있어 메시지를 보낼 수 없습니다.');
+    }
   };
 
   const handlePickEmployees = (selectedEmployees) => {
     setIsPickerOpen(false);
     if (selectedEmployees.length === 0) return;
+    setRoomError('');
     createRoomMutation.mutate(
       {
         memberIds: selectedEmployees.map((e) => e.userId),
         name: selectedEmployees.length > 1 ? selectedEmployees.map((e) => e.name).join(', ') : null,
       },
-      { onSuccess: (room) => setSelectedRoomId(room.room_id) }
+      {
+        onSuccess: (room) => setSelectedRoomId(room.room_id),
+        onError: (error) => {
+          const message = error.response?.data?.detail || '채팅방 생성에 실패했습니다.';
+          setRoomError(message);
+        },
+      }
     );
   };
 
@@ -55,6 +80,8 @@ function ChatPage() {
     <div className="chat-page">
       <aside className="chat-room-list">
         <button className="chat-new-room-btn" onClick={() => setIsPickerOpen(true)}>+ 새 채팅</button>
+        {roomError && <div className="chat-inline-error">{roomError}</div>}
+        {isRoomsError && <div className="chat-inline-error">채팅방 목록을 불러오지 못했습니다.</div>}
         {rooms.map((room) => (
           <div
             key={room.room_id}
@@ -71,7 +98,13 @@ function ChatPage() {
       <section className="chat-thread">
         {selectedRoomId ? (
           <>
+            <div className="chat-thread-header">
+              <span className={`chat-connection-badge ${isConnected ? 'online' : 'offline'}`}>
+                {isConnected ? '연결됨' : '연결 끊김'}
+              </span>
+            </div>
             <div className="chat-message-list">
+              {isMessagesError && <div className="chat-inline-error">메시지를 불러오지 못했습니다.</div>}
               {[...messages].reverse().map((m) => (
                 <div key={m.message_id} className={`chat-message ${m.sender_id === currentUser?.userId ? 'mine' : ''}`}>
                   <span className="chat-message-sender">{m.sender_id}</span>
@@ -89,6 +122,7 @@ function ChatPage() {
               />
               <button onClick={handleSend}>전송</button>
             </div>
+            {sendError && <div className="chat-inline-error">{sendError}</div>}
           </>
         ) : (
           <div className="chat-empty-state">채팅방을 선택하거나 새 채팅을 시작하세요.</div>
