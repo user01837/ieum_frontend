@@ -32,7 +32,7 @@ export default function Login() {
 
   useEffect(() => {
     if (token) {
-      navigate("/petitions");
+      navigate("/");
     }
   }, [token, navigate]);
 

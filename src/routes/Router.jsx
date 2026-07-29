@@ -89,10 +89,6 @@ async function deptManagerLoader() {
 
 const router = createBrowserRouter([
   {
-    path: "/",
-    element: <Login />,
-  },
-  {
     path: "/login",
     element: <Login />,
   },
@@ -101,13 +97,21 @@ const router = createBrowserRouter([
     element: <Apply />,
   },
   {
+    path: "/",
     element: (
       <AuthLoader><MainLayout /></AuthLoader>
     ),
     loader: protectedLoader,
     errorElement: <NotFound />,
     children: [
-
+      {
+        index: true,
+        element: <Home />,
+      },
+      {
+        path: "home", // 기존 /home 경로도 유지
+        element: <Home />,
+      },
       {
         path: "petitions",
         element: <PetitionList //isAdmin={true}

@@ -36,7 +36,7 @@ function MainLayout() {
     if (path.startsWith("/chat")) {
       return "채팅";
     }
-    return "IEUM";
+    return "홈";
   };
 
   // DetailPetition 컴포넌트의 분할 화면 상태를 감지하여 main 태그의 스타일을 제어

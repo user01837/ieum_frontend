@@ -26,7 +26,7 @@ const NotFound = () => {
               className="primary-btn"
               onClick={() => navigate('/')} // 메인(민원 처리)으로 이동
             >
-              민원 처리 홈으로 이동
+              공공이음 홈으로 이동
             </button>
             <button 
               className="secondary-btn"

@@ -70,6 +70,7 @@ function PetitionList() {
       sort: isSortOn ? 'due_date_impending' : null,
       departmentCode: apiDepartmentCode,
       keyword: appliedSearchKeyword, // 검색어 파라미터 추가
+      enabled: !!user, // 사용자가 있을 때만 쿼리를 실행합니다.
     });
 
     const complaints = petitionData?.content || [];

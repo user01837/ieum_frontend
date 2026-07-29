@@ -12,19 +12,20 @@ import { getPetitions, getPetitionDetail } from '../../api/petition';
  * @param {string|null} params.sort
  */
 export const usePetitionsQuery = (params) => {
+  // enabled 옵션을 분리하고, 나머지 파라미터로 cleanParams를 생성합니다.
+  const { enabled = true, ...apiParams } = params;
+
   // API로 보내기 전에 null이나 undefined 값을 가진 파라미터를 제거합니다.
   // 이렇게 하면 백엔드가 예기치 않은 빈 파라미터(예: ?sort=)를 수신하는 것을 방지할 수 있습니다.
   const cleanParams = Object.fromEntries(
-    Object.entries(params).filter(([, value]) => value !== null && value !== undefined)
+    Object.entries(apiParams).filter(([, value]) => value !== null && value !== undefined)
   );
 
   return useQuery({
-    // params 객체의 속성을 모두 쿼리 키에 포함시켜,
-    // 파라미터가 동일할 경우 캐시된 데이터를 재사용하도록 합니다.
-    // 객체 참조가 아닌 실제 값에 의해 캐싱이 결정됩니다.
     queryKey: ['petitions', { ...cleanParams }],
     queryFn: () => getPetitions(cleanParams),
-    enabled: !!params?.scope, // scope 값이 있을 때만 쿼리를 실행합니다.
+    // 외부에서 전달된 enabled 값과, scope 파라미터 존재 여부를 모두 만족할 때 쿼리를 실행합니다.
+    enabled: enabled && !!params?.scope,
   });
 };
 

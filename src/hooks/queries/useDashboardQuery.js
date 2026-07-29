@@ -9,7 +9,8 @@ export const useComplaintsSummaryQuery = (departmentCode) => {
     return useQuery({
         queryKey: ['complaintsSummary', departmentCode],
         queryFn: () => getComplaintsSummary(departmentCode),
-        enabled: departmentCode !== null,
+        // departmentCode가 truthy(null, undefined, ''가 아님)일 때만 쿼리를 실행합니다.
+        enabled: !!departmentCode,
         staleTime: 1000 * 60 * 5,
         refetchOnWindowFocus: false,
     });
@@ -22,7 +23,7 @@ export const useDueSoonComplaintsQuery = (departmentCode) => {
     return useQuery({
         queryKey: ['dueSoonComplaints', departmentCode],
         queryFn: () => getDueSoonComplaints(departmentCode),
-        enabled: departmentCode !== null,
+        enabled: !!departmentCode,
         staleTime: 1000 * 60 * 5,
         refetchOnWindowFocus: false,
     });
@@ -35,7 +36,7 @@ export const useTasksSummaryQuery = (departmentCode) => {
     return useQuery({
         queryKey: ['tasksSummary', departmentCode],
         queryFn: () => getTasksSummary(departmentCode),
-        enabled: departmentCode !== null,
+        enabled: !!departmentCode,
         staleTime: 1000 * 60 * 5,
         refetchOnWindowFocus: false,
     });
