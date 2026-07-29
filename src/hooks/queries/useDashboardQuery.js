@@ -1,6 +1,6 @@
 // 부서관리 페이지 - 대시보드
 import { useQuery } from '@tanstack/react-query';
-import { getComplaintsSummary, getDueSoonComplaints, getTasksSummary } from '../../api/dashboard';
+import { getComplaintsSummary, getDueSoonComplaints, getTasksSummary, getHomeDashboardData } from '../../api/dashboard';
 
 /**
  * 이번달 민원 건수 쿼리
@@ -13,6 +13,19 @@ export const useComplaintsSummaryQuery = (departmentCode) => {
         enabled: !!departmentCode,
         staleTime: 1000 * 60 * 5,
         refetchOnWindowFocus: false,
+    });
+};
+
+/**
+ * 사용자 홈 대시보드 데이터 조회 쿼리
+ */
+export const useHomeDashboardQuery = (options) => {
+    return useQuery({
+        queryKey: ['homeDashboard'],
+        queryFn: getHomeDashboardData,
+        staleTime: 1000 * 60 * 5, // 5분
+        refetchOnWindowFocus: false,
+        ...options,
     });
 };
 
