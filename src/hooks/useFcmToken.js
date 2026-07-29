@@ -4,10 +4,15 @@ import { registerDeviceToken, unregisterDeviceToken } from '../api/notification'
 import useAuthStore from '../store/useAuthStore';
 
 export function useFcmToken() {
-  const token = useAuthStore((state) => state.token);
+  // 토큰 "값"이 아니라 로그인 여부(boolean)에만 반응합니다.
+  // access token은 silent refresh로 값이 자주 바뀌는데, 이 effect가 token 값에 의존하면
+  // 토큰이 바뀔 때마다 cleanup(unregisterDeviceToken)과 재실행(registerDeviceToken)이 연달아
+  // 발생해 같은 device-token row에 대해 DELETE/POST가 경쟁하게 됩니다. 실제 API 호출들은
+  // (axios 인터셉터가 최신 토큰을 알아서 헤더에 실어주므로) 로그인 여부만 알면 충분합니다.
+  const isLoggedIn = useAuthStore((state) => !!state.token);
 
   useEffect(() => {
-    if (!token) return undefined;
+    if (!isLoggedIn) return undefined;
 
     let currentFcmToken = null;
 
@@ -32,5 +37,5 @@ export function useFcmToken() {
         unregisterDeviceToken(currentFcmToken).catch(() => {});
       }
     };
-  }, [token]);
+  }, [isLoggedIn]);
 }
