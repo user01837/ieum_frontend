@@ -7,7 +7,6 @@ export default function AnnouncementDetail() {
     const { id } = useParams();
     const navigate = useNavigate();
     const user = useAuthStore((state) => state.user);
-    const canWrite = user?.system_role_code === "02" || user?.position_code === "01";
 
     const { data: a, isLoading } = useAnnouncementDetailQuery(id);
     const { mutate: deleteAnnouncement } = useDeleteAnnouncementMutation();
@@ -15,13 +14,17 @@ export default function AnnouncementDetail() {
     if (isLoading) return <div className="ann-content">불러오는 중...</div>;
     if (!a) return <div className="ann-content">존재하지 않는 공지사항입니다.</div>;
 
+    const isAdmin = user?.system_role_code === "02";
+    const canEdit = a.createdBy === Number(user?.userId);
+    const canDelete = isAdmin || a.createdBy === Number(user?.userId);
+
     const handleDelete = () => {
         if (!window.confirm("공지사항을 삭제하시겠습니까?")) return;
         deleteAnnouncement(id, { onSuccess: () => navigate("/announcements") });
     };
 
     return (
-        <div className="ann-content">
+        <div className="ann-detail-content">
             <div className="backrow">
                 <div className="backbtn" onClick={() => navigate("/announcements")}>
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3">
@@ -30,6 +33,9 @@ export default function AnnouncementDetail() {
                     목록으로
                 </div>
             </div>
+            <div className="crumb">
+                공지사항 목록 &gt; 상세
+            </div>
 
             <div className="tablewrap" style={{ padding: '28px 32px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
@@ -37,10 +43,14 @@ export default function AnnouncementDetail() {
                         {a.isPinned && <span className="ann-pin">📌</span>}
                         <h2 style={{ fontSize: 18, fontWeight: 700, margin: 0 }}>{a.title}</h2>
                     </div>
-                    {canWrite && (
+                    {(canEdit || canDelete) && (
                         <div style={{ display: 'flex', gap: 8 }}>
-                            <button className="ann-edit-btn" onClick={() => navigate(`/announcements/${id}/edit`)}>수정</button>
-                            <button className="ann-del-btn" onClick={handleDelete}>삭제</button>
+                            {canEdit && (
+                                <button className="ann-edit-btn" onClick={() => navigate(`/announcements/${id}/edit`)}>수정</button>
+                            )}
+                            {canDelete && (
+                                <button className="ann-del-btn" onClick={handleDelete}>삭제</button>
+                            )}
                         </div>
                     )}
                 </div>
