@@ -97,17 +97,23 @@ function NotificationBell() {
       };
     });
 
-    const mappedAnnouncements = announcementItems.map((n) => ({
-      key: `ann-${n.notification_id}`,
-      type: 'ANNOUNCEMENT',
-      text: '새로운 공지사항이 등록되었습니다. 확인해주세요.',
-      count: 1,
-      sortKey: n.created_at,
-    }));
+    // 안읽은 공지사항이 몇 건이든 최상단에 1건으로만 묶어서 보여주고, 옆에 개수만 표시한다.
+    const announcementGroup = announcementItems.length > 0
+      ? [{
+          key: 'ann-group',
+          type: 'ANNOUNCEMENT',
+          text: '새로운 공지사항이 등록되었습니다. 확인해주세요.',
+          count: announcementItems.length,
+          sortKey: announcementItems.reduce(
+            (latest, n) => (n.created_at > latest ? n.created_at : latest),
+            announcementItems[0].created_at
+          ),
+        }]
+      : [];
 
     // 기존 동작 유지: 공지사항을 채팅 알림보다 먼저 보여준다.
     return [
-      ...mappedAnnouncements.sort((a, b) => (a.sortKey < b.sortKey ? 1 : -1)),
+      ...announcementGroup,
       ...chatItems.sort((a, b) => (a.sortKey < b.sortKey ? 1 : -1)),
     ];
   }, [unread, roomsById, userDisplayMap, currentUser]);

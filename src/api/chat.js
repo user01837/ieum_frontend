@@ -29,3 +29,8 @@ export const addChatRoomMembers = async ({ roomId, memberIds }) => {
 export const leaveChatRoom = async (roomId) => {
   await api.delete(`/chat/rooms/${roomId}`);
 };
+
+export const renameChatRoom = async ({ roomId, name }) => {
+  const response = await api.patch(`/chat/rooms/${roomId}`, { name });
+  return response.data;
+};

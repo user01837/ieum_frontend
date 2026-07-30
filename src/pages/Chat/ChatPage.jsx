@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import './ChatPage.css';
 import { useChatRoomsQuery, useChatRoomMessagesQuery } from '../../hooks/queries/useChatQuery';
-import { useCreateChatRoomMutation, useMarkChatRoomReadMutation, useAddChatRoomMembersMutation, useLeaveChatRoomMutation } from '../../hooks/mutations/useChatMutations';
+import { useCreateChatRoomMutation, useMarkChatRoomReadMutation, useAddChatRoomMembersMutation, useLeaveChatRoomMutation, useRenameChatRoomMutation } from '../../hooks/mutations/useChatMutations';
 import { useChatSocketContext } from '../../store/ChatSocketContext';
 import useAuthStore from '../../store/useAuthStore';
 import EmployeeSearchModal from '../../components/EmpSearchModal/EmpSearchModal';
@@ -100,6 +100,7 @@ function ChatPage() {
   const markReadMutation = useMarkChatRoomReadMutation();
   const addMembersMutation = useAddChatRoomMembersMutation();
   const leaveRoomMutation = useLeaveChatRoomMutation();
+  const renameRoomMutation = useRenameChatRoomMutation();
   const [isAddMemberPickerOpen, setIsAddMemberPickerOpen] = useState(false);
   const textareaRef = useRef(null);
   const messageListRef = useRef(null);
@@ -202,6 +203,19 @@ function ChatPage() {
     });
   };
 
+  const handleRenameRoom = () => {
+    if (!selectedRoomId) return;
+    const nextName = window.prompt('새 채팅방 이름을 입력하세요.', selectedRoomLabel);
+    if (nextName === null) return; // 취소
+    const trimmed = nextName.trim();
+    if (!trimmed) return;
+    setRoomError('');
+    renameRoomMutation.mutate(
+      { roomId: selectedRoomId, name: trimmed },
+      { onError: () => setRoomError('채팅방 이름 변경에 실패했습니다.') }
+    );
+  };
+
   const roomLabel = (room) => {
     // 그룹방 생성 시 지정된 이름(예: 사업 협업방의 "[사업] ...")이 있으면 그대로 보여준다.
     // 이름이 없는 방(1:1, 또는 이름 없이 만든 그룹방)만 참여자 목록으로 대체 표시한다.
@@ -232,7 +246,7 @@ function ChatPage() {
         <div className="chat-room-list-header">
           <input
             className="chat-search-input"
-            placeholder="채팅방 검색(직원 및 부서 이름)"
+            placeholder="채팅방 검색"
             value={roomSearch}
             onChange={(e) => setRoomSearch(e.target.value)}
           />
@@ -288,7 +302,17 @@ function ChatPage() {
             {/* 헤더 */}
             <div className="chat-thread-header">
               <div className="chat-thread-header-left">
-                <span className="chat-thread-title">{selectedRoomLabel}</span>
+                <div className="chat-thread-title-row">
+                  <span className="chat-thread-title">{selectedRoomLabel}</span>
+                  <button
+                    className="chat-rename-badge"
+                    onClick={handleRenameRoom}
+                    title="채팅방 이름 변경"
+                    aria-label="채팅방 이름 변경"
+                  >
+                    ✎ 이름변경
+                  </button>
+                </div>
                 <span className="chat-thread-subtitle">
                   참여자 {selectedRoomMemberCount}명 <IconChevronDown />
                 </span>

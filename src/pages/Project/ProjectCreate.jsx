@@ -18,6 +18,7 @@ export default function ProjectCreate() {
   const [dueDate, setDueDate] = useState("");
   const [teamMembers, setTeamMembers] = useState([]);
   const [isEmpModalOpen, setIsEmpModalOpen] = useState(false);
+  const [createChatRoom, setCreateChatRoom] = useState(true);
 
   const handleAddMember = (employee) => {
     const isDuplicate = teamMembers.some((m) => String(m.userId) === String(employee.userId));
@@ -44,6 +45,7 @@ export default function ProjectCreate() {
         startDate: startDate,
         deadline: dueDate,
         memberUserIds: teamMembers.map((m) => m.userId),
+        createChatRoom,
       },
       {
         onSuccess: () => {
@@ -146,6 +148,14 @@ export default function ProjectCreate() {
               </div>
             ))}
           </div>
+          <label className="chatroom-check-label">
+            <input
+              type="checkbox"
+              checked={createChatRoom}
+              onChange={(e) => setCreateChatRoom(e.target.checked)}
+            />
+            협업 팀원과 단체 채팅방 생성
+          </label>
         </div>
 
         <div className="formfoot">
