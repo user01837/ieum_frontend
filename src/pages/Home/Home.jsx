@@ -16,6 +16,7 @@ export default function Home() {
   // 클라이언트 사이드 렌더링 시점에서만 UI를 그리도록 하여
   // 서버/클라이언트 간 불일치(hydration mismatch) 오류를 방지합니다.
   const [isClient, setIsClient] = useState(false);
+  const [isUrgentListExpanded, setIsUrgentListExpanded] = useState(false);
   useEffect(() => {
     setIsClient(true);
   }, []);
@@ -420,7 +421,7 @@ export default function Home() {
                   <h3 className="card-title">처리 기한 임박 민원</h3>
                   <div className="alert-list">
                     {urgentPetitions.length > 0 ? (
-                      urgentPetitions.map((p) => {
+                      (isUrgentListExpanded ? urgentPetitions : urgentPetitions.slice(0, 5)).map((p) => {
                         let urgency;
                         let badgeText;
                         if (p.dDay < 0) {
@@ -446,6 +447,23 @@ export default function Home() {
                       </div>
                     )}
                   </div>
+                  {urgentPetitions.length > 5 && (
+                    <div style={{ marginTop: '12px', paddingTop: '12px', borderTop: '1px solid var(--line-light)', textAlign: 'center' }}>
+                      <button className="more-btn" onClick={() => setIsUrgentListExpanded(prev => !prev)} style={{ padding: '4px 8px' }}>
+                        {isUrgentListExpanded ? (
+                          <>
+                            접기
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="m18 15-6-6-6 6"/></svg>
+                          </>
+                        ) : (
+                          <>
+                            더보기 ({urgentPetitions.length - 5}건)
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="m6 9 6 6 6-6"/></svg>
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
 
