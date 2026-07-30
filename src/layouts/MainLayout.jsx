@@ -44,14 +44,24 @@ function MainLayout() {
     location.pathname.startsWith("/petitions/") &&
     outlet?.props?.children?.props?.isCaseDetailOpen === true;
 
+  const isChatPage = location.pathname.startsWith("/chat");
+
   return (
     <ChatSocketProvider>
       <div className="layout">
         <Sidebar />
 
         {/* isSplitViewActive가 true일 때 'no-max-width' 클래스 추가 */}
-        <main className={`content ${isSplitViewActive ? 'no-max-width' : ''}`}>
-          <Header title={getTitle()} userName="박주임" currentDate={formattedDate} />
+        <main
+          className={`content ${
+            isSplitViewActive ? "no-max-width" : ""
+          } ${isChatPage ? "no-padding-bottom" : ""}`}
+        >
+          <Header
+            title={getTitle()}
+            userName="박주임"
+            currentDate={formattedDate}
+          />
           <Outlet />
           <Chatbot />
         </main>

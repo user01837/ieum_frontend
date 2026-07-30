@@ -64,7 +64,8 @@
   background: #fff;
   cursor: pointer;
   color: #4f46e5;
-  font-size: 15px;
+  font-size: 13px;
+  font-weight: 500;
   line-height: 1;
   white-space: nowrap; /* 버튼 내 텍스트가 줄바꿈되지 않도록 설정 */
 }
