@@ -33,11 +33,6 @@ const IconInfo = () => (
     <line x1="12" y1="12" x2="12" y2="16" strokeWidth="2" strokeLinecap="round"/>
   </svg>
 );
-const IconMore = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-    <circle cx="5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/>
-  </svg>
-);
 const IconAttach = () => (
   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
     <path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66L9.41 17.41A2 2 0 016.59 14.59l8.49-8.48"/>
@@ -102,8 +97,10 @@ function ChatPage() {
   const leaveRoomMutation = useLeaveChatRoomMutation();
   const renameRoomMutation = useRenameChatRoomMutation();
   const [isAddMemberPickerOpen, setIsAddMemberPickerOpen] = useState(false);
+  const [isParticipantsOpen, setIsParticipantsOpen] = useState(false);
   const textareaRef = useRef(null);
   const messageListRef = useRef(null);
+  const participantsRef = useRef(null);
 
   const { data: allEmployees = [] } = useUserSearch({ scope: 'all' });
   const userDisplayMap = useMemo(() => {
@@ -152,6 +149,20 @@ function ChatPage() {
     const el = messageListRef.current;
     if (el) el.scrollTop = el.scrollHeight;
   }, [messages]);
+
+  // 방을 바꾸면 이전 방의 참여자 목록 드롭다운은 닫아둔다.
+  useEffect(() => { setIsParticipantsOpen(false); }, [selectedRoomId]);
+
+  useEffect(() => {
+    if (!isParticipantsOpen) return undefined;
+    const handler = (e) => {
+      if (participantsRef.current && !participantsRef.current.contains(e.target)) {
+        setIsParticipantsOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [isParticipantsOpen]);
 
   const handleSend = () => {
     if (!draft.trim() || !selectedRoomId) return;
@@ -313,9 +324,25 @@ function ChatPage() {
                     ✎ 이름변경
                   </button>
                 </div>
-                <span className="chat-thread-subtitle">
-                  참여자 {selectedRoomMemberCount}명 <IconChevronDown />
-                </span>
+                <div className="chat-participants-wrap" ref={participantsRef}>
+                  <button
+                    type="button"
+                    className="chat-thread-subtitle"
+                    onClick={() => setIsParticipantsOpen((v) => !v)}
+                  >
+                    참여자 {selectedRoomMemberCount}명 <IconChevronDown />
+                  </button>
+                  {isParticipantsOpen && selectedRoom && (
+                    <div className="chat-participants-dropdown">
+                      {selectedRoom.member_ids.map((id) => (
+                        <div key={id} className="chat-participant-item">
+                          {displayName(id)}
+                          {id === currentUser?.userId && <span className="chat-participant-me"> (나)</span>}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
               <div className="chat-thread-header-right">
                 {currentRoom?.is_group && (
@@ -331,7 +358,6 @@ function ChatPage() {
                 </span>
                 {/* <button className="chat-icon-btn"><IconSearch /></button>
                 <button className="chat-icon-btn"><IconInfo /></button> */}
-                <button className="chat-icon-btn"><IconMore /></button>
               </div>
             </div>
 
