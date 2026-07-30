@@ -2,6 +2,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import useAuthStore from "../../store/useAuthStore";
 import { useAnnouncementDetailQuery, useDeleteAnnouncementMutation } from "../../hooks/queries/useAnnouncementQuery";
 import "./AnnouncementList.css";
+import "../knowledge/KnowlDetail.css"; // 첨부파일 UI/스타일 재사용
 
 export default function AnnouncementDetail() {
     const { id } = useParams();
@@ -62,9 +63,25 @@ export default function AnnouncementDetail() {
 
                 <hr style={{ border: 'none', borderTop: '1px solid var(--line)', marginBottom: 24 }} />
 
-                <div style={{ fontSize: 14, lineHeight: 1.8, color: 'var(--ink)', whiteSpace: 'pre-wrap' }}>
+                <div style={{ fontSize: 14, lineHeight: 1.8, color: 'var(--ink)', whiteSpace: 'pre-wrap', minHeight: 200, marginBottom: 40 }}>
                     {a.content}
                 </div>
+
+                {a.attachments && a.attachments.length > 0 && (
+                    <div className="section-card" style={{ padding: '20px', border: '1px solid var(--line-light)', borderRadius: 12, background: 'var(--surface-alt)' }}>
+                        <h2 className="section-title" style={{ fontSize: 14, fontWeight: 700, marginBottom: 12, marginTop: 0 }}>첨부파일</h2>
+                        <div className="attach-list">
+                            {a.attachments.map(att => (
+                                <div key={att.attachmentId} className="reply-attach-chip">
+                                    <svg className="ic" viewBox="0 0 24 24"><path fill="currentColor" d="M16.5 6v11.5c0 2.21-1.79 4-4 4s-4-1.79-4-4V5a2.5 2.5 0 0 1 5 0v10.5c0 .83-.67 1.5-1.5 1.5s-1.5-.67-1.5-1.5V6H10v9.5c0 1.38 1.12 2.5 2.5 2.5s2.5-1.12 2.5-2.5V5c-1.93 0-3.5 1.57-3.5 3.5v11.5c0 2.76 2.24 5 5 5s5-2.24 5-5V6h-1.5z"></path></svg>
+                                    <a href={att.fileUrl} target="_blank" rel="noopener noreferrer" download={att.fileName} style={{ flex: '1' }}>
+                                        {att.fileName}
+                                    </a>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
             </div>
         </div>
     );
