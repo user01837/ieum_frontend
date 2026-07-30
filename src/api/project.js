@@ -92,3 +92,13 @@ export const exportProject = async (projectId, format) => {
   });
   return response;
 };
+
+/**
+ * 사업 주관자 변경 API
+ * @param {number} projectId - 프로젝트 ID
+ * @param {number} newOwnerUserId - 새 주관자 사번
+ */
+export const changeProjectOwner = async (projectId, newOwnerUserId) => {
+  const { data } = await api.patch(`/projects/${projectId}/owner`, { newOwnerUserId });
+  return data;
+};

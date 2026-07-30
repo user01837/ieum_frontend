@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useProjectDetailQuery } from "../../hooks/queries/useProjectQuery";
-import { useUpdateProjectMutation, useApproveProjectMutation, useDeleteProjectMutation } from "../../hooks/mutations/useProjectMutation";
+import { useUpdateProjectMutation, useApproveProjectMutation, useDeleteProjectMutation, useChangeProjectOwnerMutation } from "../../hooks/mutations/useProjectMutation";
 import { exportProject, getAiDraft } from '../../api/project';
 import useAuthStore from "../../store/useAuthStore";
 import EmpSearchModal from "../../components/EmpSearchModal/EmpSearchModal";
@@ -51,6 +51,10 @@ export default function ProjectDetail() {
   const [isSaved, setIsSaved] = useState(true);
   const [isOverwriteModalOpen, setIsOverwriteModalOpen] = useState(false);
   const [isAiPanelOpen, setIsAiPanelOpen] = useState(false);
+  const [newOwner, setNewOwner] = useState(null);
+  const [isOwner, setIsOwner] = useState(false);
+  const [isOwnerModalOpen, setIsOwnerModalOpen] = useState(false);
+  const { mutate: changeOwner } = useChangeProjectOwnerMutation(id);
   const exportRef = useRef(null);
   const pendingDraftRef = useRef(null);
   const isInitialized = useRef(false);
@@ -89,6 +93,7 @@ export default function ProjectDetail() {
       const isOwner = myRole?.roleName === "주관";
       setIsApproved(approved);
       const isAdmin = user?.system_role_code === "02";
+      setIsOwner(isOwner);
       setIsLocked(approved || !isOwner || isAdmin);
       setTeamMembers(
         project.members.map((m) => ({ userId: m.userId, name: m.name, departmentName: m.departmentName || "", roleName: m.roleName }))
@@ -183,6 +188,17 @@ export default function ProjectDetail() {
   };
 
   const handleSave = () => {
+    if (newOwner) {
+      if (!window.confirm("주관자를 변경하시겠습니까? 변경 후 이 사업에 접근할 수 없습니다.")) return;
+      changeOwner(newOwner.userId, {
+        onSuccess: () => {
+          setNewOwner(null);
+          navigate("/projects");
+        },
+        onError: () => alert("주관자 변경에 실패했습니다."),
+      });
+      return;
+    }
     if (!title.trim()) { alert("사업명을 입력해 주세요."); return; }
     if (!desc.trim()) { alert("사업 설명을 입력해 주세요."); return; }
     if (startDate && dueDate && new Date(dueDate) < new Date(startDate)) {
@@ -565,27 +581,48 @@ export default function ProjectDetail() {
             />
           ))}
           <div className="bottomrow" style={{ padding: '0 20px 16px' }}>
-            <div className={`export-wrap${isExportOpen ? " open" : ""}`} ref={exportRef}>
-              <button className="btn btn-ghost" onClick={() => setIsExportOpen((p) => !p)}>
-                내보내기
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3">
-                  <path d="m6 9 6 6 6-6" />
-                </svg>
-              </button>
-              {isExportOpen && (
-                <div className="export-menu">
-                  {[
-                    { label: "Word (.docx)", color: "#2B579A", format: "docx" },
-                    { label: "한글 (.hwpx)", color: "#4CAF50", format: "hwpx" },
-                    { label: "PDF (.pdf)", color: "#EC1C24", format: "pdf" },
-                  ].map((item) => (
-                    <div key={item.label} className="export-item"
-                      onClick={() => { handleExport(item.format); setIsExportOpen(false); }}>
-                      <span className="dot" style={{ background: item.color, width: 8, height: 8, borderRadius: "50%", display: "inline-block" }} />
-                      {item.label}로 내보내기
-                    </div>
-                  ))}
-                </div>
+            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              <div className={`export-wrap${isExportOpen ? " open" : ""}`} ref={exportRef}>
+                <button className="btn btn-ghost" onClick={() => setIsExportOpen((p) => !p)}>
+                  내보내기
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3">
+                    <path d="m6 9 6 6 6-6" />
+                  </svg>
+                </button>
+                {isExportOpen && (
+                  <div className="export-menu">
+                    {[
+                      { label: "Word (.docx)", color: "#2B579A", format: "docx" },
+                      { label: "한글 (.hwpx)", color: "#4CAF50", format: "hwpx" },
+                      { label: "PDF (.pdf)", color: "#EC1C24", format: "pdf" },
+                    ].map((item) => (
+                      <div key={item.label} className="export-item"
+                        onClick={() => { handleExport(item.format); setIsExportOpen(false); }}>
+                        <span className="dot" style={{ background: item.color, width: 8, height: 8, borderRadius: "50%", display: "inline-block" }} />
+                        {item.label}로 내보내기
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+              {isOwner && !isApproved && (
+                <>
+                  <button className="btn btn-ghost" onClick={() => setIsOwnerModalOpen(true)}>
+                    담당자 변경
+                  </button>
+                  {newOwner && (
+                    <>
+                      <p style={{ fontSize: "12px", color: "var(--ink-soft)", margin: 0 }}>
+                        선택됨: {newOwner.name} ({newOwner.positionName})
+                      </p>
+                      <button type="button" onClick={() => setNewOwner(null)}
+                        className="btn-cancel-assignee"
+                        aria-label="담당자 선택 취소">
+                        &times;
+                      </button>
+                    </>
+                  )}
+                </>
               )}
             </div>
             {!isLocked && (
@@ -651,6 +688,14 @@ export default function ProjectDetail() {
           <EmpSearchModal
             onSelect={handleAddMember}
             onClose={() => setIsEmpModalOpen(false)}
+          />
+        )}
+        {isOwnerModalOpen && (
+          <EmpSearchModal
+            currentDept={project?.departmentName}
+            forceDeptScope={true}
+            onSelect={(emp) => { setNewOwner(emp); setIsOwnerModalOpen(false); }}
+            onClose={() => setIsOwnerModalOpen(false)}
           />
         )}
       </div>

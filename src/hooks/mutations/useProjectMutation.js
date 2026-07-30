@@ -1,7 +1,5 @@
-// 프로젝트 생성/수정/삭제
-
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { createProject, updateProject, approveProject, deleteProject } from '../../api/project';
+import { createProject, updateProject, approveProject, deleteProject, changeProjectOwner } from '../../api/project';
 
 /**
  * 새 프로젝트 생성 뮤테이션 Hook
@@ -56,6 +54,20 @@ export const useDeleteProjectMutation = () => {
     mutationFn: deleteProject,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['projects'] });
+    },
+  });
+};
+
+/**
+ * 사업 주관자 변경 뮤테이션 Hook
+ */
+export const useChangeProjectOwnerMutation = (projectId) => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (newOwnerUserId) => changeProjectOwner(projectId, newOwnerUserId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['project', projectId] });
     },
   });
 };
