@@ -83,9 +83,9 @@ function NewDashboard({ tasks, members, onOpenUrgentPanel, complaintsSummary, du
 
       {/* 처리기한 임박 */}
       <div className="dash-card urgent-card clickable" onClick={() => onOpenUrgentPanel(urgentComplaints)}>
-        <div className="dash-card-title">처리기한 임박</div>
+        <div className="dash-card-title">처리 임박 및 지연 민원</div>
         <div style={{ fontSize: '11px', color: 'var(--ink-tertiary)', marginBottom: '6px' }}>
-          클릭하여 처리기한이 임박한 민원을 확인하세요.
+          클릭하여 처리기한이 임박하거나 지연된 민원을 확인하세요.
         </div>
         <div className="dash-card-value">{urgentComplaints.length}<span className="unit">건</span></div>
       </div>
@@ -120,7 +120,7 @@ function UrgentComplaintsPanel({ complaints, onClose }) {
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M18 6 6 18M6 6l12 12" /></svg>
           </div>
         </div>
-        <h3 className="side-panel-title">기한이 3일 이하로 남은 민원 목록입니다.</h3>
+        <h3 className="side-panel-title">처리 기한이 지났거나 3일 이내로 남은 민원 목록입니다.</h3>
       </div>
       <div className="side-panel-body">
         {complaints.length > 0 ? (

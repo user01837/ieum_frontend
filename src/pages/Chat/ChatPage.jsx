@@ -8,35 +8,103 @@ import useAuthStore from '../../store/useAuthStore';
 import EmployeeSearchModal from '../../components/EmpSearchModal/EmpSearchModal';
 import { useUserSearch } from '../../hooks/queries/useUserQuery';
 
+/* ── 아이콘 (inline SVG, 외부 라이브러리 없이) ── */
+const IconPerson = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+    <circle cx="12" cy="8" r="4" /><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" />
+  </svg>
+);
+const IconGroup = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+    <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+    <circle cx="9" cy="7" r="4" />
+    <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+    <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+  </svg>
+);
+const IconSearch = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <circle cx="11" cy="11" r="7" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
+  </svg>
+);
+const IconInfo = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="8" strokeWidth="2.5" strokeLinecap="round"/>
+    <line x1="12" y1="12" x2="12" y2="16" strokeWidth="2" strokeLinecap="round"/>
+  </svg>
+);
+const IconMore = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+    <circle cx="5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/>
+  </svg>
+);
+const IconAttach = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66L9.41 17.41A2 2 0 016.59 14.59l8.49-8.48"/>
+  </svg>
+);
+const IconEmoji = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/>
+  </svg>
+);
+const IconSend = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+    <path d="M22 2L11 13M22 2L15 22l-4-9-9-4 20-7z"/>
+  </svg>
+);
+const IconChevronDown = () => (
+  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+    <polyline points="6 9 12 15 18 9"/>
+  </svg>
+);
+
+/* 시간 포맷 헬퍼 */
+const formatTime = (isoStr) => {
+  if (!isoStr) return '';
+  const d = new Date(isoStr);
+  const h = d.getHours();
+  const m = String(d.getMinutes()).padStart(2, '0');
+  const ampm = h < 12 ? '오전' : '오후';
+  return `${ampm} ${h % 12 || 12}:${m}`;
+};
+
+const formatDate = (isoStr) => {
+  if (!isoStr) return '';
+  const d = new Date(isoStr);
+  return `${d.getFullYear()}년 ${d.getMonth() + 1}월 ${d.getDate()}일 (${['일','월','화','수','목','금','토'][d.getDay()]})`;
+};
+
+const isSameDay = (a, b) => {
+  const da = new Date(a), db = new Date(b);
+  return da.getFullYear() === db.getFullYear() &&
+    da.getMonth() === db.getMonth() &&
+    da.getDate() === db.getDate();
+};
+
 function ChatPage() {
   const currentUser = useAuthStore((state) => state.user);
   const { data: rooms = [], isError: isRoomsError } = useChatRoomsQuery();
   const [searchParams] = useSearchParams();
-  // 알림벨에서 /chat?room=123 형태로 딥링크했을 때, 해당 방을 초기 선택 상태로 사용합니다.
-  // 유효하지 않거나 접근 권한이 없는 room_id는 이후 메시지 조회(GET /chat/rooms/{id}/messages)에서
-  // 백엔드의 멤버십 검증에 의해 자연스럽게 실패하므로 여기서 별도 검증하지 않습니다.
   const roomParam = searchParams.get('room');
   const [selectedRoomId, setSelectedRoomId] = useState(roomParam ? Number(roomParam) : null);
   const [draft, setDraft] = useState('');
   const [isPickerOpen, setIsPickerOpen] = useState(false);
   const [sendError, setSendError] = useState('');
   const [roomError, setRoomError] = useState('');
+  const [roomSearch, setRoomSearch] = useState('');
 
   const { data: messages = [], isError: isMessagesError } = useChatRoomMessagesQuery(selectedRoomId);
   const { isConnected, sendMessage, setActiveRoom } = useChatSocketContext();
   const createRoomMutation = useCreateChatRoomMutation();
   const markReadMutation = useMarkChatRoomReadMutation();
   const textareaRef = useRef(null);
+  const messageListRef = useRef(null);
 
-  // 채팅방/메시지 API는 참여자를 사번(member_ids/sender_id)으로만 내려주므로,
-  // 화면에는 "부서 이름" 형태로 보여주기 위해 전체 직원 목록을 한 번 불러와
-  // 사번 -> {name, departmentName} 맵을 만들어 둔다.
   const { data: allEmployees = [] } = useUserSearch({ scope: 'all' });
   const userDisplayMap = useMemo(() => {
     const map = {};
-    allEmployees.forEach((emp) => {
-      map[String(emp.userId)] = emp;
-    });
+    allEmployees.forEach((emp) => { map[String(emp.userId)] = emp; });
     return map;
   }, [allEmployees]);
 
@@ -47,42 +115,27 @@ function ChatPage() {
   };
 
   useEffect(() => {
-    // 이미 /chat 페이지에 머무른 상태에서 알림벨을 통해 다른 room으로 다시 딥링크되는 경우
-    // (컴포넌트가 언마운트되지 않으므로 위 useState 초기값만으로는 반영되지 않음),
-    // room 쿼리 파라미터가 바뀔 때마다 동일한 setSelectedRoomId 경로로 선택 상태를 갱신합니다.
     if (!roomParam) return;
-    const parsedRoomId = Number(roomParam);
-    if (Number.isNaN(parsedRoomId)) return;
-    setSelectedRoomId(parsedRoomId);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    const parsed = Number(roomParam);
+    if (Number.isNaN(parsed)) return;
+    setSelectedRoomId(parsed);
   }, [roomParam]);
 
   useEffect(() => {
-    // 읽음 처리는 REST 호출이라 WebSocket 연결 상태와 무관합니다.
-    // 소켓이 끊겨있거나 재연결 백오프 중이어도(최대 15초) 방을 선택/전환하면 즉시 호출되어야 합니다.
     if (!selectedRoomId) return;
     markReadMutation.mutate(selectedRoomId, {
       onError: () => setRoomError('읽음 처리에 실패했습니다.'),
     });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedRoomId]);
 
   useEffect(() => {
-    // 소켓이 연결되어 있을 때만 active_room을 보낼 수 있습니다.
-    // isConnected가 false -> true로 바뀔 때(최초 연결/재연결 모두)도 이 effect가 다시 실행되어
-    // 현재 선택된 방을 서버에 다시 알립니다.
     if (!isConnected) return undefined;
-
     setActiveRoom(selectedRoomId);
     return () => setActiveRoom(null);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedRoomId, isConnected]);
 
-  useEffect(() => {
-    setSendError('');
-  }, [selectedRoomId]);
+  useEffect(() => { setSendError(''); }, [selectedRoomId]);
 
-  // 입력창 높이를 내용에 맞춰 늘렸다 줄였다 한다 (최대 높이는 CSS max-height로 제한).
   useEffect(() => {
     const el = textareaRef.current;
     if (!el) return;
@@ -90,15 +143,17 @@ function ChatPage() {
     el.style.height = `${el.scrollHeight}px`;
   }, [draft]);
 
+  // 새 메시지 오면 스크롤 하단 이동
+  useEffect(() => {
+    const el = messageListRef.current;
+    if (el) el.scrollTop = el.scrollHeight;
+  }, [messages]);
+
   const handleSend = () => {
     if (!draft.trim() || !selectedRoomId) return;
     const sent = sendMessage(selectedRoomId, draft.trim());
-    if (sent) {
-      setDraft('');
-      setSendError('');
-    } else {
-      setSendError('연결이 끊겨 있어 메시지를 보낼 수 없습니다.');
-    }
+    if (sent) { setDraft(''); setSendError(''); }
+    else setSendError('연결이 끊겨 있어 메시지를 보낼 수 없습니다.');
   };
 
   const handlePickEmployees = (selectedEmployees) => {
@@ -113,74 +168,152 @@ function ChatPage() {
       {
         onSuccess: (room) => setSelectedRoomId(room.room_id),
         onError: (error) => {
-          const message = error.response?.data?.detail || '채팅방 생성에 실패했습니다.';
-          setRoomError(message);
+          setRoomError(error.response?.data?.detail || '채팅방 생성에 실패했습니다.');
         },
       }
     );
   };
 
   const roomLabel = (room) => {
-    // room.name은 방 생성 시점의 이름(사번/이름)만 저장되어 있어 부서 정보가 없다.
-    // 1:1/그룹 모두 항상 member_ids를 부서+이름으로 변환해 동일한 형식으로 보여준다.
     const others = room.member_ids.filter((id) => id !== currentUser?.userId);
     return others.map(displayName).join(', ') || '(참여자 없음)';
   };
 
+  const selectedRoom = rooms.find((r) => r.room_id === selectedRoomId);
+  const selectedRoomLabel = selectedRoom ? roomLabel(selectedRoom) : '';
+  const selectedRoomMemberCount = selectedRoom?.member_ids?.length ?? 0;
+
+  /* 메시지를 오래된 순으로 정렬 + 날짜 구분선 삽입 */
+  const sortedMessages = useMemo(() => [...messages].reverse(), [messages]);
+
+  const filteredRooms = useMemo(() => {
+    if (!roomSearch.trim()) return rooms;
+    const q = roomSearch.trim().toLowerCase();
+    return rooms.filter((r) => roomLabel(r).toLowerCase().includes(q));
+  }, [rooms, roomSearch, userDisplayMap]);
+
   return (
     <div className="chat-page">
+      {/* ── 좌측: 채팅방 목록 ── */}
       <aside className="chat-room-list">
-        <button className="chat-new-room-btn" onClick={() => setIsPickerOpen(true)}>+ 새 채팅</button>
+        <div className="chat-room-list-header">
+          <input
+            className="chat-search-input"
+            placeholder="채팅방 검색(직원 및 부서 이름)"
+            value={roomSearch}
+            onChange={(e) => setRoomSearch(e.target.value)}
+          />
+          {/* <button className="chat-sort-btn">최신순 ▾</button> */}
+          <button className="chat-new-room-btn" onClick={() => setIsPickerOpen(true)} title="새 채팅">+ 새 채팅</button>
+        </div>
+
         {roomError && <div className="chat-inline-error">{roomError}</div>}
         {isRoomsError && <div className="chat-inline-error">채팅방 목록을 불러오지 못했습니다.</div>}
-        {rooms.map((room) => (
+
+        {filteredRooms.map((room) => (
           <div
             key={room.room_id}
             className={`chat-room-item ${selectedRoomId === room.room_id ? 'active' : ''}`}
             onClick={() => setSelectedRoomId(room.room_id)}
           >
-            <div className="chat-room-name">{roomLabel(room)}</div>
-            <div className="chat-room-preview">{room.last_message || '대화를 시작해보세요'}</div>
-            {room.unread_count > 0 && <span className="chat-unread-badge">{room.unread_count}</span>}
+            <div className="chat-room-avatar">
+              {room.member_ids.length > 2 ? <IconGroup /> : <IconPerson />}
+            </div>
+            <div className="chat-room-body">
+              <div className="chat-room-meta">
+                <span className="chat-room-name">{roomLabel(room)}</span>
+                <span className="chat-room-time">
+                  {room.last_message_at ? formatTime(room.last_message_at) : ''}
+                </span>
+              </div>
+              <div className="chat-room-preview">{room.last_message || '대화를 시작해보세요'}</div>
+            </div>
+            {room.unread_count > 0 && (
+              <span className="chat-unread-badge">{room.unread_count}</span>
+            )}
           </div>
         ))}
       </aside>
 
+      {/* ── 우측: 채팅 스레드 ── */}
       <section className="chat-thread">
         {selectedRoomId ? (
           <>
+            {/* 헤더 */}
             <div className="chat-thread-header">
-              <span className={`chat-connection-badge ${isConnected ? 'online' : 'offline'}`}>
-                {isConnected ? '연결됨' : '연결 끊김'}
-              </span>
+              <div className="chat-thread-header-left">
+                <span className="chat-thread-title">{selectedRoomLabel}</span>
+                <span className="chat-thread-subtitle">
+                  참여자 {selectedRoomMemberCount}명 <IconChevronDown />
+                </span>
+              </div>
+              <div className="chat-thread-header-right">
+                <span className={`chat-connection-badge ${isConnected ? 'online' : 'offline'}`}>
+                  {isConnected ? '연결됨' : '연결 끊김'}
+                </span>
+                {/* <button className="chat-icon-btn"><IconSearch /></button>
+                <button className="chat-icon-btn"><IconInfo /></button>
+                <button className="chat-icon-btn"><IconMore /></button> */}
+              </div>
             </div>
-            <div className="chat-message-list">
-              {isMessagesError && <div className="chat-inline-error">메시지를 불러오지 못했습니다.</div>}
-              {[...messages].reverse().map((m) => (
-                <div key={m.message_id} className={`chat-message ${m.sender_id === currentUser?.userId ? 'mine' : ''}`}>
-                  <span className="chat-message-sender">{displayName(m.sender_id)}</span>
-                  <p>{m.content}</p>
-                </div>
-              ))}
+
+            {/* 메시지 목록 */}
+            <div className="chat-message-list" ref={messageListRef}>
+              {isMessagesError && (
+                <div className="chat-inline-error">메시지를 불러오지 못했습니다.</div>
+              )}
+              {sortedMessages.map((m, idx) => {
+                const isMine = m.sender_id === currentUser?.userId;
+                const prev = sortedMessages[idx - 1];
+                const showDate = !prev || !isSameDay(prev.created_at ?? prev.sent_at, m.created_at ?? m.sent_at);
+
+                return (
+                  <React.Fragment key={m.message_id}>
+                    {showDate && (
+                      <div className="chat-date-divider">
+                        {formatDate(m.created_at ?? m.sent_at)}
+                      </div>
+                    )}
+                    <div className={`chat-message-group ${isMine ? 'mine' : ''}`}>
+                      {!isMine && (
+                        <span className="chat-message-group-sender">{displayName(m.sender_id)}</span>
+                      )}
+                      <div className="chat-message-bubble-row">
+                        <div className={`chat-message ${isMine ? 'mine' : ''}`}>{m.content}</div>
+                        <span className="chat-message-time">
+                          {formatTime(m.created_at ?? m.sent_at)}
+                        </span>
+                      </div>
+                    </div>
+                  </React.Fragment>
+                );
+              })}
             </div>
+
+            {/* 입력창 */}
             <div className="chat-input-area">
-              <textarea
-                ref={textareaRef}
-                rows={1}
-                className="chat-textarea"
-                value={draft}
-                onChange={(e) => setDraft(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' && !e.nativeEvent.isComposing && !e.shiftKey) {
-                    e.preventDefault();
-                    handleSend();
-                  }
-                }}
-                placeholder="메시지를 입력하세요 (Shift+Enter로 줄바꿈)"
-              />
-              <button onClick={handleSend}>전송</button>
+              <div className="chat-input-row">
+                <textarea
+                  ref={textareaRef}
+                  rows={1}
+                  className="chat-textarea"
+                  value={draft}
+                  onChange={(e) => setDraft(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !e.nativeEvent.isComposing && !e.shiftKey) {
+                      e.preventDefault();
+                      handleSend();
+                    }
+                  }}
+                  placeholder="메시지를 입력하세요 (Shift+Enter로 줄바꿈)"
+                />
+                <button className="chat-icon-btn" title="파일 첨부"><IconAttach /></button>
+                <button className="chat-send-btn" onClick={handleSend} disabled={!draft.trim()}>
+                  <IconSend /> 전송
+                </button>
+              </div>
+              {sendError && <div className="chat-inline-error">{sendError}</div>}
             </div>
-            {sendError && <div className="chat-inline-error">{sendError}</div>}
           </>
         ) : (
           <div className="chat-empty-state">채팅방을 선택하거나 새 채팅을 시작하세요.</div>
@@ -188,7 +321,11 @@ function ChatPage() {
       </section>
 
       {isPickerOpen && (
-        <EmployeeSearchModal multiSelect onConfirm={handlePickEmployees} onClose={() => setIsPickerOpen(false)} />
+        <EmployeeSearchModal
+          multiSelect
+          onConfirm={handlePickEmployees}
+          onClose={() => setIsPickerOpen(false)}
+        />
       )}
     </div>
   );
