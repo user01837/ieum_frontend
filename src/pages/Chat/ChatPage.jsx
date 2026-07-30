@@ -203,6 +203,9 @@ function ChatPage() {
   };
 
   const roomLabel = (room) => {
+    // 그룹방 생성 시 지정된 이름(예: 사업 협업방의 "[사업] ...")이 있으면 그대로 보여준다.
+    // 이름이 없는 방(1:1, 또는 이름 없이 만든 그룹방)만 참여자 목록으로 대체 표시한다.
+    if (room.name) return room.name;
     const others = room.member_ids.filter((id) => id !== currentUser?.userId);
     return others.map(displayName).join(', ') || '(참여자 없음)';
   };
@@ -266,6 +269,7 @@ function ChatPage() {
       <button
         className="chat-room-leave-btn"
         aria-label="채팅방 나가기"
+        title="채팅방 나가기"
         onClick={(e) => {
           e.stopPropagation();
           handleLeaveRoom(room.room_id);
