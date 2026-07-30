@@ -22,36 +22,116 @@ export default function Home() {
 
   // --- API 데이터 로드 ---
   const { data: dashboardData, isLoading, isError } = useHomeDashboardQuery({
-    enabled: isClient && !isAdmin, // 관리자가 아닐 때만 이 쿼리를 실행합니다.
+    enabled: isClient && !!user, // 사용자 정보가 있을 때 쿼리를 실행합니다.
   });
 
-  // API 응답 데이터 구조 분해 할당
+  // useMemo를 사용하여 API 데이터를 역할에 맞게 가공하고, 차트 데이터를 생성합니다.
   const {
-    myPetitionSummary = { total: 0, waiting: 0, checked: 0, inProgress: 0, completed: 0 },
-    announcements = [],
+    isReady,
+    // Staff data
+    myPetitionSummary,
+    staffAnnouncements,
     urgentPetitions = [],
     recentPetitions = [],
     myProjects = [],
-  } = dashboardData || {};
+    staffChartData,
+    // Admin data
+    stats,
+    employeeStatus,
+    adminMonthlyPetitionSummary,
+    totalDelayedOrUrgentPetitions,
+    knowledgeSummary,
+    adminAnnouncements,
+    adminDelayedOrUrgentPetitions,
+    recentUsers,
+    adminDeptChartData,
+    adminDeptKbData,
+  } = useMemo(() => {
+    if (!dashboardData) {
+      return { isReady: false };
+    }
 
-  // ==========================================
-  // 1. 일반 직원용 차트 데이터
-  // ==========================================
-  const staffChartData = {
-    labels: ['대기중', '확인중', '처리중', '완료'],
-    datasets: [
-      {
-        data: [
-          myPetitionSummary.waiting,
-          myPetitionSummary.checked,
-          myPetitionSummary.inProgress,
-          myPetitionSummary.completed,
+    if (isAdmin) {
+      const {
+        stats = { totalUsers: 0, activeDepartments: 0 },
+        employeeStatus = { active: 0, onLeave: 0, resigned: 0 },
+        monthlyPetitionSummary = { total: 0, percentageChange: 0.0 },
+        totalDelayedOrUrgentPetitions = 0,
+        departmentPetitionStatus = [],
+        knowledgeSummary = { total: 0, byDepartment: [] },
+        announcements = [],
+        delayedOrUrgentPetitions = [],
+        recentUsers = [],
+      } = dashboardData;
+
+      const adminDeptChartData = {
+        labels: departmentPetitionStatus.map(d => d.departmentName),
+        datasets: [
+          { label: '대기', data: departmentPetitionStatus.map(d => d.waiting), backgroundColor: '#919191' },
+          { label: '확인중', data: departmentPetitionStatus.map(d => d.checked), backgroundColor: '#f59e0b' },
+          { label: '진행중', data: departmentPetitionStatus.map(d => d.inProgress), backgroundColor: '#2563eb' },
+          { label: '완료', data: departmentPetitionStatus.map(d => d.completed), backgroundColor: '#10b981' },
+          { label: '지연', data: departmentPetitionStatus.map(d => d.delayed), backgroundColor: '#ef4444' },
         ],
-        backgroundColor: ['#919191', '#E08A2B', '#2563eb', '#10b981'],
-        borderWidth: 0,
-      },
-    ],
-  };
+      };
+
+      const adminDeptKbData = {
+        labels: knowledgeSummary.byDepartment.map(d => d.departmentName),
+        datasets: [{
+          label: '등록 건수',
+          data: knowledgeSummary.byDepartment.map(d => d.count),
+          backgroundColor: '#6366f1',
+          borderRadius: 4,
+        }],
+      };
+
+      return {
+        isReady: true,
+        stats,
+        employeeStatus,
+        adminMonthlyPetitionSummary: monthlyPetitionSummary,
+        totalDelayedOrUrgentPetitions,
+        knowledgeSummary,
+        adminAnnouncements: announcements,
+        adminDelayedOrUrgentPetitions: delayedOrUrgentPetitions,
+        recentUsers,
+        adminDeptChartData,
+        adminDeptKbData,
+      };
+    } else { // Staff
+      const {
+        myPetitionSummary = { total: 0, waiting: 0, checked: 0, inProgress: 0, completed: 0 },
+        announcements = [],
+        urgentPetitions = [],
+        recentPetitions = [],
+        myProjects = [],
+      } = dashboardData;
+
+      const staffChartData = {
+        labels: ['대기중', '확인중', '처리중', '완료'],
+        datasets: [{
+          data: [
+            myPetitionSummary.waiting,
+            myPetitionSummary.checked,
+            myPetitionSummary.inProgress,
+            myPetitionSummary.completed,
+          ],
+          backgroundColor: ['#919191', '#E08A2B', '#2563eb', '#10b981'],
+          borderWidth: 0,
+        }],
+      };
+
+      return {
+        isReady: true,
+        myPetitionSummary,
+        staffAnnouncements: announcements,
+        urgentPetitions,
+        recentPetitions,
+        myProjects,
+        staffChartData,
+      };
+    }
+  }, [dashboardData, isAdmin]);
 
   const donutOptions = {
     responsive: true,
@@ -60,26 +140,6 @@ export default function Home() {
       legend: { display: false },
     },
     cutout: '65%',
-  };
-
-  // ==========================================
-  // 2. 관리자용 차트 데이터
-  // ==========================================
-  // (1) 부서별 민원 접수 및 처리 현황 (바 차트)
-  const adminDeptChartData = {
-    labels: ['교통부', '문화·체육·관광부', '복지행정과', '환경위생과', '도시재생과'],
-    datasets: [
-      {
-        label: '처리 완료',
-        data: [120, 85, 95, 60, 40],
-        backgroundColor: '#2563eb',
-      },
-      {
-        label: '진행 중/지연',
-        data: [25, 12, 18, 5, 8],
-        backgroundColor: '#f59e0b',
-      },
-    ],
   };
 
   const adminBarOptions = {
@@ -94,16 +154,10 @@ export default function Home() {
     },
   };
 
-  // (2) 지식베이스 카테고리별 등록 현황 (건수 기준)
-  const adminKbChartData = {
-    labels: ['민원/매뉴얼', '교통/시설', '행정/서식', '기타'],
-    datasets: [
-      {
-        data: [210, 115, 90, 67], // 단순 등록된 문서 수
-        backgroundColor: ['#2563eb', '#10b981', '#6366f1', '#f59e0b'],
-        borderWidth: 0,
-      },
-    ],
+  const adminKbBarOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: { legend: { display: false } },
   };
 
   // --- 상태별 색상/클래스 맵 ---
@@ -128,9 +182,9 @@ export default function Home() {
     );
   }
 
-  // 직원 대시보드 데이터 로딩/에러 처리
-  if (!isAdmin && isLoading) return <div className="dashboard-container" style={{ padding: '40px', textAlign: 'center' }}>대시보드 데이터를 불러오는 중입니다...</div>;
-  if (!isAdmin && isError) return <div className="dashboard-container" style={{ padding: '40px', textAlign: 'center', color: 'var(--danger)' }}>데이터 로딩 중 오류가 발생했습니다.</div>;
+  // 데이터 로딩/에러 처리
+  if (isLoading || !isReady) return <div className="dashboard-container" style={{ padding: '40px', textAlign: 'center' }}>대시보드 데이터를 불러오는 중입니다...</div>;
+  if (isError) return <div className="dashboard-container" style={{ padding: '40px', textAlign: 'center', color: 'var(--danger)' }}>데이터 로딩 중 오류가 발생했습니다.</div>;
 
 
   return (
@@ -143,81 +197,92 @@ export default function Home() {
           {/* ========================================================================= */}
           {isAdmin ? (
             <>
-              {/* 관리자 1행: 조직 및 민원 현황 KPI 카운터 */}
+              {/* 관리자 1행: 조직 및 민원 현황 KPI 카운터 4개 */}
               <div className="grid-row-kpi" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px', marginBottom: '20px' }}>
                 <div className="card" style={{ padding: '20px' }}>
-                  <div style={{ fontSize: '13px', color: '#64748b' }}>전체 직원 / 활성 부서</div>
+                  <div style={{ fontSize: '13px', color: '#64748b' }}>전체 직원 수</div>
                   <div style={{ fontSize: '28px', fontWeight: 700, color: '#0f172a', marginTop: '6px' }}>
-                    112<span style={{ fontSize: '16px', fontWeight: 400 }}> 명</span>
+                    {stats.totalUsers}<span style={{ fontSize: '16px', fontWeight: 400 }}> 명</span>
                   </div>
-                  <div style={{ fontSize: '12px', color: '#10b981', marginTop: '4px' }}>● 9개 부서 등록됨</div>
+                  <div style={{ fontSize: '12px', color: '#10b981', marginTop: '4px' }}>● 활성 부서 {stats.activeDepartments}개</div>
                 </div>
 
                 <div className="card" style={{ padding: '20px' }}>
-                  <div style={{ fontSize: '13px', color: '#64748b' }}>휴직 중 직원</div>
-                  <div style={{ fontSize: '28px', fontWeight: 700, color: '#f59e0b', marginTop: '6px' }}>
-                    2<span style={{ fontSize: '16px', fontWeight: 400 }}> 명</span>
+                  <div style={{ fontSize: '13px', color: '#64748b' }}>직원 상태 현황</div>
+                  <div style={{ fontSize: '18px', fontWeight: 700, color: '#0f172a', marginTop: '10px' }}>
+                    재직 <strong className="text-dark">{employeeStatus.active}</strong> / 휴직 <strong className="text-amber">{employeeStatus.onLeave}</strong> / 퇴직 <strong className="text-danger">{employeeStatus.resigned}</strong>
                   </div>
-                  <div style={{ fontSize: '12px', color: '#64748b', marginTop: '4px' }}>재직 중 109명 / 퇴직 1명</div>
+                  <div style={{ fontSize: '12px', color: '#64748b', marginTop: '4px' }}>총 계정 {stats.totalUsers}개 기준</div>
                 </div>
 
                 <div className="card" style={{ padding: '20px' }}>
                   <div style={{ fontSize: '13px', color: '#64748b' }}>금월 전체 민원</div>
                   <div style={{ fontSize: '28px', fontWeight: 700, color: '#2563eb', marginTop: '6px' }}>
-                    1,240<span style={{ fontSize: '16px', fontWeight: 400 }}> 건</span>
+                    {adminMonthlyPetitionSummary.total.toLocaleString()}<span style={{ fontSize: '16px', fontWeight: 400 }}> 건</span>
                   </div>
-                  <div style={{ fontSize: '12px', color: '#64748b', marginTop: '4px' }}>전월 대비 +8.4%</div>
+                  <div style={{ fontSize: '12px', color: adminMonthlyPetitionSummary.percentageChange >= 0 ? '#10b981' : '#ef4444', marginTop: '4px' }}>{adminMonthlyPetitionSummary.percentageChange >= 0 ? '▲' : '▼'} 전월 대비 {Math.abs(adminMonthlyPetitionSummary.percentageChange)}%</div>
                 </div>
 
                 <div className="card" style={{ padding: '20px' }}>
-                  <div style={{ fontSize: '13px', color: '#64748b' }}>처리 지연/임박 민원</div>
+                  <div style={{ fontSize: '13px', color: '#64748b' }}>전체 부서 처리 지연/임박 민원</div>
                   <div style={{ fontSize: '28px', fontWeight: 700, color: '#ef4444', marginTop: '6px' }}>
-                    5<span style={{ fontSize: '16px', fontWeight : 400 }}> 건</span>
+                    {totalDelayedOrUrgentPetitions}<span style={{ fontSize: '16px', fontWeight: 400 }}> 건</span>
                   </div>
-                  <div style={{ fontSize: '12px', color: '#ef4444', marginTop: '4px' }}>⚠️ 기한 임박 모니터링</div>
+                  <div style={{ fontSize: '12px', color: '#ef4444', marginTop: '4px' }}>⚠️ 즉시 관제 및 독촉 필요</div>
                 </div>
               </div>
 
-              {/* 관리자 2행: 부서별 민원 처리 현황 & 지식베이스 등록 현황 */}
-              <div className="grid-row-two" style={{ marginBottom: '20px' }}>
+              {/* 관리자 2행: 부서별 민원 처리 현황 (9개 부서 100% 가로 풀 너비) */}
+              <div className="grid-row-full" style={{ marginBottom: '20px' }}>
                 <div className="card">
-                  <h3 className="card-title">부서별 민원 처리 현황</h3>
-                  <div style={{ height: '220px', marginTop: '10px' }}>
+                  <h3 className="card-title">부서별 민원 처리 현황 (월별)</h3>
+                  <div style={{ height: '280px', marginTop: '10px' }}>
                     <Bar data={adminDeptChartData} options={adminBarOptions} />
                   </div>
                 </div>
+              </div>
 
+              {/* 관리자 3행: 부서별 지식베이스 등록 현황 & 공지사항 */}
+              <div className="grid-row-two" style={{ marginBottom: '20px' }}>
+                {/* 부서별 지식베이스 등록 현황 */}
                 <div className="card">
-                  <h3 className="card-title">지식베이스 카테고리별 등록 현황</h3>
-                  <div className="status-flex">
-                    <div className="status-info">
-                      <div className="status-total">전체 등록 지식: 482건</div>
-                      <div className="status-item">
-                        <span>민원 / 매뉴얼</span> <span className="text-blue font-bold">210건</span>
-                      </div>
-                      <div className="status-item">
-                        <span>교통 / 시설</span> <span className="text-emerald font-bold">115건</span>
-                      </div>
-                      <div className="status-item">
-                        <span>행정 / 서식</span> <span className="text-dark font-bold">90건</span>
-                      </div>
-                      <div className="status-item">
-                        <span>기타 규정</span> <span className="text-amber font-bold">67건</span>
-                      </div>
-                    </div>
-                    <div className="chart-box-sm">
-                      <Doughnut data={adminKbChartData} options={donutOptions} />
-                    </div>
+                  <div className="card-header-flex">
+                    <h3 className="card-title">부서별 지식베이스 등록 현황</h3>
+                    <span style={{ fontSize: '12px', color: '#64748b' }}>총 {knowledgeSummary.total}건 등록됨</span>
                   </div>
+                  <div style={{ height: '200px', marginTop: '10px' }}>
+                    <Bar data={adminDeptKbData} options={adminKbBarOptions} />
+                  </div>
+                </div>
+
+                {/* 공지사항 */}
+                <div className="card">
+                  <div className="card-header-flex">
+                    <h3 className="card-title">공지사항</h3>
+                    <Link to="/announcements" className="more-btn">더보기 +</Link>
+                  </div>
+                  <ul className="simple-list">
+                    {adminAnnouncements.length > 0 ? (
+                      adminAnnouncements.map((notice, index) => (
+                        <li key={index}>
+                          <span className="list-title">{notice.title}</span>
+                          <span className="list-date">{notice.date}</span>
+                        </li>
+                      ))
+                    ) : (
+                      <li style={{ textAlign: 'center', color: 'var(--ink-tertiary)', fontSize: '12px', padding: '20px 0' }}>등록된 공지사항이 없습니다.</li>
+                    )}
+                  </ul>
                 </div>
               </div>
 
-              {/* 관리자 3행: 지연 임박 민원 모니터링 & 최근 등록/수정 직원 목록 */}
+              {/* 관리자 4행: 처리 지연/임박 민원 현황 & 최근 등록/수정 직원 현황 */}
               <div className="grid-row-two">
+                {/* 처리 지연/임박 민원 현황 */}
                 <div className="card">
                   <div className="card-header-flex">
-                    <h3 className="card-title" style={{ color: '#ef4444' }}>🚨 처리 지연/임박 민원 현황</h3>
-                    <a href="#petitions" className="more-btn">민원 전체보기 +</a>
+                    <h3 className="card-title" style={{ color: '#ef4444' }}>🚨 처리 지연 / 임박 민원 현황</h3>
+                    <Link to="/petitions" className="more-btn">전체보기 +</Link>
                   </div>
                   <table className="recent-table">
                     <thead>
@@ -229,32 +294,30 @@ export default function Home() {
                       </tr>
                     </thead>
                     <tbody>
-                      <tr>
-                        <td>교통부</td>
-                        <td>김교통 부장</td>
-                        <td className="font-semibold text-dark">주차장 출입 차단기 오류</td>
-                        <td className="text-danger font-medium">오늘 만료</td>
-                      </tr>
-                      <tr>
-                        <td>문화·체육·관광부</td>
-                        <td>안건호 주무관</td>
-                        <td className="font-semibold text-dark">체육시설 대관 승인 요청</td>
-                        <td className="text-danger font-medium">D-1</td>
-                      </tr>
-                      <tr>
-                        <td>환경위생과</td>
-                        <td>이환경 주무관</td>
-                        <td className="font-semibold text-dark">야외 쓰레기통 추가 설치</td>
-                        <td className="text-amber font-medium">D-2</td>
-                      </tr>
+                      {adminDelayedOrUrgentPetitions.length > 0 ? (
+                        adminDelayedOrUrgentPetitions.map((p, index) => (
+                          <tr key={index}>
+                            <td>{p.departmentName || '-'}</td>
+                            <td>{p.assigneeName || '-'}</td>
+                            <td className="font-semibold text-dark">{p.title}</td>
+                            <td className="text-danger font-medium">{p.dueDate}</td>
+                          </tr>
+                        ))
+                      ) : (
+                        <tr>
+                          <td colSpan="4" style={{ textAlign: 'center', color: 'var(--ink-tertiary)', fontSize: '12px', padding: '20px 0' }}>
+                            처리 지연/임박 민원이 없습니다.
+                          </td>
+                        </tr>
+                      )}
                     </tbody>
                   </table>
                 </div>
 
-                {/* 최근 등록/수정된 직원 목록 (사원 DB 데이터 연동용) */}
+                {/* 최근 등록/수정 직원 현황 */}
                 <div className="card">
                   <div className="card-header-flex">
-                    <h3 className="card-title">최근 등록 직원 현황</h3>
+                    <h3 className="card-title">최근 등록 / 수정 직원 현황</h3>
                     <a href="#admin-page" className="more-btn">직원 관리 페이지 +</a>
                   </div>
                   <table className="recent-table">
@@ -267,30 +330,22 @@ export default function Home() {
                       </tr>
                     </thead>
                     <tbody>
-                      <tr>
-                        <td>20250818</td>
-                        <td className="font-semibold text-dark">안건호</td>
-                        <td>문화·체육·관광부</td>
-                        <td><span className="status-badge active">재직</span></td>
-                      </tr>
-                      <tr>
-                        <td>20260001</td>
-                        <td className="font-semibold text-dark">김관리</td>
-                        <td>관리자</td>
-                        <td><span className="status-badge active">재직</span></td>
-                      </tr>
-                      <tr>
-                        <td>20260002</td>
-                        <td className="font-semibold text-dark">김교통</td>
-                        <td>교통부</td>
-                        <td><span className="status-badge active">재직</span></td>
-                      </tr>
-                      <tr>
-                        <td>20260005</td>
-                        <td className="font-semibold text-dark">이휴직</td>
-                        <td>교통부</td>
-                        <td><span className="status-badge leave">휴직</span></td>
-                      </tr>
+                      {recentUsers.length > 0 ? (
+                        recentUsers.map(u => (
+                          <tr key={u.userId}>
+                            <td>{u.userId}</td>
+                            <td className="font-semibold text-dark">{u.name}</td>
+                            <td>{u.departmentName || '-'}</td>
+                            <td><span className={`status-badge ${u.statusName === '재직' ? 'active' : 'leave'}`}>{u.statusName}</span></td>
+                          </tr>
+                        ))
+                      ) : (
+                        <tr>
+                          <td colSpan="4" style={{ textAlign: 'center', color: 'var(--ink-tertiary)', fontSize: '12px', padding: '20px 0' }}>
+                            최근 변경된 직원이 없습니다.
+                          </td>
+                        </tr>
+                      )}
                     </tbody>
                   </table>
                 </div>
@@ -334,8 +389,8 @@ export default function Home() {
                     <Link to="/announcements" className="more-btn">더보기 +</Link>
                   </div>
                   <ul className="simple-list">
-                    {announcements.length > 0 ? (
-                      announcements.slice(0, 4).map((notice) => (
+                    {staffAnnouncements.length > 0 ? (
+                      staffAnnouncements.slice(0, 4).map((notice) => (
                         <li
                           key={notice.id}
                           onClick={() => navigate(`/announcements/${notice.id}`)}
@@ -359,12 +414,22 @@ export default function Home() {
                   <h3 className="card-title">처리 기한 임박 민원</h3>
                   <div className="alert-list">
                     {urgentPetitions.length > 0 ? (
-                      urgentPetitions.map(p => {
-                        const urgency = p.dDay <= 0 ? 'danger' : p.dDay <= 2 ? 'warning' : 'info';
-                        const badgeText = p.dDay <= 0 ? '오늘 만료' : `D-${p.dDay}`;
+                      urgentPetitions.map((p) => {
+                        let urgency;
+                        let badgeText;
+                        if (p.dDay < 0) {
+                          urgency = 'overdue';
+                          badgeText = `D+${Math.abs(p.dDay)}`;
+                        } else if (p.dDay === 0) {
+                          urgency = 'danger';
+                          badgeText = '오늘 만료';
+                        } else {
+                          urgency = p.dDay <= 2 ? 'warning' : 'info';
+                          badgeText = `D-${p.dDay}`;
+                        }
                         return (
                           <Link to={`/petitions/${p.complaintId}`} key={p.complaintId} className={`alert-item alert-${urgency}`}>
-                            <span className={urgency === 'danger' ? 'font-bold' : ''}>{p.title}</span>
+                            <span className={urgency === 'danger' || urgency === 'overdue' ? 'font-bold' : ''}>{p.title}</span>
                             <span className={`alert-badge-${urgency}`}>{badgeText}</span>
                           </Link>
                         );
