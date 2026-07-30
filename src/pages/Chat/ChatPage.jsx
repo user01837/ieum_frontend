@@ -462,21 +462,23 @@ function ChatPage() {
               )}
 
               <div className="chat-input-row">
-                <textarea
-                  ref={textareaRef}
-                  rows={1}
-                  className="chat-textarea"
-                  value={draft}
-                  onChange={(e) => setDraft(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' && !e.nativeEvent.isComposing && !e.shiftKey) {
-                      e.preventDefault();
-                      handleSend();
-                    }
-                  }}
-                  placeholder="메시지를 입력하세요 (Shift+Enter로 줄바꿈)"
-                />
-                <button className="chat-attach-btn" title="파일 첨부" onClick={open}><IconAttach /></button>
+                <div className="chat-input-box">
+                  <textarea
+                    ref={textareaRef}
+                    rows={1}
+                    className="chat-textarea"
+                    value={draft}
+                    onChange={(e) => setDraft(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && !e.nativeEvent.isComposing && !e.shiftKey) {
+                        e.preventDefault();
+                        handleSend();
+                      }
+                    }}
+                    placeholder="메시지를 입력하세요 (Shift+Enter로 줄바꿈)"
+                  />
+                  <button className="chat-attach-btn" title="파일 첨부" onClick={open}><IconAttach /></button>
+                </div>
                 <button className="chat-send-btn" onClick={handleSend} disabled={!draft.trim() && attachedFiles.length === 0}>
                   <IconSend /> 전송
                 </button>
