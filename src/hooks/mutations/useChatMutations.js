@@ -38,6 +38,8 @@ export const useLeaveChatRoomMutation = () => {
     mutationFn: leaveChatRoom,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['chatRooms'] });
+      // 나가기 시 서버가 해당 방의 알림 row도 함께 삭제하므로 알림 목록도 갱신한다.
+      queryClient.invalidateQueries({ queryKey: ['notifications'] });
     },
   });
 };
