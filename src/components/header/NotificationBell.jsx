@@ -43,9 +43,9 @@ function NotificationBell() {
   return (
     <div className="notification-bell" ref={ref}>
       <button className="bell-btn" onClick={() => setIsOpen((v) => !v)} aria-label="알림">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-          <path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9" />
-          <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M6 8a6 6 0 0 1 12 0c0 7 2.5 8.5 3 9.5a1 1 0 0 1-.9 1.5H3.9A1 1 0 0 1 3 17.5C3.5 16.5 6 15 6 8z" />
+          <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
         </svg>
         {unreadCount > 0 && <span className="bell-badge">{unreadCount}</span>}
       </button>
