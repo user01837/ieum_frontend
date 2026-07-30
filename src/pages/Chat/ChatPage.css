@@ -442,6 +442,9 @@ justify-content: space-between;
   align-items: flex-end;
   gap: 8px;
   padding: 12px 16px;
+  /* 우측 하단에 떠 있는 챗봇 아이콘(56px + 20px 여백)과 전송 버튼이 겹치지
+     않도록 여유를 둔다. */
+  padding-right: 90px;
 }
 
 .chat-input-area textarea.chat-textarea {
@@ -478,7 +481,6 @@ justify-content: space-between;
   font-weight: 600;
   cursor: pointer;
   transition: background 0.15s;
-  margin-right: 150px;
 }
 
 .chat-send-btn:hover {

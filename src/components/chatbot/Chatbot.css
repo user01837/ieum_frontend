@@ -41,6 +41,23 @@
   animation: slide-in 0.3s ease-out;
 }
 
+/* 채팅 페이지에서는 기본 150px 아이콘이 메시지 입력창(전송 버튼)과 겹친다.
+   이 페이지에서만 아이콘을 작게 줄이고 모서리에 더 붙여, 입력창과 겹치지
+   않으면서도 눈에 띄게 유지한다. */
+.chatbot-container.compact {
+  bottom: 20px;
+  right: 20px;
+}
+
+.chatbot-container.compact .chatbot-fab img {
+  width: 56px;
+  height: 56px;
+}
+
+.chatbot-container.compact .chatbot-window {
+  margin-bottom: 10px;
+}
+
 @keyframes slide-in {
   from {
     opacity: 0;
