@@ -1,13 +1,14 @@
 import api from './axios';
 
 export const getAnnouncements = async (params) => {
-    const { keyword, ...rest } = params;
-    const queryParams = {
-        ...rest,
-        ...(keyword ? { keyword } : {}),
-    };
-    const { data } = await api.get('/announcements', { params: queryParams });
-    return data;
+  const { keyword, departmentCode, ...rest } = params;
+  const queryParams = {
+    ...rest,
+    ...(keyword ? { keyword } : {}),
+    ...(departmentCode ? { department_code: departmentCode } : {}),
+  };
+  const { data } = await api.get('/announcements', { params: queryParams });
+  return data;
 };
 
 export const getAnnouncementDetail = async (id) => {

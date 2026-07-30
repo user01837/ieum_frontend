@@ -1,7 +1,5 @@
 .ann-content {
   padding: 26px 34px 50px;
-  max-width: 1400px;
-  margin: 0 auto;
 }
 
 .ann-toolbar {
@@ -123,4 +121,26 @@
 
 .ann-trow.head span:nth-child(2) {
   text-align: left;
+  padding-left: 3px;
+}
+
+.ann-toolbar .action-btn {
+    padding: 9px 16px;
+    border: 1px solid var(--line-strong);
+    border-radius: 8px;
+    background: var(--surface);
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--ink-soft);
+    transition: background-color .15s, border-color .15s;
+    font-family: inherit;
+}
+.ann-toolbar .action-btn:hover { background: var(--bg); }
+
+.ann-detail-content {
+  padding: 26px 34px 60px;
+  max-width: 900px;
+  width: 100%;
+  margin: 0 auto;
 }

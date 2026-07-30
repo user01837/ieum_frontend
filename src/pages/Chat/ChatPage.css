@@ -139,6 +139,11 @@
   flex-shrink: 0;
 }
 
+/* 나가기 버튼이 나타날 때 시간 표시와 자리가 겹치지 않도록, 호버 중에는 시간을 숨긴다. */
+.chat-room-item:hover .chat-room-time {
+  visibility: hidden;
+}
+
 .chat-room-preview {
   font-size: 12px;
   color: #6b7280;
@@ -160,20 +165,35 @@
   text-align: center;
 }
 
+/* 채팅방 나가기 버튼: 안읽음 배지와 겹치던 것을 위쪽(시간 표시 자리)으로 옮기고,
+   평소엔 숨겨뒀다가 해당 방에 마우스를 올렸을 때만 눈에 띄게 나타나도록 한다. */
 .chat-room-leave-btn {
   position: absolute;
-  right: 12px;
-  bottom: 10px;
+  top: 12px;
+  right: 14px;
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   border: none;
+  border-radius: 50%;
   background: transparent;
   color: #9ca3af;
   cursor: pointer;
-  font-size: 12px;
+  font-size: 13px;
   line-height: 1;
-  padding: 2px 4px;
+  padding: 0;
+  opacity: 0;
+  transition: opacity 0.12s, background 0.12s, color 0.12s;
+}
+
+.chat-room-item:hover .chat-room-leave-btn {
+  opacity: 1;
 }
 
 .chat-room-leave-btn:hover {
+  background: #fee2e2;
   color: #ef4444;
 }
 
@@ -333,6 +353,9 @@ justify-content: space-between;
   line-height: 1.5;
   box-shadow: 0 1px 2px rgba(0,0,0,0.06);
   word-break: break-word;
+  /* Shift+Enter로 입력한 줄바꿈이 메시지 텍스트에 그대로 보존되도록 한다.
+     기본값(normal)은 HTML처럼 연속 공백/개행을 모두 한 칸으로 접어버린다. */
+  white-space: pre-wrap;
 }
 
 .chat-message.mine {
