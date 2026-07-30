@@ -3,12 +3,14 @@ import { useSearchParams } from 'react-router-dom';
 import { useDropzone } from 'react-dropzone';
 import './ChatPage.css';
 import '../Petition/Detail_petition.css'; // 민원 상세의 첨부파일 스타일 재사용
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useChatRoomsQuery, useChatRoomMessagesQuery } from '../../hooks/queries/useChatQuery';
 import { useCreateChatRoomMutation, useMarkChatRoomReadMutation, useAddChatRoomMembersMutation, useLeaveChatRoomMutation, useRenameChatRoomMutation } from '../../hooks/mutations/useChatMutations';
 import { useChatSocketContext } from '../../store/ChatSocketContext';
 import useAuthStore from '../../store/useAuthStore';
 import EmployeeSearchModal from '../../components/EmpSearchModal/EmpSearchModal';
 import { useUserSearch } from '../../hooks/queries/useUserQuery';
+import api from '../../api/axios'
 
 /* ── 아이콘 (inline SVG, 외부 라이브러리 없이) ── */
 const IconPerson = () => (
@@ -106,6 +108,7 @@ function ChatPage() {
   const participantsRef = useRef(null);
 
   const { data: allEmployees = [] } = useUserSearch({ scope: 'all' });
+  const queryClient = useQueryClient();
   const userDisplayMap = useMemo(() => {
     const map = {};
     allEmployees.forEach((emp) => { map[String(emp.userId)] = emp; });
@@ -149,6 +152,19 @@ function ChatPage() {
   });
 
   const removeFile = (fileToRemove) => setAttachedFiles(prev => prev.filter(file => file !== fileToRemove));
+
+  const sendChatMessageMutation = useMutation({
+    mutationFn: ({ roomId, formData }) => 
+      api.post(`/chat/rooms/${roomId}/messages`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      }),
+    onSuccess: (data, variables) => {
+      // WebSocket을 통해 새 메시지가 푸시될 것으로 예상되지만,
+      // 안전장치 및 즉각적인 UI 업데이트를 위해 메시지 쿼리를 무효화합니다.
+      // 중복을 피하기 위해 캐시를 직접 업데이트하는 것보다 무효화가 더 안전합니다.
+      queryClient.invalidateQueries({ queryKey: ['chatMessages', variables.roomId] });
+    },
+  });
 
   useEffect(() => {
     if (!roomParam) return;
@@ -202,21 +218,29 @@ function ChatPage() {
   const handleSend = () => {
     if ((!draft.trim() && attachedFiles.length === 0) || !selectedRoomId) return;
 
-    if (attachedFiles.length > 0) {
-      // TODO: 파일 전송 로직 구현 필요
-      console.log('파일을 전송합니다:', attachedFiles.map(f => f.name));
-    }
-
+    const formData = new FormData();
     if (draft.trim()) {
-      const sent = sendMessage(selectedRoomId, draft.trim());
-      if (!sent) {
-        setSendError('연결이 끊겨 있어 메시지를 보낼 수 없습니다.');
-        return;
-      }
+      formData.append('content', draft.trim());
     }
-    setDraft('');
-    setAttachedFiles([]);
-    setSendError('');
+    attachedFiles.forEach(file => {
+      formData.append('files', file);
+    });
+
+    sendChatMessageMutation.mutate(
+      { roomId: selectedRoomId, formData },
+      {
+        onSuccess: () => {
+          setDraft('');
+          setAttachedFiles([]);
+          setSendError('');
+          queryClient.invalidateQueries({ queryKey: ['chatRoomMessages', selectedRoomId] });
+          queryClient.invalidateQueries({ queryKey: ['chatRooms'] });
+        },
+        onError: (err) => {
+          setSendError(err.response?.data?.detail || '메시지 전송에 실패했습니다.');
+        },
+      }
+    );
   };
 
   const handlePickEmployees = (selectedEmployees) => {
@@ -431,7 +455,21 @@ function ChatPage() {
                         <span className="chat-message-group-sender">{displayName(m.sender_id)}</span>
                       )}
                       <div className="chat-message-bubble-row">
-                        <div className={`chat-message ${isMine ? 'mine' : ''}`}>{m.content}</div>
+                        <div className={`chat-message ${isMine ? 'mine' : ''}`}>
+                          {m.content && <div>{m.content}</div>}
+                          {m.attachments && m.attachments.length > 0 && (
+                            <div className="attach-list" style={{ marginTop: m.content ? '12px' : '0', padding: '0', gap: '6px' }}>
+                              {m.attachments.map(att => (
+                                <div key={att.attachment_id} className="reply-attach-chip">
+                                  <svg className="ic" viewBox="0 0 24 24"><path fill="currentColor" d="M16.5 6v11.5c0 2.21-1.79 4-4 4s-4-1.79-4-4V5a2.5 2.5 0 0 1 5 0v10.5c0 .83-.67 1.5-1.5 1.5s-1.5-.67-1.5-1.5V6H10v9.5c0 1.38 1.12 2.5 2.5 2.5s2.5-1.12 2.5-2.5V5c-1.93 0-3.5 1.57-3.5 3.5v11.5c0 2.76 2.24 5 5 5s5-2.24 5-5V6h-1.5z"></path></svg>
+                                  <a href={att.file_url} target="_blank" rel="noopener noreferrer" download={att.file_name} style={{ flex: '1' }}>
+                                    {att.file_name}
+                                  </a>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
                         <span className="chat-message-time">
                           {formatTime(m.created_at ?? m.sent_at)}
                         </span>
@@ -477,7 +515,7 @@ function ChatPage() {
                   placeholder="메시지를 입력하세요 (Shift+Enter로 줄바꿈)"
                 />
                 <button className="chat-attach-btn" title="파일 첨부" onClick={open}><IconAttach /></button>
-                <button className="chat-send-btn" onClick={handleSend} disabled={!draft.trim() && attachedFiles.length === 0}>
+                <button className="chat-send-btn" onClick={handleSend} disabled={(!draft.trim() && attachedFiles.length === 0) || sendChatMessageMutation.isPending}>
                   <IconSend /> 전송
                 </button>
               </div>
