@@ -57,6 +57,23 @@
   padding: 1px 7px;
 }
 
+.chat-room-leave-btn {
+  position: absolute;
+  right: 12px;
+  bottom: 10px;
+  border: none;
+  background: transparent;
+  color: #9ca3af;
+  cursor: pointer;
+  font-size: 12px;
+  line-height: 1;
+  padding: 2px 4px;
+}
+
+.chat-room-leave-btn:hover {
+  color: #ef4444;
+}
+
 .chat-thread {
   flex: 1;
   display: flex;
@@ -68,8 +85,19 @@
 
 .chat-thread-header {
   display: flex;
+  align-items: center;
   justify-content: flex-end;
+  gap: 8px;
   padding: 8px 24px 0;
+}
+
+.chat-add-member-btn {
+  font-size: 12px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  border: 1px solid #d1d5db;
+  background: #fff;
+  cursor: pointer;
 }
 
 .chat-connection-badge {

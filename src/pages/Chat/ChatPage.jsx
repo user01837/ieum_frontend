@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import './ChatPage.css';
 import { useChatRoomsQuery, useChatRoomMessagesQuery } from '../../hooks/queries/useChatQuery';
-import { useCreateChatRoomMutation, useMarkChatRoomReadMutation } from '../../hooks/mutations/useChatMutations';
+import { useCreateChatRoomMutation, useMarkChatRoomReadMutation, useAddChatRoomMembersMutation, useLeaveChatRoomMutation } from '../../hooks/mutations/useChatMutations';
 import { useChatSocketContext } from '../../store/ChatSocketContext';
 import useAuthStore from '../../store/useAuthStore';
 import EmployeeSearchModal from '../../components/EmpSearchModal/EmpSearchModal';
@@ -26,6 +26,9 @@ function ChatPage() {
   const { isConnected, sendMessage, setActiveRoom } = useChatSocketContext();
   const createRoomMutation = useCreateChatRoomMutation();
   const markReadMutation = useMarkChatRoomReadMutation();
+  const addMembersMutation = useAddChatRoomMembersMutation();
+  const leaveRoomMutation = useLeaveChatRoomMutation();
+  const [isAddMemberPickerOpen, setIsAddMemberPickerOpen] = useState(false);
   const textareaRef = useRef(null);
 
   // 채팅방/메시지 API는 참여자를 사번(member_ids/sender_id)으로만 내려주므로,
@@ -120,12 +123,39 @@ function ChatPage() {
     );
   };
 
+  const handleAddMembers = (selectedEmployees) => {
+    setIsAddMemberPickerOpen(false);
+    if (selectedEmployees.length === 0 || !selectedRoomId) return;
+    setRoomError('');
+    addMembersMutation.mutate(
+      { roomId: selectedRoomId, memberIds: selectedEmployees.map((e) => e.userId) },
+      {
+        onError: (error) => {
+          const message = error.response?.data?.detail || '인원 추가에 실패했습니다.';
+          setRoomError(message);
+        },
+      }
+    );
+  };
+
+  const handleLeaveRoom = (roomId) => {
+    if (!window.confirm('이 채팅방에서 나가시겠습니까?')) return;
+    leaveRoomMutation.mutate(roomId, {
+      onSuccess: () => {
+        if (selectedRoomId === roomId) setSelectedRoomId(null);
+      },
+      onError: () => setRoomError('채팅방 나가기에 실패했습니다.'),
+    });
+  };
+
   const roomLabel = (room) => {
     // room.name은 방 생성 시점의 이름(사번/이름)만 저장되어 있어 부서 정보가 없다.
     // 1:1/그룹 모두 항상 member_ids를 부서+이름으로 변환해 동일한 형식으로 보여준다.
     const others = room.member_ids.filter((id) => id !== currentUser?.userId);
     return others.map(displayName).join(', ') || '(참여자 없음)';
   };
+
+  const currentRoom = rooms.find((r) => r.room_id === selectedRoomId);
 
   return (
     <div className="chat-page">
@@ -142,6 +172,16 @@ function ChatPage() {
             <div className="chat-room-name">{roomLabel(room)}</div>
             <div className="chat-room-preview">{room.last_message || '대화를 시작해보세요'}</div>
             {room.unread_count > 0 && <span className="chat-unread-badge">{room.unread_count}</span>}
+            <button
+              className="chat-room-leave-btn"
+              aria-label="채팅방 나가기"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleLeaveRoom(room.room_id);
+              }}
+            >
+              ✕
+            </button>
           </div>
         ))}
       </aside>
@@ -150,6 +190,14 @@ function ChatPage() {
         {selectedRoomId ? (
           <>
             <div className="chat-thread-header">
+              {currentRoom?.is_group && (
+                <button
+                  className="chat-add-member-btn"
+                  onClick={() => setIsAddMemberPickerOpen(true)}
+                >
+                  + 인원 추가
+                </button>
+              )}
               <span className={`chat-connection-badge ${isConnected ? 'online' : 'offline'}`}>
                 {isConnected ? '연결됨' : '연결 끊김'}
               </span>
@@ -189,6 +237,15 @@ function ChatPage() {
 
       {isPickerOpen && (
         <EmployeeSearchModal multiSelect onConfirm={handlePickEmployees} onClose={() => setIsPickerOpen(false)} />
+      )}
+
+      {isAddMemberPickerOpen && currentRoom && (
+        <EmployeeSearchModal
+          multiSelect
+          excludeUserIds={currentRoom.member_ids}
+          onConfirm={handleAddMembers}
+          onClose={() => setIsAddMemberPickerOpen(false)}
+        />
       )}
     </div>
   );
