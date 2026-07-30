@@ -8,7 +8,7 @@ function getInitials(name) {
   return name ? name.slice(-2) : '';
 }
 
-function EmployeeSearchModal({ currentDept, onSelect, onConfirm, onClose, forceDeptScope = false, multiSelect = false }) {
+function EmployeeSearchModal({ currentDept, onSelect, onConfirm, onClose, forceDeptScope = false, multiSelect = false, excludeUserIds = [] }) {
   const { data: deptList = [] } = useDepartmentsQuery();
 
   // 전달받은 부서 이름(currentDept)으로 부서 코드를 찾습니다.
@@ -42,9 +42,16 @@ function EmployeeSearchModal({ currentDept, onSelect, onConfirm, onClose, forceD
   // 본인만 선택한 채로 확인하면 백엔드가 "채팅 상대를 1명 이상 지정해야 합니다"로 거부하므로,
   // 애초에 목록에서 본인을 제외해 그런 선택 자체가 불가능하도록 막습니다.
   const employees = useMemo(() => {
-    if (!multiSelect || !currentUser?.userId) return rawEmployees;
-    return rawEmployees.filter((emp) => String(emp.userId) !== String(currentUser.userId));
-  }, [rawEmployees, multiSelect, currentUser]);
+    let list = rawEmployees;
+    if (multiSelect && currentUser?.userId) {
+      list = list.filter((emp) => String(emp.userId) !== String(currentUser.userId));
+    }
+    if (excludeUserIds.length > 0) {
+      const excludeSet = new Set(excludeUserIds.map(String));
+      list = list.filter((emp) => !excludeSet.has(String(emp.userId)));
+    }
+    return list;
+  }, [rawEmployees, multiSelect, currentUser, excludeUserIds]);
 
   const error = isError ? '직원 목록을 불러오지 못했습니다.' : null;
 
