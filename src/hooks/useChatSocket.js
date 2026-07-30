@@ -1,6 +1,7 @@
 import { useEffect, useRef, useCallback, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import useAuthStore from '../store/useAuthStore';
+import api from '../api/axios';
 
 const getWsBaseUrl = () => {
   const httpBase = import.meta.env.VITE_API_BASE_URL || '';
@@ -9,13 +10,38 @@ const getWsBaseUrl = () => {
 
 const RECONNECT_BASE_DELAY_MS = 1000;
 const RECONNECT_MAX_DELAY_MS = 15000;
+// access token 만료 판단에 여유를 두는 시간(초). 만료 직전(이 값 이내)이거나 이미
+// 만료된 토큰은 어차피 서버가 거부할 것이므로 미리 갱신한다.
+const TOKEN_EXPIRY_BUFFER_SECONDS = 30;
+
+// axios 인터셉터는 REST 요청이 401을 받아야만 반응하는 "사후" 방식이라, 웹소켓처럼
+// axios를 거치지 않는 연결에는 적용되지 않는다. 채팅 페이지를 access token 유효
+// 시간(30분)보다 오래 열어두면 이 토큰은 조용히 만료되고, 그 뒤로는 재연결을
+// 시도할 때마다 서버가 4401로 거부해 "웹소켓 오류가 발생했습니다"가 반복되며
+// REST 요청이 우연히 하나 실패해 인터셉터가 토큰을 갱신해줄 때까지 복구되지
+// 않는다. exp 클레임만 디코딩해(서명 검증 없이, 만료 여부만 확인) 연결 직전에
+// 미리 걸러낸다.
+const isTokenExpired = (token, bufferSeconds = TOKEN_EXPIRY_BUFFER_SECONDS) => {
+  try {
+    // JWT는 base64url(RFC 7515, '-'/'_' 사용, 패딩 없음)로 인코딩되어 있어
+    // atob()가 기대하는 표준 base64('+'/'/' , '=' 패딩)로 먼저 바꿔줘야 한다.
+    let base64 = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
+    while (base64.length % 4 !== 0) base64 += '=';
+    const payload = JSON.parse(atob(base64));
+    if (!payload.exp) return false;
+    return payload.exp * 1000 <= Date.now() + bufferSeconds * 1000;
+  } catch {
+    return true;
+  }
+};
 
 export const useChatSocket = () => {
   const queryClient = useQueryClient();
   // 토큰 "값"이 아니라 로그인 여부(boolean)에만 반응합니다.
-  // access token은 주기적인 silent refresh로 값이 자주 바뀌는데, 그때마다 이 effect가
-  // 재실행되어 소켓을 통째로 재생성하면 재연결 경쟁 상태(아래 onclose 참고)가 그만큼 자주 발생합니다.
-  // 로그인 상태 자체는 로그인/로그아웃 때만 바뀌므로 재연결 빈도를 최소화할 수 있습니다.
+  // access token은 아래 connect()에서 매 연결 시도 직전에 필요하면 직접 갱신하는데,
+  // 그때마다 이 effect가 재실행되어 소켓을 통째로 재생성하면 재연결 경쟁 상태(아래
+  // onclose 참고)가 그만큼 자주 발생합니다. 로그인 상태 자체는 로그인/로그아웃
+  // 때만 바뀌므로 재연결 빈도를 최소화할 수 있습니다.
   const isLoggedIn = useAuthStore((state) => !!state.token);
   const wsRef = useRef(null);
   const [isConnected, setIsConnected] = useState(false);
@@ -30,14 +56,32 @@ export const useChatSocket = () => {
     // true인 상태에서 다시 onopen이 불리면 "재연결"이므로 캐시를 무효화합니다(Fix 3).
     let hasConnectedOnce = false;
 
-    const connect = () => {
+    const connect = async () => {
       if (cancelled) return;
 
       // 클로저에 캡처된 값이 아니라, 연결을 여는 바로 그 순간의 최신 토큰을 읽습니다.
-      // 이렇게 하면 silent refresh로 토큰이 바뀌어도 이 effect를 재실행할 필요 없이,
-      // 기존 재연결 백오프 로직이 다음 연결 시도에서 자연스럽게 최신 토큰을 사용합니다.
-      const currentToken = useAuthStore.getState().token;
+      // 이렇게 하면 토큰이 바뀌어도 이 effect를 재실행할 필요 없이, 기존 재연결
+      // 백오프 로직이 다음 연결 시도에서 자연스럽게 최신 토큰을 사용합니다.
+      let currentToken = useAuthStore.getState().token;
       if (!currentToken) return;
+
+      if (isTokenExpired(currentToken)) {
+        const refreshToken = useAuthStore.getState().refreshToken;
+        if (refreshToken) {
+          try {
+            const { data } = await api.post('/auth/refresh', { refreshToken });
+            useAuthStore.getState().setToken(data.accessToken);
+            currentToken = data.accessToken;
+          } catch (err) {
+            // 갱신에 실패해도(예: refresh token마저 만료) 일단 현재 토큰으로 시도한다.
+            // 서버가 거부하면 onclose의 재연결 루프가 다음 시도에서 다시 갱신을 시도한다.
+            console.error('[chat] WS 연결 전 access token 갱신 실패', err);
+          }
+        }
+      }
+
+      // await 도중 컴포넌트가 언마운트되었을 수 있으니 다시 확인한다.
+      if (cancelled) return;
 
       const ws = new WebSocket(`${getWsBaseUrl()}/ws/chat?token=${currentToken}`);
       wsRef.current = ws;
