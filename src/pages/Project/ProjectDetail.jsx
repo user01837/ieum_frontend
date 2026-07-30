@@ -24,6 +24,7 @@ export default function ProjectDetail() {
   const [desc, setDesc] = useState("");
   const [teamMembers, setTeamMembers] = useState([]);
   const [isEmpModalOpen, setIsEmpModalOpen] = useState(false);
+  const [createChatRoom, setCreateChatRoom] = useState(true);
   const [aiDraft, setAiDraft] = useState(null);
   const [isAiLoading, setIsAiLoading] = useState(false);
   const [aiChecked, setAiChecked] = useState({
@@ -208,6 +209,7 @@ export default function ProjectDetail() {
         memberUserIds: teamMembers
           .filter((m) => m.roleName !== "주관")
           .map((m) => m.userId),
+        createChatRoom,
       },
       {
         onSuccess: () => { isInitialized.current = false; setIsSaved(true); alert("저장되었습니다."); },
@@ -404,6 +406,16 @@ export default function ProjectDetail() {
               </div>
             ))}
           </div>
+          {!isLocked && (
+            <label className="chatroom-check-label">
+              <input
+                type="checkbox"
+                checked={createChatRoom}
+                onChange={(e) => setCreateChatRoom(e.target.checked)}
+              />
+              협업 팀원과 단체 채팅방 생성
+            </label>
+          )}
         </div>
 
         {user?.system_role_code !== "02" && !isLocked && (
