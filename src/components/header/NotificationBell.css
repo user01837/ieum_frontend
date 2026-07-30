@@ -37,6 +37,10 @@
 }
 
 .bell-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
   padding: 10px 14px;
   font-size: 13px;
   cursor: pointer;
@@ -46,6 +50,40 @@
 .bell-item.unread {
   background: #eef2ff;
   font-weight: 600;
+}
+
+.bell-item-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.bell-item-count {
+  display: inline-block;
+  margin-left: 6px;
+  color: #4f46e5;
+  font-weight: 700;
+}
+
+.bell-item-dismiss {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: #9ca3af;
+  font-size: 11px;
+  line-height: 1;
+  padding: 0;
+  cursor: pointer;
+}
+
+.bell-item-dismiss:hover {
+  background: #fee2e2;
+  color: #ef4444;
 }
 
 .bell-empty {
