@@ -46,7 +46,7 @@ const ReferencedArticles = ({ articles }) => {
   );
 };
 
-function Chatbot() {
+function Chatbot({ compact = false }) {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState([
     { id: 1, text: '안녕하세요! 법률 관련 질문에 답변해 드립니다.', sender: 'bot' },
@@ -137,7 +137,7 @@ function Chatbot() {
   };
 
   return (
-    <div className="chatbot-container">
+    <div className={`chatbot-container ${compact ? 'compact' : ''}`}>
       {isOpen && (
         <div className="chatbot-window">
           <div className="chatbot-header">

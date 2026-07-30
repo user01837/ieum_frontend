@@ -63,7 +63,7 @@ function MainLayout() {
             currentDate={formattedDate}
           />
           <Outlet />
-          <Chatbot />
+          <Chatbot compact={isChatPage} />
         </main>
       </div>
     </ChatSocketProvider>
