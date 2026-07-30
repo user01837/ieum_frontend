@@ -52,6 +52,7 @@ export const useChatSocket = () => {
         if (hasConnectedOnce) {
           queryClient.invalidateQueries({ queryKey: ['chatRoomMessages'] });
           queryClient.invalidateQueries({ queryKey: ['chatRooms'] });
+          queryClient.invalidateQueries({ queryKey: ['notifications'] });
         }
         hasConnectedOnce = true;
       };
