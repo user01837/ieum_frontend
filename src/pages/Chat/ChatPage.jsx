@@ -302,8 +302,8 @@ function ChatPage() {
                   {isConnected ? '연결됨' : '연결 끊김'}
                 </span>
                 {/* <button className="chat-icon-btn"><IconSearch /></button>
-                <button className="chat-icon-btn"><IconInfo /></button>
-                <button className="chat-icon-btn"><IconMore /></button> */}
+                <button className="chat-icon-btn"><IconInfo /></button> */}
+                <button className="chat-icon-btn"><IconMore /></button>
               </div>
             </div>
 
