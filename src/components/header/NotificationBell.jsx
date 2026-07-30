@@ -78,8 +78,10 @@ function NotificationBell() {
       let text;
       if (room?.is_group) {
         text = '단체방에 메세지가 도착했습니다.';
-      } else if (room) {
-        const otherId = room.member_ids.find((id) => id !== currentUser?.userId);
+      } else if (room && currentUser?.userId) {
+        // currentUser가 아직 로드되지 않은 순간(새로고침 직후)에는 본인을 걸러내지
+        // 못해 엉뚱한 상대가 뽑힐 수 있으므로, 그 사이엔 안전한 기본 문구로 대체한다.
+        const otherId = room.member_ids.find((id) => id !== currentUser.userId);
         text = `${displayName(otherId)}에게 메세지가 도착했습니다.`;
       } else {
         // 방 목록이 아직 로드되지 않았거나(드묾) 이미 나간 방 - 안전한 기본 문구.
