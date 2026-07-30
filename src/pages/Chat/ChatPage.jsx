@@ -1,6 +1,8 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { useDropzone } from 'react-dropzone';
 import './ChatPage.css';
+import '../Petition/Detail_petition.css'; // 민원 상세의 첨부파일 스타일 재사용
 import { useChatRoomsQuery, useChatRoomMessagesQuery } from '../../hooks/queries/useChatQuery';
 import { useCreateChatRoomMutation, useMarkChatRoomReadMutation, useAddChatRoomMembersMutation, useLeaveChatRoomMutation, useRenameChatRoomMutation } from '../../hooks/mutations/useChatMutations';
 import { useChatSocketContext } from '../../store/ChatSocketContext';
@@ -86,6 +88,7 @@ function ChatPage() {
   const [draft, setDraft] = useState('');
   const [isPickerOpen, setIsPickerOpen] = useState(false);
   const [sendError, setSendError] = useState('');
+  const [attachedFiles, setAttachedFiles] = useState([]);
   const [roomError, setRoomError] = useState('');
   const [roomSearch, setRoomSearch] = useState('');
 
@@ -114,6 +117,38 @@ function ChatPage() {
     if (!emp) return String(userId);
     return emp.departmentName ? `${emp.departmentName} ${emp.name}` : emp.name;
   };
+
+  // --- 파일 첨부 로직 (react-dropzone) ---
+  const onDrop = useCallback(acceptedFiles => {
+    if (attachedFiles.length + acceptedFiles.length > 5) {
+      alert('파일은 최대 5개까지 첨부할 수 있습니다.');
+      return;
+    }
+    const newUniqueFiles = acceptedFiles.filter(
+      newFile => !attachedFiles.some(existingFile => existingFile.path === newFile.path && existingFile.size === newFile.size)
+    );
+    setAttachedFiles(prev => {
+      return [...prev, ...newUniqueFiles].slice(0, 5);
+    });
+  }, [attachedFiles]);
+
+  const onDropRejected = useCallback((fileRejections) => {
+    const largeFile = fileRejections.find(f => f.errors.some(e => e.code === 'file-too-large'));
+    if (largeFile) {
+      alert(`오류: 파일 크기는 10MB를 초과할 수 없습니다. (${largeFile.file.name})`);
+    }
+  }, []);
+
+  const { getRootProps, getInputProps, open, isDragActive } = useDropzone({
+    onDrop,
+    onDropRejected,
+    multiple: true,
+    maxSize: 10485760, // 10MB
+    noClick: true,
+    noKeyboard: true,
+  });
+
+  const removeFile = (fileToRemove) => setAttachedFiles(prev => prev.filter(file => file !== fileToRemove));
 
   useEffect(() => {
     if (!roomParam) return;
@@ -165,10 +200,23 @@ function ChatPage() {
   }, [isParticipantsOpen]);
 
   const handleSend = () => {
-    if (!draft.trim() || !selectedRoomId) return;
-    const sent = sendMessage(selectedRoomId, draft.trim());
-    if (sent) { setDraft(''); setSendError(''); }
-    else setSendError('연결이 끊겨 있어 메시지를 보낼 수 없습니다.');
+    if ((!draft.trim() && attachedFiles.length === 0) || !selectedRoomId) return;
+
+    if (attachedFiles.length > 0) {
+      // TODO: 파일 전송 로직 구현 필요
+      console.log('파일을 전송합니다:', attachedFiles.map(f => f.name));
+    }
+
+    if (draft.trim()) {
+      const sent = sendMessage(selectedRoomId, draft.trim());
+      if (!sent) {
+        setSendError('연결이 끊겨 있어 메시지를 보낼 수 없습니다.');
+        return;
+      }
+    }
+    setDraft('');
+    setAttachedFiles([]);
+    setSendError('');
   };
 
   const handlePickEmployees = (selectedEmployees) => {
@@ -395,7 +443,24 @@ function ChatPage() {
             </div>
 
             {/* 입력창 */}
-            <div className="chat-input-area">
+            <div className="chat-input-area" {...getRootProps()}>
+              {isDragActive && <div className="chat-dropzone-overlay">파일을 여기에 드롭하세요</div>}
+              <input {...getInputProps()} />
+
+              {attachedFiles.length > 0 && (
+                <div className="attach-list" style={{ padding: '8px 12px', borderTop: '1px solid var(--line)' }}>
+                  {attachedFiles.map((file, index) => (
+                    <div key={index} className="reply-attach-chip">
+                      <svg className="ic" viewBox="0 0 24 24"><path fill="currentColor" d="M16.5 6v11.5c0 2.21-1.79 4-4 4s-4-1.79-4-4V5a2.5 2.5 0 0 1 5 0v10.5c0 .83-.67 1.5-1.5 1.5s-1.5-.67-1.5-1.5V6H10v9.5c0 1.38 1.12 2.5 2.5 2.5s2.5-1.12 2.5-2.5V5c-1.93 0-3.5 1.57-3.5 3.5v11.5c0 2.76 2.24 5 5 5s5-2.24 5-5V6h-1.5z"></path></svg>
+                      <span>{file.name} ({(file.size / 1024).toFixed(1)} KB)</span>
+                      <button type="button" className="rm" onClick={() => removeFile(file)}>
+                        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.47 2 2 6.47 2 12s4.47 10 10 10 10-4.47 10-10S17.53 2 12 2zm5 13.59L15.59 17 12 13.41 8.41 17 7 15.59 10.59 12 7 8.41 8.41 7 12 10.59 15.59 7 17 8.41 13.41 12 17 15.59z"></path></svg>
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
               <div className="chat-input-row">
                 <textarea
                   ref={textareaRef}
@@ -411,8 +476,8 @@ function ChatPage() {
                   }}
                   placeholder="메시지를 입력하세요 (Shift+Enter로 줄바꿈)"
                 />
-                <button className="chat-icon-btn" title="파일 첨부"><IconAttach /></button>
-                <button className="chat-send-btn" onClick={handleSend} disabled={!draft.trim()}>
+                <button className="chat-attach-btn" title="파일 첨부" onClick={open}><IconAttach /></button>
+                <button className="chat-send-btn" onClick={handleSend} disabled={!draft.trim() && attachedFiles.length === 0}>
                   <IconSend /> 전송
                 </button>
               </div>
