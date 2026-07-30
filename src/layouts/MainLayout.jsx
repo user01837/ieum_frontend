@@ -55,7 +55,7 @@ function MainLayout() {
         <main
           className={`content ${
             isSplitViewActive ? "no-max-width" : ""
-          } ${isChatPage ? "no-padding-bottom" : ""}`}
+          } ${isChatPage ? "no-padding-bottom chat-flex-content" : ""}`}
         >
           <Header
             title={getTitle()}
