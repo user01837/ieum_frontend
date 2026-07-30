@@ -20,3 +20,12 @@ export const getChatRoomMessages = async ({ roomId, beforeMessageId, size = 30 }
 export const markChatRoomRead = async (roomId) => {
   await api.post(`/chat/rooms/${roomId}/read`);
 };
+
+export const addChatRoomMembers = async ({ roomId, memberIds }) => {
+  const response = await api.post(`/chat/rooms/${roomId}/members`, { member_ids: memberIds });
+  return response.data;
+};
+
+export const leaveChatRoom = async (roomId) => {
+  await api.delete(`/chat/rooms/${roomId}`);
+};
