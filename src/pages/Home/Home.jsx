@@ -100,7 +100,7 @@ export default function Home() {
       };
     } else { // Staff
       const {
-        myPetitionSummary = { total: 0, waiting: 0, checked: 0, inProgress: 0, completed: 0 },
+        myPetitionSummary = { total: 0, waiting: 0, checked: 0, inProgress: 0, completed: 0, delayed: 0 },
         announcements = [],
         urgentPetitions = [],
         recentPetitions = [],
@@ -318,7 +318,7 @@ export default function Home() {
                 <div className="card">
                   <div className="card-header-flex">
                     <h3 className="card-title">최근 등록 / 수정 직원 현황</h3>
-                    <a href="#admin-page" className="more-btn">직원 관리 페이지 +</a>
+                    <a href="admin" className="more-btn">직원 관리 페이지 +</a>
                   </div>
                   <table className="recent-table">
                     <thead>
@@ -376,6 +376,12 @@ export default function Home() {
                       <div className="status-item">
                         <span>처리 완료</span> <span className="text-emerald font-bold">{myPetitionSummary.completed}건</span>
                       </div>
+                      {/* 지연 건수는 차트에 포함되지 않는 별도 항목으로, 시각적 구분을 위해 스타일을 조정합니다. */}
+                      {myPetitionSummary.delayed > 0 && (
+                        <div className="status-item" style={{ borderBottom: 'none', marginTop: '0.5rem' }}>
+                          <span>🚨 이 중 처리 지연</span> <span className="text-danger font-bold">{myPetitionSummary.delayed}건</span>
+                        </div>
+                      )}
                     </div>
                     <div className="chart-box-sm">
                       <Doughnut data={staffChartData} options={donutOptions} />
