@@ -12,9 +12,10 @@ function EmployeeSearchModal({ currentDept, onSelect, onConfirm, onClose, forceD
   const { data: deptList = [] } = useDepartmentsQuery();
 
   // 전달받은 부서 이름(currentDept)으로 부서 코드를 찾습니다.
-  const initialDeptCode = useMemo(() =>
-    deptList.find(d => d.name === currentDept)?.code
-  , [deptList, currentDept]);
+  const initialDeptCode = useMemo(() => {
+    if (!deptList.length || !currentDept) return undefined;
+    return deptList.find(d => d.name === currentDept)?.code;
+  }, [deptList, currentDept]);
 
   const [scope, setScope] = useState(forceDeptScope ? 'dept' : 'dept');
   const [query, setQuery] = useState('');
@@ -38,6 +39,9 @@ function EmployeeSearchModal({ currentDept, onSelect, onConfirm, onClose, forceD
 
   const currentUser = useAuthStore((state) => state.user);
 
+  const POSITION_ORDER = { '부장': 1, '팀장': 2, '주무관': 3 };
+
+
   // multiSelect(예: 채팅 상대 선택)에서는 본인을 선택할 수 없어야 합니다.
   // 본인만 선택한 채로 확인하면 백엔드가 "채팅 상대를 1명 이상 지정해야 합니다"로 거부하므로,
   // 애초에 목록에서 본인을 제외해 그런 선택 자체가 불가능하도록 막습니다.
@@ -50,7 +54,9 @@ function EmployeeSearchModal({ currentDept, onSelect, onConfirm, onClose, forceD
       const excludeSet = new Set(excludeUserIds.map(String));
       list = list.filter((emp) => !excludeSet.has(String(emp.userId)));
     }
-    return list;
+    return [...list].sort((a, b) =>
+      (POSITION_ORDER[a.positionName] ?? 99) - (POSITION_ORDER[b.positionName] ?? 99)
+    );
   }, [rawEmployees, multiSelect, currentUser, excludeUserIds]);
 
   const error = isError ? '직원 목록을 불러오지 못했습니다.' : null;

@@ -59,6 +59,7 @@ export default function ProjectDetail() {
   const pendingDraftRef = useRef(null);
   const isInitialized = useRef(false);
   const user = useAuthStore((state) => state.user);
+  const isAdmin = user?.system_role_code === "02";
   const [isKnowhowPanelOpen, setIsKnowhowPanelOpen] = useState(false);
   const [coverTitle, setCoverTitle] = useState("");
 
@@ -92,7 +93,6 @@ export default function ProjectDetail() {
       const myRole = project.members.find((m) => String(m.userId) === String(user?.userId));
       const isOwner = myRole?.roleName === "주관";
       setIsApproved(approved);
-      const isAdmin = user?.system_role_code === "02";
       setIsOwner(isOwner);
       setIsLocked(approved || !isOwner || isAdmin);
       setTeamMembers(
@@ -246,7 +246,7 @@ export default function ProjectDetail() {
   };
 
   const handleExport = async (format) => {
-    if (!isSaved) {
+    if (!isSaved && !isApproved) {
       alert("저장 완료 후 내보내기를 이용할 수 있습니다.");
       return;
     }
@@ -582,29 +582,31 @@ export default function ProjectDetail() {
           ))}
           <div className="bottomrow" style={{ padding: '0 20px 16px' }}>
             <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-              <div className={`export-wrap${isExportOpen ? " open" : ""}`} ref={exportRef}>
-                <button className="btn btn-ghost" onClick={() => setIsExportOpen((p) => !p)}>
-                  내보내기
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3">
-                    <path d="m6 9 6 6 6-6" />
-                  </svg>
-                </button>
-                {isExportOpen && (
-                  <div className="export-menu">
-                    {[
-                      { label: "Word (.docx)", color: "#2B579A", format: "docx" },
-                      { label: "한글 (.hwpx)", color: "#4CAF50", format: "hwpx" },
-                      { label: "PDF (.pdf)", color: "#EC1C24", format: "pdf" },
-                    ].map((item) => (
-                      <div key={item.label} className="export-item"
-                        onClick={() => { handleExport(item.format); setIsExportOpen(false); }}>
-                        <span className="dot" style={{ background: item.color, width: 8, height: 8, borderRadius: "50%", display: "inline-block" }} />
-                        {item.label}로 내보내기
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
+              {(isOwner || isApproved) && !isAdmin && (
+                <div className={`export-wrap${isExportOpen ? " open" : ""}`} ref={exportRef}>
+                  <button className="btn btn-ghost" onClick={() => setIsExportOpen((p) => !p)}>
+                    내보내기
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3">
+                      <path d="m6 9 6 6 6-6" />
+                    </svg>
+                  </button>
+                  {isExportOpen && (
+                    <div className="export-menu">
+                      {[
+                        { label: "Word (.docx)", color: "#2B579A", format: "docx" },
+                        { label: "한글 (.hwpx)", color: "#4CAF50", format: "hwpx" },
+                        { label: "PDF (.pdf)", color: "#EC1C24", format: "pdf" },
+                      ].map((item) => (
+                        <div key={item.label} className="export-item"
+                          onClick={() => { handleExport(item.format); setIsExportOpen(false); }}>
+                          <span className="dot" style={{ background: item.color, width: 8, height: 8, borderRadius: "50%", display: "inline-block" }} />
+                          {item.label}로 내보내기
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
               {isOwner && !isApproved && (
                 <>
                   <button className="btn btn-ghost" onClick={() => setIsOwnerModalOpen(true)}>
@@ -686,6 +688,7 @@ export default function ProjectDetail() {
         )}
         {isEmpModalOpen && (
           <EmpSearchModal
+            currentDept={project?.departmentName}
             onSelect={handleAddMember}
             onClose={() => setIsEmpModalOpen(false)}
           />

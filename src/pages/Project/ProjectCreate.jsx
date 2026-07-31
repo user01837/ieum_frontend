@@ -173,6 +173,7 @@ export default function ProjectCreate() {
 
       {isEmpModalOpen && (
         <EmpSearchModal
+          currentDept={user?.deptName}
           onSelect={handleAddMember}
           onClose={() => setIsEmpModalOpen(false)}
         />

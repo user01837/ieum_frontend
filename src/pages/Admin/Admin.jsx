@@ -51,6 +51,8 @@ export default function Admin() {
   const [isDeptOpen, setIsDeptOpen] = useState(false);
   const [isStatusOpen, setIsStatusOpen] = useState(false);
   const [isPageSizeOpen, setIsPageSizeOpen] = useState(false);
+  const [isModalDeptOpen, setIsModalDeptOpen] = useState(false);
+  const [isModalPositionOpen, setIsModalPositionOpen] = useState(false);
 
   // 신규 직원 등록 모달
   const [isUserFormOpen, setIsUserFormOpen] = useState(false);
@@ -95,6 +97,8 @@ export default function Admin() {
   const deptRef = useRef(null);
   const statusRef = useRef(null);
   const pageSizeRef = useRef(null);
+  const modalDeptRef = useRef(null);
+  const modalPositionRef = useRef(null);
 
   useEffect(() => {
     return () => toastTimerRef.current && clearTimeout(toastTimerRef.current);
@@ -106,6 +110,8 @@ export default function Admin() {
       if (deptRef.current && !deptRef.current.contains(e.target)) setIsDeptOpen(false);
       if (statusRef.current && !statusRef.current.contains(e.target)) setIsStatusOpen(false);
       if (pageSizeRef.current && !pageSizeRef.current.contains(e.target)) setIsPageSizeOpen(false);
+      if (modalDeptRef.current && !modalDeptRef.current.contains(e.target)) setIsModalDeptOpen(false);
+      if (modalPositionRef.current && !modalPositionRef.current.contains(e.target)) setIsModalPositionOpen(false);
     };
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
@@ -396,12 +402,12 @@ export default function Admin() {
             {/* 페이지네이션 */}
             <div className="admin-tablefoot" style={{ justifyContent: users.length > 0 ? 'center' : 'flex-end' }}>
               {users.length > 0 && (
-              <Pagination
-                totalItems={totalUsers}
-                itemsPerPage={pageSize}
-                currentPage={currentPage}
-                onPageChange={setCurrentPage}
-              />
+                <Pagination
+                  totalItems={totalUsers}
+                  itemsPerPage={pageSize}
+                  currentPage={currentPage}
+                  onPageChange={setCurrentPage}
+                />
               )}
             </div>
           </div>
@@ -456,25 +462,53 @@ export default function Admin() {
                 <div className="admin-formrow2">
                   <div className="admin-field">
                     <label>부서 *</label>
-                    <select className="admin-input" value={formData.dept} onChange={(e) => {
-                      setFormData(p => ({
-                        ...p,
-                        dept: e.target.value,
-                        predecessor: null // 부서 변경 시 전임자 정보 초기화
-                      }));
-                    }}>
-                      <option value="">부서를 선택하세요</option>
-                      {departmentsData?.map(d => <option key={d.code} value={d.code}>{d.name}</option>)}
-                    </select>
+                    <div className={`dropdown-wrap ${isModalDeptOpen ? 'open' : ''}`} ref={modalDeptRef}>
+                      <div className="dropdown" onClick={() => setIsModalDeptOpen(p => !p)}>
+                        <span style={{ color: formData.dept ? 'var(--ink)' : 'var(--ink-soft)' }}>
+                          {departmentsData?.find(d => d.code === formData.dept)?.name || '부서를 선택하세요'}
+                        </span>
+                        <svg className="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="m6 9 6 6 6-6" /></svg>
+                      </div>
+                      <div className="dropdown-menu">
+                        {departmentsData?.map(d => (
+                          <div key={d.code}
+                            className={`dropdown-item ${formData.dept === d.code ? 'active' : ''}`}
+                            onClick={() => {
+                              setFormData(p => ({ ...p, dept: d.code, predecessor: null }));
+                              setIsModalDeptOpen(false);
+                            }}>
+                            {d.name}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
                   </div>
                 </div>
 
                 <div className="admin-field">
                   <label>직책 *</label>
-                  <select className="admin-input" value={formData.position} onChange={(e) => setFormData(p => ({ ...p, position: e.target.value }))}>
-                    <option value="">직책을 선택하세요</option>
-                    {Object.entries({ "01": "부장", "02": "팀장", "03": "주무관" }).map(([code, name]) => <option key={code} value={code}>{name}</option>)}
-                  </select>
+                  <div className={`dropdown-wrap ${isModalPositionOpen ? 'open' : ''}`} ref={modalPositionRef}>
+                    <div className="dropdown" onClick={() => setIsModalPositionOpen(p => !p)}>
+                      <span style={{ color: formData.position ? 'var(--ink)' : 'var(--ink-soft)' }}>
+                        {formData.position
+                          ? { "01": "부장", "02": "팀장", "03": "주무관" }[formData.position]
+                          : '직책을 선택하세요'}
+                      </span>
+                      <svg className="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="m6 9 6 6 6-6" /></svg>
+                    </div>
+                    <div className="dropdown-menu">
+                      {Object.entries({ "01": "부장", "02": "팀장", "03": "주무관" }).map(([code, name]) => (
+                        <div key={code}
+                          className={`dropdown-item ${formData.position === code ? 'active' : ''}`}
+                          onClick={() => {
+                            setFormData(p => ({ ...p, position: code }));
+                            setIsModalPositionOpen(false);
+                          }}>
+                          {name}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
                 </div>
 
                 <div className="admin-field">
@@ -546,53 +580,58 @@ export default function Admin() {
             </div>
           </div>
         </div>
-      )}
+      )
+      }
 
-      {isPredecessorModalOpen && (
-        <EmployeeSearchModal
-          onSelect={handleSelectPredecessor}
-          onClose={() => setIsPredecessorModalOpen(false)}
-          // forceDeptScope를 제거하여 모달 내에서 '전체 부서'를 선택할 수 있도록 하고,
-          // currentDept를 전달하여 이전에 선택한 부서를 초기값으로 설정합니다.
-          currentDept={departmentsData?.find(d => d.code === formData.dept)?.name}
-        />
-      )}
+      {
+        isPredecessorModalOpen && (
+          <EmployeeSearchModal
+            onSelect={handleSelectPredecessor}
+            onClose={() => setIsPredecessorModalOpen(false)}
+            // forceDeptScope를 제거하여 모달 내에서 '전체 부서'를 선택할 수 있도록 하고,
+            // currentDept를 전달하여 이전에 선택한 부서를 초기값으로 설정합니다.
+            currentDept={departmentsData?.find(d => d.code === formData.dept)?.name}
+          />
+        )
+      }
 
       {/* 비밀번호 초기화 확인 모달 */}
-      {isResetPwOpen && resetTarget && (
-        <div className="modal-overlay" onClick={closeResetPwModal}>
-          <div className="modal-card" style={{ width: 380 }} onClick={(e) => e.stopPropagation()}>
-            <div style={{ width: 44, height: 44, borderRadius: '50%', background: 'var(--good-soft)', color: 'var(--good)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 14 }}>
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="10" width="18" height="11" rx="2" /><path d="M7 10V7a5 5 0 0 1 10 0v3" /></svg>
-            </div>
-            <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 8 }}>
-              {newTempPassword ? '초기화 완료' : '비밀번호 초기화'}
-            </div>
-            <div style={{ fontSize: 12.5, color: 'var(--ink-soft)', lineHeight: 1.7, marginBottom: 20 }}>
-              {newTempPassword ? (
-                <>
-                  <b>{resetTarget.name}</b>님의 비밀번호가 초기화되었습니다.<br />
-                  새로운 임시 비밀번호는 <b>{newTempPassword}</b>입니다.<br />
-                  이 비밀번호는 해당 직원에게 안전하게 전달해 주세요.
-                </>
-              ) : (
-                <>
-                  <b>{resetTarget.name}</b>님의 비밀번호를 초기화하시겠습니까?<br />
-                  초기화 시 임시 비밀번호가 생성되며, 해당 직원은 다음 로그인 시 비밀번호를 변경해야 합니다.
-                </>
-              )}
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
-              {newTempPassword
-                ? <button className="btn btn-navy" style={{ padding: '9px 16px' }} onClick={closeResetPwModal}>확인</button>
-                : <><button className="modal-footer-btn" onClick={closeResetPwModal}>취소</button><button className="btn btn-navy" style={{ padding: '9px 16px' }} onClick={handleResetPw} disabled={resetPasswordMutation.isLoading}>초기화</button></>}
+      {
+        isResetPwOpen && resetTarget && (
+          <div className="modal-overlay" onClick={closeResetPwModal}>
+            <div className="modal-card" style={{ width: 380 }} onClick={(e) => e.stopPropagation()}>
+              <div style={{ width: 44, height: 44, borderRadius: '50%', background: 'var(--good-soft)', color: 'var(--good)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 14 }}>
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="10" width="18" height="11" rx="2" /><path d="M7 10V7a5 5 0 0 1 10 0v3" /></svg>
+              </div>
+              <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 8 }}>
+                {newTempPassword ? '초기화 완료' : '비밀번호 초기화'}
+              </div>
+              <div style={{ fontSize: 12.5, color: 'var(--ink-soft)', lineHeight: 1.7, marginBottom: 20 }}>
+                {newTempPassword ? (
+                  <>
+                    <b>{resetTarget.name}</b>님의 비밀번호가 초기화되었습니다.<br />
+                    새로운 임시 비밀번호는 <b>{newTempPassword}</b>입니다.<br />
+                    이 비밀번호는 해당 직원에게 안전하게 전달해 주세요.
+                  </>
+                ) : (
+                  <>
+                    <b>{resetTarget.name}</b>님의 비밀번호를 초기화하시겠습니까?<br />
+                    초기화 시 임시 비밀번호가 생성되며, 해당 직원은 다음 로그인 시 비밀번호를 변경해야 합니다.
+                  </>
+                )}
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+                {newTempPassword
+                  ? <button className="btn btn-navy" style={{ padding: '9px 16px' }} onClick={closeResetPwModal}>확인</button>
+                  : <><button className="modal-footer-btn" onClick={closeResetPwModal}>취소</button><button className="btn btn-navy" style={{ padding: '9px 16px' }} onClick={handleResetPw} disabled={resetPasswordMutation.isLoading}>초기화</button></>}
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )
+      }
       {/* 토스트 */}
       {toast && <div key={toast} className="admin-toast">{toast}</div>}
 
-    </div>
+    </div >
   );
 }

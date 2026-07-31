@@ -18,7 +18,7 @@ export const useUserSearch = ({ scope, departmentCode, keyword }) => {
           },
         })
         .then((res) => res.data), // API의 원본 데이터
-    enabled: !!scope,
+    enabled: !!scope && (scope !== 'dept' || (departmentCode !== undefined && departmentCode !== null)),
     // `select` 옵션으로 API 응답 데이터를 가공합니다.
     // 이렇게 하면 이 훅을 사용하는 모든 컴포넌트가 일관된 데이터 형식을 받게 됩니다.
     select: (data) =>
