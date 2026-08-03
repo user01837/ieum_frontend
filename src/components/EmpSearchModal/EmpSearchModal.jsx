@@ -32,9 +32,10 @@ function EmployeeSearchModal({ currentDept, onSelect, onConfirm, onClose, forceD
   }, [scope, initialDeptCode, deptFilter]);
 
   const { data: rawEmployees = [], isLoading, isError } = useUserSearch({
-    scope: 'all', // API 스코프는 'all'로 고정하고 departmentCode로 필터링
+    scope: 'all',
     departmentCode: apiDeptCode,
     keyword: query || undefined,
+    enabled: scope === 'all' || apiDeptCode !== undefined,
   });
 
   const currentUser = useAuthStore((state) => state.user);
