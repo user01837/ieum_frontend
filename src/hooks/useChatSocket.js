@@ -91,11 +91,14 @@ export const useChatSocket = () => {
         setIsConnected(true);
         // 재연결 성공 시 백오프 간격을 초기화합니다.
         reconnectDelay = RECONNECT_BASE_DELAY_MS;
-        // 재연결(최초 연결이 아님)인 경우, 끊겨 있던 동안 놓쳤을 수 있는 메시지/방 목록을
+        // 재연결(최초 연결이 아님)인 경우, 끊겨 있던 동안 놓쳤을 수 있는 메시지/방 목록/알림을
         // 다시 불러옵니다. 최초 연결에서는 어차피 쿼리들이 처음 fetch되므로 불필요합니다.
+        // notifications를 빼먹으면, 끊겨 있는 동안 도착한 채팅 알림이 다음 폴링
+        // 주기(최대 30초)까지 종 아이콘에 반영되지 않는다.
         if (hasConnectedOnce) {
           queryClient.invalidateQueries({ queryKey: ['chatRoomMessages'] });
           queryClient.invalidateQueries({ queryKey: ['chatRooms'] });
+          queryClient.invalidateQueries({ queryKey: ['notifications'] });
         }
         hasConnectedOnce = true;
       };
