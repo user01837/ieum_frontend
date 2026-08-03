@@ -89,6 +89,43 @@
   color: var(--ink-soft);
 }
 
+/* 법률/노하우 모드 탭 */
+.chatbot-mode-tabs {
+  display: flex;
+  gap: 6px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--line);
+  flex-shrink: 0;
+}
+
+.chatbot-mode-tab {
+  flex: 1;
+  padding: 6px 8px;
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--ink-soft);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.chatbot-mode-tab:hover:not(:disabled) {
+  background: var(--ghost);
+}
+
+.chatbot-mode-tab:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.chatbot-mode-tab.active {
+  background: var(--navy);
+  border-color: var(--navy);
+  color: #fff;
+}
+
 .chatbot-body {
   flex: 1;
   padding: 16px;
@@ -246,6 +283,38 @@
 
 .ref-article-link:hover {
   text-decoration: underline;
+}
+
+/* 참고 노하우 전용 부가 요소 */
+.ref-knowledge-summary {
+  margin: 0 0 8px;
+  font-size: 12px;
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.ref-knowledge-warning {
+  margin: 8px 0 0;
+  font-size: 11px;
+  color: var(--danger);
+  background-color: var(--danger-soft);
+  padding: 6px 8px;
+  border-radius: 6px;
+}
+
+.ref-knowledge-tags {
+  margin-top: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.ref-knowledge-tag {
+  font-size: 10px;
+  color: var(--blue);
+  background-color: var(--blue-soft);
+  padding: 2px 8px;
+  border-radius: 10px;
 }
 
 /* 에러 메시지 */
