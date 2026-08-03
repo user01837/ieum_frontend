@@ -364,7 +364,8 @@ export default function Home() {
                   <h3 className="card-title">내 민원 현황</h3>
                   <div className="status-flex">
                     <div className="status-info">
-                      <div className="status-total">이번 달 총 민원 수: {myPetitionSummary.total}건</div>
+                      <div className="status-total">현재 담당 민원 현황: {myPetitionSummary.total}건</div>
+                      <div className="status-subtitle">이번 달 + 이전 달 미완료</div>
                       <div className="status-item">
                         <span>대기 중</span> <span style={{ color: '#919191' }} className="font-bold">{myPetitionSummary.waiting}건</span>
                       </div>
