@@ -156,7 +156,16 @@ function EmployeeSearchModal({ currentDept, onSelect, onConfirm, onClose, forceD
                     {scope === 'all' && deptFilter === 'all' && (
                       <span className="modal-employee-dept">{emp.departmentName}</span>
                     )}
-                    {multiSelect && isSelected && <span className="modal-selected-check">✓</span>}
+                    {multiSelect && isSelected && (
+                      <div className="modal-selected-check">
+                        <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="4">
+                          <path d="M20 6 9 17l-5-5" />
+                        </svg>
+                      </div>
+                    )}
+                    {multiSelect && !isSelected && (
+                      <div style={{ width: 15, height: 15, borderRadius: 3, border: '1.5px solid var(--line-strong)', flexShrink: 0 }} />
+                    )}
                   </div>
                 );
               })

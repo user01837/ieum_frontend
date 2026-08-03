@@ -20,12 +20,14 @@ export default function ProjectCreate() {
   const [isEmpModalOpen, setIsEmpModalOpen] = useState(false);
   const [createChatRoom, setCreateChatRoom] = useState(true);
 
-  const handleAddMember = (employee) => {
-    const isDuplicate = teamMembers.some((m) => String(m.userId) === String(employee.userId));
-    if (isDuplicate) return;
-    if (String(employee.userId) === String(user?.userId)) return;  // 작성자 본인 차단
-    setTeamMembers((prev) => [...prev, employee]);
-    setIsEmpModalOpen(false);
+  const handleAddMember = (selectedEmployees) => {
+    setTeamMembers((prev) => {
+      const existingIds = new Set(prev.map((m) => String(m.userId)));
+      const newMembers = selectedEmployees.filter(
+        (e) => !existingIds.has(String(e.userId)) && String(e.userId) !== String(user?.userId)
+      );
+      return [...prev, ...newMembers];
+    });
   };
 
   const handleRemoveMember = (id) => {
@@ -174,7 +176,8 @@ export default function ProjectCreate() {
       {isEmpModalOpen && (
         <EmpSearchModal
           currentDept={user?.deptName}
-          onSelect={handleAddMember}
+          multiSelect
+          onConfirm={(emps) => { handleAddMember(emps); setIsEmpModalOpen(false); }}
           onClose={() => setIsEmpModalOpen(false)}
         />
       )}

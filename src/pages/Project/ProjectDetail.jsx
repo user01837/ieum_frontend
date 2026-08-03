@@ -119,11 +119,12 @@ export default function ProjectDetail() {
     setIsSaved(false);
   }, [title, desc, sections, startDate, dueDate, teamMembers]);
 
-  const handleAddMember = (employee) => {
-    const isDuplicate = teamMembers.some((m) => String(m.userId) === String(employee.userId));
-    if (isDuplicate) return;
-    setTeamMembers((prev) => [...prev, employee]);
-    setIsEmpModalOpen(false);
+  const handleAddMember = (selectedEmployees) => {
+    setTeamMembers((prev) => {
+      const existingIds = new Set(prev.map((m) => String(m.userId)));
+      const newMembers = selectedEmployees.filter((e) => !existingIds.has(String(e.userId)));
+      return [...prev, ...newMembers];
+    });
   };
 
   const handleRemoveMember = (id) => {
@@ -689,7 +690,8 @@ export default function ProjectDetail() {
         {isEmpModalOpen && (
           <EmpSearchModal
             currentDept={project?.departmentName}
-            onSelect={handleAddMember}
+            multiSelect
+            onConfirm={(emps) => { handleAddMember(emps); setIsEmpModalOpen(false); }}
             onClose={() => setIsEmpModalOpen(false)}
           />
         )}

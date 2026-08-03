@@ -160,7 +160,7 @@
   padding: 10px 10px;
   border-radius: 9px;
   cursor: pointer;
-  transition: background 0.12s ease;
+  transition: none;
 }
 
 .modal-result-row:hover {
@@ -274,4 +274,24 @@
 
 .modal-footer-btn:hover {
   border-color: var(--ink-soft);
+}
+
+/*다중선택 시*/
+.modal-result-row.selected {
+  background: var(--blue-soft);
+}
+
+.modal-result-row.selected:hover {
+  background: var(--blue-soft);
+}
+
+.modal-selected-check {
+  width: 15px;
+  height: 15px;
+  border-radius: 3px;
+  background: var(--blue);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
 }
