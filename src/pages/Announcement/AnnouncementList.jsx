@@ -192,7 +192,7 @@ export default function AnnouncementList() {
                                     <span className="ann-meta">{a.departmentName}</span>
                                     <span className="ann-meta">{a.createdByName}</span>
                                     <span className="ann-meta">{a.createdAt?.slice(0, 10)}</span>
-                                    {canWrite && (
+                                    {canWrite && a.createdBy === Number(user?.userId) && (
                                         <span className="ann-actions" onClick={(e) => e.stopPropagation()}>
                                             <button className="ann-edit-btn" onClick={(e) => { e.stopPropagation(); navigate(`/announcements/${a.announcementId}/edit`); }}>수정</button>
                                             <button className="ann-del-btn" onClick={(e) => handleDelete(e, a.announcementId)}>삭제</button>
