@@ -170,8 +170,8 @@ export default function Home() {
   };
 
   const projectStageMap = {
-    '저장': { className: 'planning', text: '기획중' },
-    '승인완료': { className: 'in-progress', text: '진행중' },
+    '저장': { className: 'planning', text: '저장' },
+    '승인완료': { className: 'in-progress', text: '승인완료' },
   };
 
   // 사용자 정보가 로드되기 전까지 로딩 상태를 표시합니다.
