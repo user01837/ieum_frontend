@@ -109,17 +109,21 @@ function DetailKnowl() {
             setDocuments(apiAttachments);
 
             // API 로그 구조를 UI에서 사용하는 구조로 매핑하고 최신순으로 정렬
-            const mappedLogs = (knowledgeData.logs || []).map(log => ({
-                id: log.log_id,
-                tags: log.tags, // 수정 모달에 전달할 전체 태그 배열
-                tag: log.tags?.[0]?.name || '미분류',
-                author: log.user_name,
-                date: log.created_at?.split('T')[0].replace(/-/g, '.'),
-                content: log.content,
-                // 수정 여부 판단
-                updatedBy: log.updated_at && log.updated_at !== log.created_at ? (log.updated_by_name || '수정자 정보 없음') : null,
-                updateDate: log.updated_at?.split('T')[0].replace(/-/g, '.'),
-        })).sort((a, b) => new Date(b.updateDate || b.date) - new Date(a.updateDate || a.date)); // 최신순 정렬
+            const mappedLogs = (knowledgeData.logs || []).map(log => {
+                const isLogUpdated = log.updated_at && log.updated_at !== log.created_at;
+                return {
+                    id: log.log_id,
+                    tags: log.tags, // 수정 모달에 전달할 전체 태그 배열
+                    tag: log.tags?.[0]?.name || '미분류',
+                    author: log.user_name,
+                    date: log.created_at?.split('T')[0].replace(/-/g, '.'),
+                    content: log.content,
+                    // 수정 여부 판단
+                    updatedBy: isLogUpdated ? (log.updated_by_name || log.user_name) : null,
+                    updateDate: log.updated_at?.split('T')[0].replace(/-/g, '.'),
+                    isUpdated: isLogUpdated,
+                };
+            }).sort((a, b) => new Date(b.updateDate || b.date) - new Date(a.updateDate || a.date)); // 최신순 정렬
 
             setKnowhowLogs(mappedLogs);
         }
@@ -548,8 +552,8 @@ function DetailKnowl() {
                                             <span className={`knowhow-tag ${log.tag}`}>{log.tag}</span>
                                             <span className="knowhow-author">
                                                 {/* 수정된 로그는 수정자 이름을, 그렇지 않으면 작성자 이름을 표시합니다. */}
-                                                {log.updatedBy || log.author} · {log.updatedBy ? log.updateDate : log.date}
-                                                {log.updatedBy && <span className="edited-mark">(수정됨)</span>}
+                                                {log.updatedBy || log.author} · {log.isUpdated ? log.updateDate : log.date}
+                                                {log.isUpdated && <span className="edited-mark">(수정됨)</span>}
                                             </span>
                                         </div>
                                         {!isAdmin && (
