@@ -126,6 +126,11 @@
   color: #fff;
 }
 
+.chatbot-mode-tab.active:hover {
+  background: #454555;
+  border-color:#454555;
+}
+
 .chatbot-body {
   flex: 1;
   padding: 16px;
