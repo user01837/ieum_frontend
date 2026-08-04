@@ -15,9 +15,9 @@ export default function AnnouncementDetail() {
     if (isLoading) return <div className="ann-content">불러오는 중...</div>;
     if (!a) return <div className="ann-content">존재하지 않는 공지사항입니다.</div>;
 
-    const isAdmin = user?.system_role_code === "02";
-    const canEdit = a.createdBy === Number(user?.userId);
-    const canDelete = isAdmin || a.createdBy === Number(user?.userId);
+    const isAuthor = a.createdBy === Number(user?.userId);
+    const canEdit = isAuthor;
+    const canDelete = isAuthor;
 
     const handleDelete = () => {
         if (!window.confirm("공지사항을 삭제하시겠습니까?")) return;
