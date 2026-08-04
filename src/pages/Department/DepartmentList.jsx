@@ -134,7 +134,7 @@ function UrgentComplaintsPanel({ complaints, onClose }) {
                   <span>담당: {c.assigneeName ?? '-'}</span>
                 </div>
               </div>
-              <div className="urgent-item-dday">{c.dDay === 0 ? 'D-DAY' : `D-${c.dDay}`}</div>
+              <div className="urgent-item-dday">{c.dDay === 0 ? 'D-DAY' : c.dDay < 0 ? `D+${Math.abs(c.dDay)}` : `D-${c.dDay}`}</div>
             </div>
           ))
         ) : (
