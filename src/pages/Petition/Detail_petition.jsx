@@ -788,7 +788,6 @@ function DetailPetition() {
           currentDept={complaint.departmentName}
           onSelect={handleSelectEmployee}
           onClose={handleCloseModal}
-          forceDeptScope={true}
         />
       )}
 
