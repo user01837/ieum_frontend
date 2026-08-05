@@ -53,6 +53,7 @@ export default function Admin() {
   const [isPageSizeOpen, setIsPageSizeOpen] = useState(false);
   const [isModalDeptOpen, setIsModalDeptOpen] = useState(false);
   const [isModalPositionOpen, setIsModalPositionOpen] = useState(false);
+  const [predecessorTouched, setPredecessorTouched] = useState(false);
 
   // 신규 직원 등록 모달
   const [isUserFormOpen, setIsUserFormOpen] = useState(false);
@@ -147,6 +148,7 @@ export default function Admin() {
 
   // 수정 모달 열기
   const openEditModal = (user) => {
+    setPredecessorTouched(false);
     setIsEditMode(true);
     setEditTargetId(user.userId);
     setFormData({
@@ -169,16 +171,22 @@ export default function Admin() {
     }
 
     const mutation = isEditMode ? updateUserMutation : createUserMutation;
+
+    let userData = {
+      name: formData.name,
+      departmentCode: formData.dept,
+      positionCode: formData.position,
+      statusCode: formData.status,
+    };
+
+    if (predecessorTouched) {
+      userData.predecessorUserId = formData.predecessor ? formData.predecessor.userId : null;
+    }
+
     const variables = isEditMode ? {
       userId: editTargetId,
-      userData: { // 수정 시 API 스펙에 맞게 데이터 가공
-        name: formData.name,
-        departmentCode: formData.dept,
-        positionCode: formData.position,
-        statusCode: formData.status,
-        predecessorUserId: formData.predecessor ? formData.predecessor.userId : null,
-      }
-    } : { // 신규 생성 시 API 스펙에 맞게 데이터 가공
+      userData,
+    } : {
       userId: formData.employeeNo,
       name: formData.name,
       departmentCode: formData.dept,
@@ -231,6 +239,7 @@ export default function Admin() {
     setFormData(p => ({
       ...p, predecessor: { name: employee.name, userId: employee.userId }
     }));
+    setPredecessorTouched(true);
     setIsPredecessorModalOpen(false);
   };
 
@@ -526,7 +535,7 @@ export default function Admin() {
                   ) : (
                     <div className="admin-selected-chip" style={{ marginTop: 0 }}>
                       {formData.predecessor.name} ({formData.predecessor.userId})
-                      <button className="rm" onClick={() => { setFormData(p => ({ ...p, predecessor: null })); }}>
+                      <button className="rm" onClick={() => { setFormData(p => ({ ...p, predecessor: null })); setPredecessorTouched(true); }}>
                         <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M18 6 6 18M6 6l12 12" /></svg>
                       </button>
                     </div>

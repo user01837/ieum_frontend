@@ -108,7 +108,7 @@ export default function AnnouncementList() {
                     ) : (
                         <div className={`dropdown-wrap ${isDeptOpen ? "open" : ""}`} ref={deptRef}>
                             <div className="dropdown" onClick={() => setIsDeptOpen((p) => !p)}>
-                                <span>{deptFilter === null ? "전체 공지" : "내 부서 공지"}</span>
+                                <span>{deptFilter === null ? "전체 공지" : "부서 공지"}</span>
                                 <svg className="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                                     <path d="m6 9 6 6 6-6" />
                                 </svg>
