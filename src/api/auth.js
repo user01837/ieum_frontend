@@ -5,8 +5,6 @@ import api from './axios';
  * @param {{ empId: string, password: string, deptCode: string }} data - 로그인 데이터 (사원 ID, 비밀번호, 부서 코드)
  */
 export const login = data => {
-  console.log('Login attempt with:', data);
-
   // 백엔드 API가 기대하는 형식으로 데이터 변환
   // 프론트엔드 (empId, deptCode) -> 백엔드 (userId, department_code)
   const requestData = {
@@ -15,7 +13,6 @@ export const login = data => {
     department_code: data.deptCode,
   };
 
-  console.log('Sending login request to backend with:', requestData);
   return api.post('/auth/login', requestData);
 };
 

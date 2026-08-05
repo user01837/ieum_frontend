@@ -90,7 +90,6 @@ api.interceptors.response.use(
       }
 
       try {
-        console.log('Access token expired. Attempting to refresh...');
         const { data } = await api.post('/auth/refresh', { refreshToken });
         const newAccessToken = data.accessToken;
 
@@ -100,22 +99,13 @@ api.interceptors.response.use(
         originalRequest.headers['Authorization'] = `Bearer ${newAccessToken}`;
         return api(originalRequest); // 원래 요청 재시도
       } catch (refreshError) {
-
-        console.log("===== REFRESH CATCH 진입 =====");
-
         console.error(
           'Failed to refresh token. Logging out.',
           refreshError
         );
 
         processQueue(refreshError, null);
-
-        console.log("logout 실행 전");
-
         logout();
-
-        console.log("logout 실행 후");
-
         window.location.href = '/login';
 
         return Promise.reject(refreshError);

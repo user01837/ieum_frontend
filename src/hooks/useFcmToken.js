@@ -27,9 +27,7 @@ export function useFcmToken() {
       }
     })();
 
-    const unsubscribe = listenForForegroundMessages((payload) => {
-      console.log('포그라운드 메시지 수신:', payload);
-    });
+    const unsubscribe = listenForForegroundMessages(() => {});
 
     return () => {
       unsubscribe();

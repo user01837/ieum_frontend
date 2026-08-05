@@ -64,32 +64,24 @@ const useAuthStore = create((set, get) => ({
 
   // 앱 로드 시 토큰 유효성을 검사하고 사용자 정보를 가져오는 함수
   checkAuth: async () => {
-    console.log('[checkAuth] 시작: 토큰 확인 중...');
     const token = get().token;
     if (token) {
-      console.log('[checkAuth] 토큰 발견. 사용자 정보 요청을 시작합니다.');
       try {
         const response = await getMe();
-        console.log('[checkAuth] API 응답 받음:', response.data);
 
         const backendUser = response.data;
         const frontendUser = await mapBackendUserToFrontend(backendUser);
-        console.log('[checkAuth] 프론트엔드용으로 변환된 사용자 정보:', frontendUser);
 
         // 백엔드 /auth/me 응답에 mustChangePassword가 포함되어 있는지 확인합니다.
         // 백엔드에서 boolean (true/false) 또는 숫자 (1/0)로 올 수 있으므로 !!를 사용해 boolean으로 변환합니다.
         const mustChangePassword = !!backendUser.mustChangePassword;
-        console.log('[checkAuth] 비밀번호 변경 필요 여부:', mustChangePassword);
 
         set({ user: frontendUser, mustChangePassword });
-        console.log('[checkAuth] 스토어에 사용자 정보 저장 완료.');
       } catch (error) {
         console.error('[checkAuth] 사용자 정보 요청 실패. 토큰이 유효하지 않거나 API에 문제가 있을 수 있습니다.', error);
         get().logout(); // 토큰이 유효하지 않으면 로그아웃 처리
         throw error;
       }
-    } else {
-      console.log('[checkAuth] 토큰이 없어 인증 절차를 건너뜁니다.');
     }
   },
 }));

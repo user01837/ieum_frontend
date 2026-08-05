@@ -79,9 +79,6 @@ export default function Login() {
     handleLogin();
   };
 
-  // 부서 API 응답값 확인을 위한 콘솔 로그 추가
-  console.log("부서 API 응답값 확인:", deptList);
-
   return (
     <div className={styles.loginPage}>
       <div className={styles.wrap}>

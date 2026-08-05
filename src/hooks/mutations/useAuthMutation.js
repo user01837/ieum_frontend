@@ -19,7 +19,6 @@ export const useLoginMutation = () => {
     mutationFn: login, // api/auth.js의 login 함수 사용
     onSuccess: async (response) => {
       // 로그인 성공 시 처리
-      console.log('Login successful:', response.data);
       // 서버 응답에서 사용자 데이터와 토큰 추출 (API 응답 형식에 따라 수정 필요)
       const userData = response.data.user; // 예시: { id: 1, name: '사용자명', ... }
       const accessToken = response.data.accessToken; // 예시: 'eyJ...'
