@@ -368,10 +368,6 @@ const tasksReducer = (state, action) => {
           ? { ...t, assignees: t.assignees.filter((id) => id !== action.payload.memberId) }
           : t
       );
-    case 'HANDOVER_TASK': // 담당자를 한 명으로 교체 (인계)
-      return state.map((t) =>
-        t.id === action.payload.taskId ? { ...t, assignees: [action.payload.memberId] } : t
-      );
     default:
       return state;
   }
@@ -466,7 +462,7 @@ function DeptMgmt() {
     setIsUrgentPanelOpen(true);
   };
 
-  const handleHandover = (taskId, memberId) => dispatch({ type: 'HANDOVER_TASK', payload: { taskId, memberId } });
+  const handleHandover = (taskId, memberId) => addAssigneeMutate({ taskId, userId: memberId });
   const handleRename = (taskId, name) => dispatch({ type: 'RENAME_TASK', payload: { id: taskId, name } });
 
   const handleDelete = (taskId) => {
