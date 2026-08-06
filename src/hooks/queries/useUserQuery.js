@@ -5,9 +5,9 @@ import api from "../../api/axios";
 import { getUsers, getAdminStats } from "../../api/userManagement";
 
 // 이 훅은 EmpSearchModal에서 사용됩니다.
-export const useUserSearch = ({ scope, departmentCode, keyword }) => {
+export const useUserSearch = ({ scope, departmentCode, keyword, includeInactive }) => {
   return useQuery({
-    queryKey: ["userSearch", scope, departmentCode, keyword],
+    queryKey: ["userSearch", scope, departmentCode, keyword, includeInactive],
     queryFn: () =>
       api
         .get("/users/search", {
@@ -15,6 +15,7 @@ export const useUserSearch = ({ scope, departmentCode, keyword }) => {
             scope,
             departmentCode,
             keyword,
+            includeInactive,
           },
         })
         .then((res) => res.data), // API의 원본 데이터

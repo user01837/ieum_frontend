@@ -600,6 +600,8 @@ export default function Admin() {
             // forceDeptScope를 제거하여 모달 내에서 '전체 부서'를 선택할 수 있도록 하고,
             // currentDept를 전달하여 이전에 선택한 부서를 초기값으로 설정합니다.
             currentDept={departmentsData?.find(d => d.code === formData.dept)?.name}
+            // 전임자는 이미 퇴직/휴직 처리된 사람인 경우가 많아 재직자로만 제한하면 안 됨
+            includeInactive
           />
         )
       }

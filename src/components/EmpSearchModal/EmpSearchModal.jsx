@@ -8,7 +8,7 @@ function getInitials(name) {
   return name ? name.slice(-2) : '';
 }
 
-function EmployeeSearchModal({ currentDept, onSelect, onConfirm, onClose, forceDeptScope = false, multiSelect = false, excludeUserIds = [] }) {
+function EmployeeSearchModal({ currentDept, onSelect, onConfirm, onClose, forceDeptScope = false, multiSelect = false, excludeUserIds = [], includeInactive = false }) {
   const { data: deptList = [] } = useDepartmentsQuery();
 
   // 전달받은 부서 이름(currentDept)으로 부서 코드를 찾습니다.
@@ -35,6 +35,7 @@ function EmployeeSearchModal({ currentDept, onSelect, onConfirm, onClose, forceD
     scope: 'all',
     departmentCode: apiDeptCode,
     keyword: query || undefined,
+    includeInactive,
     enabled: scope === 'all' || apiDeptCode !== undefined,
   });
 
